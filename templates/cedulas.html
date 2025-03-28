@@ -17,10 +17,12 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center mb-4">Sistema CRUD - Cédulas</h1>
+        <!-- TITULO -->
+        <h1 class="text-center mb-4 border border-primary rounded">Sistema CRUD - Cédulas</h1>
 
         <!-- Formulario para ingresar cédulas -->
         <div class="card mb-4">
+            <!-- subtitulo -->
             <div class="card-header bg-primary text-white">
                 Ingresar Cédula
             </div>
@@ -29,7 +31,15 @@
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="cedulaInput" class="form-label">Cédula:</label>
-                        <input type="text" class="form-control" id="cedulaInput" name="cedula" placeholder="Ejemplo: 123456789" required>
+                        <input type="text" class="form-control" id="cedulaInput" name="cedula" placeholder="C.I" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cedulaInput" class="form-label">Nombre:</label>
+                        <input type="text" class="form-control" id="cedulaInput" name="cedula" placeholder="Nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cedulaInput" class="form-label">Apellido:</label>
+                        <input type="text" class="form-control" id="cedulaInput" name="cedula" placeholder="Apellido" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </form>
@@ -47,6 +57,8 @@
                         <tr>
                             <th>ID</th>
                             <th>Cédula</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -55,6 +67,8 @@
                         <tr>
                             <td>{{ cedula.id }}</td>
                             <td>{{ cedula.cedula }}</td>
+                            <td>{{ cedula.nombre }}</td>
+                            <td>{{ cedula.apellido }}</td>
                             <td>
                                 <a href="{% url 'editar_cedula' cedula.id %}" class="btn btn-sm btn-warning me-2">Editar</a>
                                 <a href="{% url 'eliminar_cedula' cedula.id %}" class="btn btn-sm btn-danger">Eliminar</a>
