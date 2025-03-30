@@ -1,0 +1,23 @@
+{% extends 'cedulas.html' %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center">Editar Cédula</h1>
+    <form method="POST" action="{% url 'editar_cedula' cedula.id %}">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="cedulaInput" class="form-label">Cédula:</label>
+            <input type="text" class="form-control" id="cedulaInput" name="cedula" value="{{ cedula.cedula }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="nombreInput" class="form-label">Nombre:</label>
+            <input type="text" class="form-control" id="nombreInput" name="nombre" value="{{ cedula.nombre }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="apellidoInput" class="form-label">Apellido:</label>
+            <input type="text" class="form-control" id="apellidoInput" name="apellido" value="{{ cedula.apellido }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    </form>
+</div>
+{% endblock %}
