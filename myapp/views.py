@@ -1,66 +1,74 @@
-from django.shortcuts import render
-from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from .models import Cedula
 
 # Vista principal (mostrar lista de cédulas)
-from django.shortcuts import render, redirect
-from django.contrib import messages  # Para mostrar mensajes al usuario
-from .models import Cedula
-
 def cedulas(request):
+    # Verificar si se está editando un registro existente
+    cedula_id = request.POST.get('id')  # ID del registro a editar (si existe)
+    if cedula_id:
+        cedula_obj = get_object_or_404(Cedula, id=cedula_id)
+    else:
+        cedula_obj = None
+
     if request.method == 'POST':
         # Obtener los datos del formulario
-        cedula_id = request.POST.get('id')  # Verifica si se proporciona un ID (para edición)
         cedula_value = request.POST.get('cedula')
         nombre = request.POST.get('nombre')
         apellido = request.POST.get('apellido')
 
-        if cedula_id:
-            # Editar un registro existente
-            cedula_obj = Cedula.objects.get(id=cedula_id)
-            cedula_obj.cedula = cedula_value
-            cedula_obj.nombre = nombre
-            cedula_obj.apellido = apellido
-            cedula_obj.save()
+        # Validar que la cédula no esté duplicada
+        if cedula_obj:
+            # Si estás editando, permitir que la cédula sea la misma que ya tiene el registro
+            if cedula_value != cedula_obj.cedula:  # Solo validar si la cédula cambió
+                if Cedula.objects.filter(cedula=cedula_value).exists():
+                    messages.error(request, "La cédula ya está registrada por otro usuario.")
+                    return redirect('cedulas')
         else:
-            # Crear un nuevo registro
+            # Si estás creando, verificar que la cédula no exista
             if Cedula.objects.filter(cedula=cedula_value).exists():
-                # Mostrar un mensaje de error si la cédula ya existe
                 messages.error(request, "La cédula ya está registrada.")
-            else:
-                Cedula.objects.create(cedula=cedula_value, nombre=nombre, apellido=apellido)
+                return redirect('cedulas')
 
-        return redirect('cedulas')  # Redirige a la misma página para actualizar la lista
+        # Guardar los cambios
+        try:
+            if cedula_obj:
+                # Editar un registro existente
+                cedula_obj.cedula = cedula_value
+                cedula_obj.nombre = nombre
+                cedula_obj.apellido = apellido
+                cedula_obj.save()
+                messages.success(request, "Registro actualizado correctamente.")
+            else:
+                # Crear un nuevo registro
+                Cedula.objects.create(cedula=cedula_value, nombre=nombre, apellido=apellido)
+                messages.success(request, "Registro guardado correctamente.")
+        except Exception as e:
+            # Capturar cualquier error inesperado
+            messages.error(request, f"Ocurrió un error al guardar los cambios: {str(e)}")
+            return redirect('cedulas')
+
+        return redirect('cedulas')  # Redirigir a la página principal después de guardar
+
+    # Si se está editando, cargar los datos del registro existente
+    if request.GET.get('editar'):
+        cedula_id = request.GET.get('editar')
+        cedula_obj = get_object_or_404(Cedula, id=cedula_id)
+    else:
+        cedula_obj = None
 
     # Obtener todas las cédulas ingresadas
     cedulas_list = Cedula.objects.all()
-    return render(request, 'cedulas.html', {'cedulas': cedulas_list})
 
-def editar_cedula(request, id):
-    cedula = get_object_or_404(Cedula, id=id)
-    if request.method == 'POST':
-        # Procesar el formulario enviado
-        cedula.cedula = request.POST.get('cedula')
-        cedula.nombre = request.POST.get('nombre')
-        cedula.apellido = request.POST.get('apellido')
-        cedula.save()
-        return redirect('cedulas')
-
-    # Pasar los datos del registro existente al formulario
+    # Renderizar la plantilla con el contexto
     return render(request, 'cedulas.html', {
-        'cedula_id': cedula.id,
-        'cedula_value': cedula.cedula,
-        'nombre': cedula.nombre,
-        'apellido': cedula.apellido,
-        'cedulas': Cedula.objects.all(),  # Mantener la lista de cédulas
+        'cedulas': cedulas_list,
+        'cedula_obj': cedula_obj,  # Datos del registro a editar (si existe)
     })
+
 # Vista para eliminar una cédula
 def eliminar_cedula(request, id):
     cedula = get_object_or_404(Cedula, id=id)
     cedula.delete()
+    messages.success(request, "Registro eliminado correctamente.")
     return redirect('cedulas')
-
-# Vista de prueba "Hello World"
-def helloworld(request):
-    return HttpResponse("Hello World bitch")
