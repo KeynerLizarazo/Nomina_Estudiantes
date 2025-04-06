@@ -76,11 +76,14 @@ WSGI_APPLICATION = 'nomina.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'nomina',  # Nombre de la base de datos PostgreSQL
+        'USER': 'postgres',        # Usuario de PostgreSQL
+        'PASSWORD': '123456', # Contraseña del usuario
+        'HOST': 'localhost',                  # Host de PostgreSQL
+        'PORT': '5432',                       # Puerto predeterminado de PostgreSQL
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

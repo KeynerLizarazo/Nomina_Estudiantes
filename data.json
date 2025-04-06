@@ -1,0 +1,21 @@
+[
+  {
+      "model": "myapp.cedula",
+      "pk": 5,
+      "fields": {
+          "cedula": "10157089",
+          "nombre": "Keyner",
+          "apellido": "Lizarazo"
+      }
+  },
+  {
+      "model": "myapp.cedula",
+      "pk": 7,
+      "fields": {
+          "cedula": "13714559",
+          "nombre": "Henrry",
+          "apellido": "Ferrer"
+      }
+  }
+]
+
