@@ -75,6 +75,9 @@
                                value="{% if cedula_obj %}{{ cedula_obj.apellido }}{% endif %}" placeholder="Apellido" required>
                     </div>
                     <button type="submit" class="btn btn-primary">{% if cedula_obj %}Guardar Cambios{% else %}Guardar{% endif %}</button>
+                    {% if cedula_obj %}
+                    <a href="{% url 'cedulas' %}" class="btn btn-danger">Cancelar</a>
+                    {% endif %}
                 </form>
             </div>
         </div>
