@@ -74,6 +74,14 @@
                         <input type="text" class="form-control" id="apellidoInput" name="apellido"
                                value="{% if cedula_obj %}{{ cedula_obj.apellido }}{% endif %}" placeholder="Apellido" required>
                     </div>
+                    <div class="mb-3">
+                        <label for="NacionalidadInput" class="form-label">Nacionalidad:</label>
+                        <select class="form-select w-50" id="nacionalidad" name="nacionalidad" required>
+                            <option value="" disabled selected>Seleccione una opción</option>
+                            <option value="extranjero">Venezolano</option>
+                            <option value="venezolano">Extranjero</option>
+                        </select>
+                    </div>
                     <button type="submit" class="btn btn-primary">{% if cedula_obj %}Guardar Cambios{% else %}Guardar{% endif %}</button>
                     {% if cedula_obj %}
                     <a href="{% url 'cedulas' %}" class="btn btn-danger">Cancelar</a>
@@ -93,6 +101,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Cédula</th>
+                            <th>Nacionalidad</th>
                             <th>Nombre</th>
                             <th>Apellido</th>
                             <th>Acciones</th>
@@ -103,6 +112,7 @@
                         <tr>
                             <td>{{ cedula.id }}</td>
                             <td>{{ cedula.cedula }}</td>
+                            <td>null<!-- {{ cedula.nacionalidad }} --></td>
                             <td>{{ cedula.nombre }}</td>
                             <td>{{ cedula.apellido }}</td>
                             <td>
