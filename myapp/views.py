@@ -1,74 +1,95 @@
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .models import Cedula
+import re
 
-# Vista principal (mostrar lista de cédulas)
 def cedulas(request):
-    # Verificar si se está editando un registro existente
-    cedula_id = request.POST.get('id')  # ID del registro a editar (si existe)
-    if cedula_id:
-        cedula_obj = get_object_or_404(Cedula, id=cedula_id)
-    else:
-        cedula_obj = None
-
     if request.method == 'POST':
-        # Obtener los datos del formulario
-        cedula_value = request.POST.get('cedula')
-        nombre = request.POST.get('nombre')
-        apellido = request.POST.get('apellido')
+        tipo_documento = request.POST.get('tipo_documento')
+        numero_documento = request.POST.get('numero_documento', '').strip()
+        nombre = request.POST.get('nombre', '').strip()
+        apellido = request.POST.get('apellido', '').strip()
 
-        # Validar que la cédula no esté duplicada
-        if cedula_obj:
-            # Si estás editando, permitir que la cédula sea la misma que ya tiene el registro
-            if cedula_value != cedula_obj.cedula:  # Solo validar si la cédula cambió
-                if Cedula.objects.filter(cedula=cedula_value).exists():
-                    messages.error(request, "La cédula ya está registrada por otro usuario.")
-                    return redirect('cedulas')
-        else:
-            # Si estás creando, verificar que la cédula no exista
-            if Cedula.objects.filter(cedula=cedula_value).exists():
-                messages.error(request, "La cédula ya está registrada.")
-                return redirect('cedulas')
+        # Validaciones
+        if not tipo_documento or tipo_documento not in ['V', 'CC']:
+            messages.error(request, 'Tipo de documento inválido.')
+            return redirect('cedulas')
 
-        # Guardar los cambios
+        if not numero_documento.isdigit() or not (6 <= len(numero_documento) <= 20):
+            messages.error(request, 'Número de documento inválido.')
+            return redirect('cedulas')
+
+        # Validar longitud de nombre y apellido
+        if len(nombre) > 50:
+            messages.error(request, 'El nombre no puede tener más de 50 caracteres.')
+            return redirect('cedulas')
+        if len(apellido) > 50:
+            messages.error(request, 'El apellido no puede tener más de 50 caracteres.')
+            return redirect('cedulas')
+
+        if not re.match(r"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$", nombre):
+            messages.error(request, 'Nombre inválido.')
+            return redirect('cedulas')
+
+        if not re.match(r"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$", apellido):
+            messages.error(request, 'Apellido inválido.')
+            return redirect('cedulas')
+
         try:
-            if cedula_obj:
-                # Editar un registro existente
-                cedula_obj.cedula = cedula_value
+            cedula_id = request.POST.get('id')
+            if cedula_id:
+                cedula_obj = get_object_or_404(Cedula, id=cedula_id)
+
+                if Cedula.objects.exclude(id=cedula_id).filter(numero_documento=numero_documento).exists():
+                    messages.error(request, 'El número de documento ya está registrado.')
+                    return redirect('cedulas')
+
+                # Actualizar
+                cedula_obj.tipo_documento = tipo_documento
+                cedula_obj.numero_documento = numero_documento
                 cedula_obj.nombre = nombre
                 cedula_obj.apellido = apellido
                 cedula_obj.save()
-                messages.success(request, "Registro actualizado correctamente.")
+                messages.success(request, 'Registro actualizado correctamente.')
             else:
-                # Crear un nuevo registro
-                Cedula.objects.create(cedula=cedula_value, nombre=nombre, apellido=apellido)
-                messages.success(request, "Registro guardado correctamente.")
+                if Cedula.objects.filter(numero_documento=numero_documento).exists():
+                    messages.error(request, 'El número de documento ya está registrado.')
+                    return redirect('cedulas')
+
+                # Crear nuevo
+                Cedula.objects.create(
+                    tipo_documento=tipo_documento,
+                    numero_documento=numero_documento,
+                    nombre=nombre,
+                    apellido=apellido
+                )
+                messages.success(request, 'Registro guardado correctamente.')
+
         except Exception as e:
-            # Capturar cualquier error inesperado
-            messages.error(request, f"Ocurrió un error al guardar los cambios: {str(e)}")
-            return redirect('cedulas')
+            messages.error(request, f'Ocurrió un error: {str(e)}')
 
-        return redirect('cedulas')  # Redirigir a la página principal después de guardar
+        return redirect('cedulas')
 
-    # Si se está editando, cargar los datos del registro existente
+    # GET
+    cedula_obj = None
     if request.GET.get('editar'):
         cedula_id = request.GET.get('editar')
         cedula_obj = get_object_or_404(Cedula, id=cedula_id)
-    else:
-        cedula_obj = None
 
-    # Obtener todas las cédulas ingresadas
     cedulas_list = Cedula.objects.all()
 
-    # Renderizar la plantilla con el contexto
     return render(request, 'cedulas.html', {
         'cedulas': cedulas_list,
-        'cedula_obj': cedula_obj,  # Datos del registro a editar (si existe)
+        'cedula_obj': cedula_obj,
     })
 
-# Vista para eliminar una cédula
 def eliminar_cedula(request, id):
-    cedula = get_object_or_404(Cedula, id=id)
-    cedula.delete()
-    messages.success(request, "Registro eliminado correctamente.")
+    if request.method == 'POST':
+        try:
+            cedula = get_object_or_404(Cedula, id=id)
+            cedula.delete()
+            messages.success(request, "Registro eliminado correctamente.")
+        except Exception as e:
+            messages.error(request, f"Ocurrió un error al eliminar el registro: {str(e)}")
     return redirect('cedulas')
