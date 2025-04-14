@@ -93,3 +93,62 @@ def eliminar_cedula(request, id):
         except Exception as e:
             messages.error(request, f"Ocurrió un error al eliminar el registro: {str(e)}")
     return redirect('cedulas')
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import Usuario
+
+def login_view(request):
+    if request.method == 'POST':
+        # Obtener los datos del formulario
+        username = request.POST.get('username', '').strip()
+        contraseña = request.POST.get('contraseña', '').strip()
+
+        try:
+            # Buscar al usuario en la base de datos por nombre de usuario
+            usuario = Usuario.objects.get(username=username)
+
+            # Validar la contraseña
+            if usuario.contraseña == contraseña:
+                # Guardar el ID del usuario en la sesión
+                request.session['usuario_id'] = usuario.id
+                return redirect('cedulas')  # Redirigir a la página principal
+            else:
+                messages.error(request, 'Contraseña incorrecta.')
+        except Usuario.DoesNotExist:
+            messages.error(request, 'Usuario no encontrado.')
+
+        return redirect('login')
+
+    return render(request, 'login.html')
+
+def logout_view(request):
+    if 'usuario_id' in request.session:
+        del request.session['usuario_id']  # Eliminar la sesión del usuario
+    return redirect('login')  # Redirigir al formulario de login
+
+from django.shortcuts import redirect
+
+# Decorador para proteger las vistas
+def login_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if 'usuario_id' not in request.session:
+            return redirect('login')  # Redirigir al login si no hay sesión activa
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+# Aplicar el decorador a la vista protegida
+@login_required
+def cedulas(request):
+    # Lógica de la vista...
+    cedula_obj = None
+    if request.GET.get('editar'):
+        cedula_id = request.GET.get('editar')
+        cedula_obj = get_object_or_404(Cedula, id=cedula_id)
+
+    cedulas_list = Cedula.objects.all()
+
+    return render(request, 'cedulas.html', {
+        'cedulas': cedulas_list,
+        'cedula_obj': cedula_obj,
+    })

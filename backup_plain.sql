@@ -1,6 +1,7 @@
 --
 -- PostgreSQL database dump
 --
+
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
