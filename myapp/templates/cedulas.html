@@ -4,9 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Control de Nómina - The Professor</title>
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- SweetAlert2 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
+  <!-- FullCalendar CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
   <style>
+    /* Estilos existentes... */
     body {
       margin: 0;
       padding: 0;
@@ -60,78 +65,21 @@
       background-color: #ffffff;
       flex-grow: 1;
     }
-    .card-header {
-      background-color: #003366;
-      color: #fff;
-      text-align: center;
-      font-size: 1.2rem;
-      padding: 15px;
-      border-radius: 15px 15px 0 0;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .form-control {
-      border: 2px solid #ced4da;
-      border-radius: 10px;
-      padding: 12px;
-      font-size: 1rem;
-      transition: border-color 0.3s ease;
-    }
-    .form-control:focus {
-      border-color: #003366;
-      box-shadow: 0 0 8px rgba(0, 51, 102, 0.5);
-    }
-    .btn-primary {
-      background-color: #00BFFF; /* Celeste */
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-      padding: 12px;
-      transition: background-color 0.3s ease;
-    }
-    .btn-primary:hover {
-      background-color: #009ACD; /* Celeste oscuro */
-    }
-    .btn-danger {
-      background-color: #DC3545;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-      padding: 12px;
-      transition: background-color 0.3s ease;
-    }
-    .btn-danger:hover {
-      background-color: #B02A37;
-    }
-    .table {
-      width: 100%;
-      margin-bottom: 1rem;
-      color: #212529;
-      border-collapse: collapse;
-    }
-    .table thead th {
-      background-color: #003366;
-      color: #fff;
-      border: 1px solid #dee2e6;
+    /* Estilos adicionales para el calendario */
+    #calendar {
+      max-width: 100%;
+      margin: 0 auto;
       padding: 1rem;
-      text-align: left;
-    }
-    .table tbody tr:nth-child(even) {
-      background-color: #f8f9fa;
-    }
-    .table tbody tr:nth-child(odd) {
-      background-color: #ffffff;
-    }
-    .error {
-      color: #DC3545;
-      font-size: 0.9em;
     }
   </style>
 </head>
 <body>
+  <!-- Sidebar -->
   <div class="sidebar">
     <h4>The Professor</h4>
     <div class="menu">
-      <a href="{% url 'cedulas' %}">Control de Nómina</a>
+      <a href="#" id="control-nomina-btn" onclick="mostrarControlNomina()">Control de Nómina</a>
+      <a href="#" id="calendario-btn" onclick="mostrarCalendario()">Calendario</a>
       <a href="#">Mi Perfil</a>
     </div>
     <!-- Bloque de Logout -->
@@ -139,8 +87,11 @@
       <a href="{% url 'logout' %}" class="btn btn-danger">Cerrar Sesión</a>
     </div>
   </div>
+
+  <!-- Contenido principal -->
   <div class="main-content">
-    <div id="control-nomina">
+    <!-- Contenedor del Control de Nómina -->
+    <div id="control-nomina" style="display: block;">
       <h2 class="text-center mb-4 bg-primary rounded-pill text-white shadow">Control de Nómina</h2>
       <div class="card mb-4 shadow">
         <div class="card-header">
@@ -213,15 +164,64 @@
         </div>
       </div>
     </div>
+
+    <!-- Contenedor del calendario -->
+    <div id="calendario-container" style="display: none;">
+      <h2 class="text-center mb-4 bg-success rounded-pill text-white shadow">Calendario</h2>
+      <div id="calendar"></div>
+    </div>
   </div>
+
+  <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.all.min.js"></script>
+  <!-- FullCalendar JS -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js"></script>
   <script>
+    // Función para mostrar el Control de Nómina
+    function mostrarControlNomina() {
+      document.getElementById('control-nomina').style.display = 'block';
+      document.getElementById('calendario-container').style.display = 'none';
+    }
+
+    // Función para mostrar el calendario
+    function mostrarCalendario() {
+      document.getElementById('control-nomina').style.display = 'none';
+      document.getElementById('calendario-container').style.display = 'block';
+
+      // Inicializar FullCalendar si no está inicializado
+      if (!window.calendarInitialized) {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+          themeSystem: 'bootstrap', // Usa estilos de Bootstrap
+          initialView: 'dayGridMonth', // Vista inicial: mes
+          locale: 'es', // Idioma español
+          events: [
+            {
+              title: 'Evento 1',
+              start: '2023-10-07',
+            },
+            {
+              title: 'Evento 2',
+              start: '2023-10-14',
+              end: '2023-10-16',
+            },
+            {
+              title: 'Reunión',
+              start: '2023-10-20T10:00:00',
+              end: '2023-10-20T12:00:00',
+            },
+          ],
+        });
+        calendar.render();
+        window.calendarInitialized = true; // Marcar como inicializado
+      }
+    }
+
     // Función para capitalizar y validar caracteres en nombre y apellido
     function capitalizarYValidar(input) {
-      // Permitir solo letras, espacios y caracteres especiales (áéíóúñ)
       input.value = input.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
-      // Capitalizar cada palabra
       input.value = input.value
         .toLowerCase()
         .split(' ')
@@ -232,10 +232,10 @@
     // Función para validar la cédula según el tipo de documento
     function validarCedula(input) {
       const tipoDocumento = document.getElementById('tipo_documento').value;
-      let longitudMaxima = tipoDocumento === 'V' ? 8 : 10; // 8 para venezolano, 10 para colombiano
-      input.value = input.value.replace(/\D/g, ''); // Permitir solo números
+      let longitudMaxima = tipoDocumento === 'V' ? 8 : 10;
+      input.value = input.value.replace(/\D/g, '');
       if (input.value.length > longitudMaxima) {
-        input.value = input.value.slice(0, longitudMaxima); // Limitar longitud
+        input.value = input.value.slice(0, longitudMaxima);
       }
     }
 
