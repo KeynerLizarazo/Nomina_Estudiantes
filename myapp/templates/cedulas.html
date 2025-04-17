@@ -6,6 +6,7 @@
   <title>Control de Nómina - The Professor</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
   <!-- SweetAlert2 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
   <!-- FullCalendar CSS -->
@@ -25,14 +26,31 @@
       background-color: #002855;
     }/* revisar los colores y organizar la paleta en el archivo y exportar todo esto al archivo propio del css */
 
+        /* Sidebar */
     .sidebar {
       background-color: #002855;
       color: white;
-      width: 250px;
+      width: 250px; /* Ancho normal */
       padding: 1rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      transition: all 0.3s ease; /* Transición suave */
+    }
+
+    /* Estado colapsado del sidebar */
+    .sidebar.collapsed {
+      width: 0px; /* Ancho reducido */
+      padding: 0; /* Reducir padding */
+    }
+
+    .sidebar.collapsed h4,
+    .sidebar.collapsed .menu a {
+      display: none; /* Ocultar texto */
+    }
+
+    .sidebar.collapsed .menu a {
+      padding: 0.75rem; /* Ajustar padding para iconos */
     }
 
     .sidebar a {
@@ -61,6 +79,17 @@
       padding: 2rem;
       overflow-y: auto;
     }
+
+    #toggleSidebarBtn {
+    transition: transform 0.3s ease-in-out;
+}
+
+#toggleSidebarBtn.active {
+    transform: rotate(180deg);
+}
+
+
+
   </style>
 </head>
 <body>
@@ -86,11 +115,16 @@
     <!-- Contenido principal (Header + Main Content) -->
     <div class="d-flex flex-column flex-grow-1">
       <!-- Header -->
-      <nav class="navbar navbar-dark color-azul-principal-background">
+      <nav class="navbar navbar-dark color-azul-principal-background position-relative">
+        <button id="toggleSidebarBtn" class="btn bg-transparent border-0 position-absolute start-0 ms-2">
+          <i id="btn-icon" class="bi bi-chevron-left text-danger fs-4"></i>
+      </button>
+      
         <div class="container-fluid d-flex justify-content-center">
-          <span class="navbar-brand  h1 text-center fs-4 mt-1">Sistema de Gestión</span>
+            <span class="navbar-brand h1 text-center fs-4 mt-1">Sistema de Gestión</span>
         </div>
       </nav>
+
 
       <!-- Main Content -->
       <div class="main-content bg-light flex-grow-1">
@@ -202,6 +236,31 @@
   </div>
 </div>
 
+<!-- organizar el maldito JS -->
+
+<script>
+  // Botón para alternar el sidebar
+  const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+  const sidebar = document.querySelector('.sidebar');
+
+  toggleSidebarBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed'); // Alternar la clase 'collapsed'
+  });
+</script>
+
+
+
+
+<script>
+document.getElementById("toggleSidebarBtn").addEventListener("click", function () {
+    this.classList.toggle("active"); // Alterna la animación
+});
+
+
+
+
+
+</script>
 <!-- Script para manejar el comportamiento del modal -->
 <script>
   // Capturar el evento de apertura del modal
