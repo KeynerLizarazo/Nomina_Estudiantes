@@ -59,11 +59,11 @@ WSGI_APPLICATION = 'nomina_estudiantes.wsgi.application'  # Configuración WSGI
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'nomina',  # Nombre de la base de datos PostgreSQL
+        'NAME': 'railway',  # Nombre de la base de datos PostgreSQL
         'USER': 'postgres',        # Usuario de PostgreSQL
-        'PASSWORD': '123456', # Contraseña del usuario
-        'HOST': 'localhost',                  # Host de PostgreSQL
-        'PORT': '5432',                       # Puerto predeterminado de PostgreSQL
+        'PASSWORD': 'XwOqzcKviSyqtqFsyEHPnLCfAYifgIhL', # Contraseña del usuario
+        'HOST': 'gondola.proxy.rlwy.net',                  # Host de PostgreSQL
+        'PORT': '25214',                       # Puerto predeterminado de PostgreSQL
     }
 }
 
