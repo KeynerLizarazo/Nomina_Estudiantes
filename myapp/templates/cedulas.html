@@ -6,41 +6,57 @@
   <title>Control de Nómina - The Professor</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+
   <!-- SweetAlert2 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
   <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
   <style>
-    /* Estilos existentes... */
+
+    /* Estilos adicionales */
     body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f9fa;
       margin: 0;
       padding: 0;
       display: flex;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f8f9fa;
+      flex-direction: column;
+      height: 100vh;
     }
+    .color-azul-principal-background {
+      background-color: #002855;
+    }/* revisar los colores y organizar la paleta en el archivo y exportar todo esto al archivo propio del css */
+
+        /* Sidebar */
     .sidebar {
-      width: 250px;
       background-color: #002855;
       color: white;
+      width: 250px; /* Ancho normal */
       padding: 1rem;
-      height: 100vh;
-      position: fixed;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      transition: all 0.3s ease; /* Transición suave */
     }
-    .sidebar h4 {
-      color: white;
-      font-weight: bold;
-      font-size: 1.5rem;
-      text-align: center;
-      margin-bottom: 1rem;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+
+    /* Estado colapsado del sidebar */
+    .sidebar.collapsed {
+      width: 0px; /* Ancho reducido */
+      padding: 0; /* Reducir padding */
     }
-    .sidebar .menu {
-      flex-grow: 1;
+
+    .sidebar.collapsed h4,
+    .sidebar.collapsed .menu a {
+      display: none; /* Ocultar texto */
     }
+
+    .sidebar.collapsed .menu a {
+      padding: 0.75rem; /* Ajustar padding para iconos */
+    }
+
+
     .sidebar a {
       color: white;
       text-decoration: none;
@@ -51,88 +67,90 @@
       transition: background-color 0.3s ease;
       margin-bottom: 0.5rem;
     }
+
+
     .sidebar a:hover {
       background-color: #BF0A30;
     }
-    .sidebar .logout {
+
+    .logout {
+
       margin-top: auto;
       padding-top: 1rem;
       border-top: 1px solid #ffffff30;
     }
+
+
     .main-content {
-      margin-left: 270px;
-      padding: 2rem;
-      background-color: #ffffff;
       flex-grow: 1;
+      padding: 2rem;
+      overflow-y: auto;
     }
-    /* Estilos adicionales para el calendario */
-    #calendar {
-      max-width: 100%;
-      margin: 0 auto;
-      padding: 1rem;
-    }
+
+    #toggleSidebarBtn {
+    transition: transform 0.3s ease-in-out;
+}
+
+#toggleSidebarBtn.active {
+    transform: rotate(180deg);
+}
+
+
+
   </style>
 </head>
 <body>
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <h4>The Professor</h4>
-    <div class="menu">
-      <a href="#" id="control-nomina-btn" onclick="mostrarControlNomina()">Control de Nómina</a>
-      <a href="#" id="calendario-btn" onclick="mostrarCalendario()">Calendario</a>
-      <a href="#">Mi Perfil</a>
-    </div>
-    <!-- Bloque de Logout -->
-    <div class="logout">
-      <a href="{% url 'logout' %}" class="btn btn-danger">Cerrar Sesión</a>
-    </div>
-  </div>
-
-  <!-- Contenido principal -->
-  <div class="main-content">
-    <!-- Contenedor del Control de Nómina -->
-    <div id="control-nomina" style="display: block;">
-      <h2 class="text-center mb-4 bg-primary rounded-pill text-white shadow">Control de Nómina</h2>
-      <div class="card mb-4 shadow">
-        <div class="card-header">
-          {% if cedula_obj %}Editar Datos{% else %}Ingresar Datos{% endif %}
-        </div>
-        <div class="card-body">
-          <form method="POST" action="">
-            {% csrf_token %}
-            <input type="hidden" name="id" value="{{ cedula_obj.id|default_if_none:'' }}">
-            <div class="mb-3">
-              <label for="tipo_documento" class="form-label">Tipo de Documento:</label>
-              <select class="form-select" id="tipo_documento" name="tipo_documento" required>
-                <option value="" disabled selected>Seleccione un tipo de documento</option>
-                <option value="V" {% if cedula_obj and cedula_obj.tipo_documento == 'V' %}selected{% endif %}>Cédula Venezolana (V)</option>
-                <option value="CC" {% if cedula_obj and cedula_obj.tipo_documento == 'CC' %}selected{% endif %}>Cédula Colombiana (CC)</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="numero_documento" class="form-label">Número de Documento:</label>
-              <input type="text" class="form-control" id="numero_documento" name="numero_documento" value="{% if cedula_obj %}{{ cedula_obj.numero_documento }}{% endif %}" required oninput="validarCedula(this)" maxlength="10">
-            </div>
-            <div class="mb-3">
-              <label for="nombre" class="form-label">Nombre:</label>
-              <input type="text" class="form-control" id="nombre" name="nombre" value="{% if cedula_obj %}{{ cedula_obj.nombre }}{% endif %}" required oninput="capitalizarYValidar(this)" maxlength="50">
-            </div>
-            <div class="mb-3">
-              <label for="apellido" class="form-label">Apellido:</label>
-              <input type="text" class="form-control" id="apellido" name="apellido" value="{% if cedula_obj %}{{ cedula_obj.apellido }}{% endif %}" required oninput="capitalizarYValidar(this)" maxlength="50">
-            </div>
-            <button type="submit" class="btn btn-primary">
-              {% if cedula_obj %}Guardar Cambios{% else %}Guardar{% endif %}
-            </button>
-            {% if cedula_obj %}
-              <a href="{% url 'cedulas' %}" class="btn btn-danger">Cancelar</a>
-            {% endif %}
-          </form>
+  <!-- Contenedor principal -->
+  <div class="d-flex flex-column flex-md-row h-100">
+    <!-- Sidebar -->
+    <div class="sidebar d-flex flex-column justify-content-between">
+      <!-- Parte superior del sidebar -->
+      <div>
+        <h4 class="text-center mb-4">The Professor</h4>
+        <div class="menu">
+          <a href="#" id="control-nomina-btn" onclick="mostrarControlNomina()" class="mb-3">Control de Nómina</a>
+          <a href="#" id="calendario-btn" onclick="mostrarCalendario()" class="mb-3">Calendario</a>
+          <a href="#" class="mb-3">Mi Perfil</a>
         </div>
       </div>
+    
+      <!-- Bloque de Logout -->
+      <div class="logout mt-auto ">
+        <a href="{% url 'logout' %}" class="btn btn-danger w-100">Cerrar Sesión</a>
+      </div>
+    </div>
+    <!-- Contenido principal (Header + Main Content) -->
+    <div class="d-flex flex-column flex-grow-1">
+      <!-- Header -->
+      <nav class="navbar navbar-dark color-azul-principal-background position-relative">
+        <button id="toggleSidebarBtn" class="btn bg-transparent border-0 position-absolute start-0 ms-2">
+          <i id="btn-icon" class="bi bi-chevron-left text-danger fs-4"></i>
+      </button>
+      
+        <div class="container-fluid d-flex justify-content-center">
+            <span class="navbar-brand h1 text-center fs-4 mt-1">Sistema de Gestión</span>
+        </div>
+      </nav>
+
+
+      <!-- Main Content -->
+      <div class="main-content bg-light flex-grow-1">
+    
       <div class="card shadow">
-        <div class="card-header">Lista de Cédulas</div>
+        <div class="card-header">Lista de Usuarios</div>
         <div class="card-body">
+          <div class="card-body">
+            <div class="d-flex justify-content-between mb-3">
+              <form class="w-50">
+                  <div class="input-group">
+                      <input type="text" class="form-control" placeholder="Buscar..." aria-label="Buscar">
+                  </div>
+              </form>
+              <button type="button" class="btn btn-primary w-25" data-bs-toggle="modal" data-bs-target="#controlNominaModal">
+                  Añadir
+              </button>
+          </div>
+          
           <table class="table table-bordered">
             <thead>
               <tr>
@@ -151,7 +169,9 @@
                   <td>{{ cedula.nombre }}</td>
                   <td>{{ cedula.apellido }}</td>
                   <td>
-                    <a href="?editar={{ cedula.id }}" class="btn btn-warning btn-sm">Editar</a>
+                    <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#controlNominaModal" data-cedula-id="{{ cedula.id }}">
+                      Editar
+                    </a>
                     <form action="{% url 'eliminar_cedula' cedula.id %}" method="post" style="display:inline;">
                       {% csrf_token %}
                       <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
@@ -165,6 +185,142 @@
       </div>
     </div>
 
+      <!-- Ventana Modal -->
+<div class="modal fade" id="controlNominaModal" tabindex="-1" aria-labelledby="controlNominaModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <!-- Encabezado del Modal -->
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title text-center w-100" id="modalTitle">Control de Nómina</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Cuerpo del Modal -->
+      <div class="modal-body">
+        <!-- Formulario -->
+        <div class="mb-4">
+          
+          <form id="nominaForm" method="POST" action="">
+            {% csrf_token %}
+            <input type="hidden" name="id" id="cedulaIdInput" value="">
+
+            <div class="mb-3">
+              <label for="tipo_documento" class="form-label">Tipo de Documento:</label>
+              <select class="form-select" id="tipo_documento" name="tipo_documento" required>
+                <option value="" disabled selected>Seleccione un tipo de documento</option>
+
+                <option value="V">Cédula Venezolana (V)</option>
+                <option value="CC">Cédula Colombiana (CC)</option>
+
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="numero_documento" class="form-label">Número de Documento:</label>
+
+              <input type="text" class="form-control" id="numero_documento" name="numero_documento" required maxlength="10">
+            </div>
+            <div class="mb-3">
+              <label for="nombre" class="form-label">Nombre:</label>
+              <input type="text" class="form-control" id="nombre" name="nombre" required maxlength="50">
+            </div>
+            <div class="mb-3">
+              <label for="apellido" class="form-label">Apellido:</label>
+              <input type="text" class="form-control" id="apellido" name="apellido" required maxlength="50">
+            </div>
+            
+          </form>
+        </div>
+      </div>
+
+      <!-- Pie del Modal -->
+      <div class="modal-footer">
+        <div class="row w-100">
+          <div class="col">
+            <button type="submit" class="btn btn-primary w-100">Guardar</button>
+          </div>
+          <div class="col">
+            <button type="button" class="btn btn-danger w-100" data-bs-dismiss="modal">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- organizar el maldito JS -->
+
+<script>
+  // Botón para alternar el sidebar
+  const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+  const sidebar = document.querySelector('.sidebar');
+
+  toggleSidebarBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed'); // Alternar la clase 'collapsed'
+  });
+</script>
+
+
+
+
+<script>
+document.getElementById("toggleSidebarBtn").addEventListener("click", function () {
+    this.classList.toggle("active"); // Alterna la animación
+});
+
+
+
+
+
+</script>
+<!-- Script para manejar el comportamiento del modal -->
+<script>
+  // Capturar el evento de apertura del modal
+  const modal = document.getElementById('controlNominaModal');
+  const modalTitle = document.getElementById('modalTitle');
+  const cedulaIdInput = document.getElementById('cedulaIdInput');
+
+  // Escuchar el evento 'show.bs.modal' para detectar cuándo se abre el modal
+  modal.addEventListener('show.bs.modal', function (event) {
+    // Obtener el botón que activó el modal
+    const button = event.relatedTarget;
+
+    // Obtener el ID del objeto desde el atributo 'data-cedula-id'
+    const cedulaId = button.getAttribute('data-cedula-id');
+
+    // Si hay un ID, significa que estamos editando
+    if (cedulaId) {
+      modalTitle.textContent = 'Editar Datos';
+      cedulaIdInput.value = cedulaId;
+
+      // Aquí puedes hacer una solicitud AJAX para cargar los datos del objeto
+      // Por ejemplo:
+      /*
+      fetch(`/api/cedulas/${cedulaId}/`)
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('tipo_documento').value = data.tipo_documento;
+          document.getElementById('numero_documento').value = data.numero_documento;
+          document.getElementById('nombre').value = data.nombre;
+          document.getElementById('apellido').value = data.apellido;
+        });
+      */
+    } else {
+      modalTitle.textContent = 'Ingresar Datos';
+      cedulaIdInput.value = '';
+    }
+  });
+
+  // Escuchar el evento 'hidden.bs.modal' para restablecer el estado al cerrar el modal
+  modal.addEventListener('hidden.bs.modal', function () {
+    modalTitle.textContent = 'Ingresar Datos';
+    cedulaIdInput.value = '';
+
+    // Limpiar el formulario
+    document.getElementById('nominaForm').reset();
+  });
+</script>
+  <!-- Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Contenedor del calendario -->
     <div id="calendario-container" style="display: none;">
       <h2 class="text-center mb-4 bg-success rounded-pill text-white shadow">Calendario</h2>

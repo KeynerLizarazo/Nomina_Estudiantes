@@ -54,8 +54,14 @@ WSGI_APPLICATION = 'nomina.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',  # Archivo de la base de datos SQLite
+
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'railway',  # Nombre de la base de datos PostgreSQL
+        'USER': 'postgres',        # Usuario de PostgreSQL
+        'PASSWORD': 'XwOqzcKviSyqtqFsyEHPnLCfAYifgIhL', # Contraseña del usuario
+        'HOST': 'gondola.proxy.rlwy.net',                  # Host de PostgreSQL
+        'PORT': '25214',                       # Puerto predeterminado de PostgreSQL
+
     }
 }
 
