@@ -56,6 +56,7 @@ WSGI_APPLICATION = 'nomina_estudiantes.wsgi.application'  # Configuración WSGI
 # ==============================
 # BASE DE DATOS
 # ==============================
+
 DATABASES = {
     'default': {
 

@@ -11,7 +11,7 @@
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
   <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
-  
+
   <style>
     /* Estilos adicionales */
     body {
@@ -90,7 +90,9 @@
         <h4 class="text-center mb-4">The Professor</h4>
         <div class="menu">
           <a href="#" id="control-nomina-btn" onclick="mostrarControlNomina()" class="mb-3">Control de Nómina</a>
+
           <a href="{% url 'calendario' %}" id="calendario-btn" class="mb-3">Calendario</a>
+
           <a href="#" class="mb-3">Mi Perfil</a>
         </div>
       </div>
@@ -98,6 +100,7 @@
       <div class="logout mt-auto ">
         <a href="{% url 'logout' %}" class="btn btn-danger w-100">Cerrar Sesión</a>
       </div>
+
     </div>
     <!-- Contenido principal (Header + Main Content) -->
     <div class="d-flex flex-column flex-grow-1">
@@ -159,6 +162,7 @@
         </div>
       </div>
     </div>
+
       <!-- Ventana Modal -->
 <div class="modal fade" id="controlNominaModal" tabindex="-1" aria-labelledby="controlNominaModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
@@ -196,6 +200,7 @@
               <input type="text" class="form-control" id="apellido" name="apellido" required maxlength="50">
             </div>
           </form>
+
         </div>
       </div>
       <!-- Pie del Modal -->
@@ -295,19 +300,74 @@
   <!-- FullCalendar JS -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js"></script>
-<!-- SweetAlert para mensajes Django -->
-<script>
-  $(document).ready(function() {
-    {% if messages %}
-      {% for message in messages %}
-        Swal.fire({
-          icon: '{{ message.tags }}',
-          title: '{{ message.message }}',
-          showConfirmButton: true
+
+  <script>
+    // Función para mostrar el Control de Nómina
+    function mostrarControlNomina() {
+      document.getElementById('control-nomina').style.display = 'block';
+      document.getElementById('calendario-container').style.display = 'none';
+    }
+    // Función para mostrar el calendario
+    function mostrarCalendario() {
+      document.getElementById('control-nomina').style.display = 'none';
+      document.getElementById('calendario-container').style.display = 'block';
+      // Inicializar FullCalendar si no está inicializado
+      if (!window.calendarInitialized) {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+          themeSystem: 'bootstrap', // Usa estilos de Bootstrap
+          initialView: 'dayGridMonth', // Vista inicial: mes
+          locale: 'es', // Idioma español
+          events: [
+            {
+              title: 'Evento 1',
+              start: '2023-10-07',
+            },
+            {
+              title: 'Evento 2',
+              start: '2023-10-14',
+              end: '2023-10-16',
+            },
+            {
+              title: 'Reunión',
+              start: '2023-10-20T10:00:00',
+              end: '2023-10-20T12:00:00',
+            },
+          ],
         });
-      {% endfor %}
-    {% endif %}
-  });
-</script>
+        calendar.render();
+        window.calendarInitialized = true; // Marcar como inicializado
+      }
+    }
+    // Función para capitalizar y validar caracteres en nombre y apellido
+    function capitalizarYValidar(input) {
+      input.value = input.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
+      input.value = input.value
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+    // Función para validar la cédula según el tipo de documento
+    function validarCedula(input) {
+      const tipoDocumento = document.getElementById('tipo_documento').value;
+      let longitudMaxima = tipoDocumento === 'V' ? 8 : 10;
+      input.value = input.value.replace(/\D/g, '');
+      if (input.value.length > longitudMaxima) {
+        input.value = input.value.slice(0, longitudMaxima);
+      }
+    }
+    $(document).ready(function(){
+      {% if messages %}
+        {% for message in messages %}
+          Swal.fire({
+            icon: '{{ message.tags }}',
+            title: '{{ message.message }}',
+            showConfirmButton: true
+          });
+        {% endfor %}
+      {% endif %}
+    });
+  </script>
 </body>
 </html>

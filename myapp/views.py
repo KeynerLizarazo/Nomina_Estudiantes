@@ -95,6 +95,7 @@ def login_view(request):
             # Buscar al usuario en la base de datos por nombre de usuario
             usuario = Usuario.objects.get(username=username)
 
+
             # Validar la contraseña
             if usuario.contraseña == contraseña:
                 # Guardar el ID del usuario en la sesión
@@ -139,6 +140,7 @@ def cedulas(request):
     return render(request, 'cedulas.html', {
         'cedulas': cedulas_list,
         'cedula_obj': cedula_obj,
+
     })
     
     # CALENDARIO VIEWS
