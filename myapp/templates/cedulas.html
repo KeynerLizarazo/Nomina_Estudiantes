@@ -11,6 +11,7 @@
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
   <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+
   <style>
     /* Estilos adicionales */
     body {
@@ -89,7 +90,9 @@
         <h4 class="text-center mb-4">The Professor</h4>
         <div class="menu">
           <a href="#" id="control-nomina-btn" onclick="mostrarControlNomina()" class="mb-3">Control de Nómina</a>
-          <a href="#" id="calendario-btn" onclick="mostrarCalendario()" class="mb-3">Calendario</a>
+
+          <a href="{% url 'calendario' %}" id="calendario-btn" class="mb-3">Calendario</a>
+
           <a href="#" class="mb-3">Mi Perfil</a>
         </div>
       </div>
@@ -97,6 +100,7 @@
       <div class="logout mt-auto ">
         <a href="{% url 'logout' %}" class="btn btn-danger w-100">Cerrar Sesión</a>
       </div>
+
     </div>
     <!-- Contenido principal (Header + Main Content) -->
     <div class="d-flex flex-column flex-grow-1">
@@ -158,6 +162,7 @@
         </div>
       </div>
     </div>
+
       <!-- Ventana Modal -->
 <div class="modal fade" id="controlNominaModal" tabindex="-1" aria-labelledby="controlNominaModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
@@ -195,6 +200,7 @@
               <input type="text" class="form-control" id="apellido" name="apellido" required maxlength="50">
             </div>
           </form>
+
         </div>
       </div>
       <!-- Pie del Modal -->
@@ -211,72 +217,90 @@
     </div>
   </div>
 </div>
+
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Contenedor del calendario -->
+<div id="calendario-container" style="display: none;">
+    <button id="add-event-btn" class="btn btn-primary mb-3">Agregar Evento</button>
+    <h2 class="text-center mb-4 bg-success rounded-pill text-white shadow">Calendario</h2>
+    <div id="calendar"></div>
+</div>
+  
+    <!-- Contenedor de Control de Nómina -->
+<div id="control-nomina">
+</div>
+
 <!-- organizar el maldito JS -->
-<script>
-  // Botón para alternar el sidebar
-  const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
-  const sidebar = document.querySelector('.sidebar');
-  toggleSidebarBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('collapsed'); // Alternar la clase 'collapsed'
+  <script>
+    // Botón para alternar el sidebar
+    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+    const sidebar = document.querySelector('.sidebar');
+    toggleSidebarBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed'); // Alternar la clase 'collapsed'
+    });
+  </script>
+
+  <script>
+  document.getElementById("toggleSidebarBtn").addEventListener("click", function () {
+      this.classList.toggle("active"); // Alterna la animación
   });
-</script>
-<script>
-document.getElementById("toggleSidebarBtn").addEventListener("click", function () {
-    this.classList.toggle("active"); // Alterna la animación
-});
-</script>
-<!-- Script para manejar el comportamiento del modal -->
-<script>
-  // Capturar el evento de apertura del modal
-  const modal = document.getElementById('controlNominaModal');
-  const modalTitle = document.getElementById('modalTitle');
-  const cedulaIdInput = document.getElementById('cedulaIdInput');
-  // Escuchar el evento 'show.bs.modal' para detectar cuándo se abre el modal
-  modal.addEventListener('show.bs.modal', function (event) {
-    // Obtener el botón que activó el modal
-    const button = event.relatedTarget;
-    // Obtener el ID del objeto desde el atributo 'data-cedula-id'
-    const cedulaId = button.getAttribute('data-cedula-id');
-    // Si hay un ID, significa que estamos editando
-    if (cedulaId) {
-      modalTitle.textContent = 'Editar Datos';
-      cedulaIdInput.value = cedulaId;
-      // Aquí puedes hacer una solicitud AJAX para cargar los datos del objeto
-      fetch(`/api/cedulas/${cedulaId}/`)
-        .then(response => response.json())
-        .then(data => {
-          document.getElementById('tipo_documento').value = data.tipo_documento;
-          document.getElementById('numero_documento').value = data.numero_documento;
-          document.getElementById('nombre').value = data.nombre;
-          document.getElementById('apellido').value = data.apellido;
-        });
-    } else {
+  </script>
+  <!-- Script para manejar el comportamiento del modal -->
+  <script>
+    // Capturar el evento de apertura del modal
+    const modal = document.getElementById('controlNominaModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const cedulaIdInput = document.getElementById('cedulaIdInput');
+
+    // Escuchar el evento 'show.bs.modal' para detectar cuándo se abre el modal
+    modal.addEventListener('show.bs.modal', function (event) {
+      // Obtener el botón que activó el modal
+      const button = event.relatedTarget;
+
+      // Obtener el ID del objeto desde el atributo 'data-cedula-id'
+      const cedulaId = button.getAttribute('data-cedula-id');
+
+      // Si hay un ID, significa que estamos editando
+      if (cedulaId) {
+        modalTitle.textContent = 'Editar Datos';
+        cedulaIdInput.value = cedulaId;
+
+        // Aquí puedes hacer una solicitud AJAX para cargar los datos del objeto
+        // Por ejemplo:
+        /*
+        fetch(`/api/cedulas/${cedulaId}/`)
+          .then(response => response.json())
+          .then(data => {
+            document.getElementById('tipo_documento').value = data.tipo_documento;
+            document.getElementById('numero_documento').value = data.numero_documento;
+            document.getElementById('nombre').value = data.nombre;
+            document.getElementById('apellido').value = data.apellido;
+          });
+        */
+      } else {
+        modalTitle.textContent = 'Ingresar Datos';
+        cedulaIdInput.value = '';
+      }
+    });
+
+    // Escuchar el evento 'hidden.bs.modal' para restablecer el estado al cerrar el modal
+    modal.addEventListener('hidden.bs.modal', function () {
       modalTitle.textContent = 'Ingresar Datos';
       cedulaIdInput.value = '';
-    }
-  });
-  // Escuchar el evento 'hidden.bs.modal' para restablecer el estado al cerrar el modal
-  modal.addEventListener('hidden.bs.modal', function () {
-    modalTitle.textContent = 'Ingresar Datos';
-    cedulaIdInput.value = '';
-    // Limpiar el formulario
-    document.getElementById('nominaForm').reset();
-  });
-</script>
-  <!-- Bootstrap Bundle with Popper -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Contenedor del calendario -->
-    <div id="calendario-container" style="display: none;">
-      <h2 class="text-center mb-4 bg-success rounded-pill text-white shadow">Calendario</h2>
-      <div id="calendar"></div>
-    </div>
-  </div>
+
+      // Limpiar el formulario
+      document.getElementById('nominaForm').reset();
+    });
+  </script>
+
   <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.all.min.js"></script>
   <!-- FullCalendar JS -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js"></script>
+
   <script>
     // Función para mostrar el Control de Nómina
     function mostrarControlNomina() {
