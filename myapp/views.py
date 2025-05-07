@@ -1,75 +1,16 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Cedula
+from .models import Cedula, Usuario
 import re
+
+# ==============================
+# Funciones CRUD para Cédulas
+# ==============================
 
 def cedulas(request):
     if request.method == 'POST':
-        tipo_documento = request.POST.get('tipo_documento')
-        numero_documento = request.POST.get('numero_documento', '').strip()
-        nombre = request.POST.get('nombre', '').strip()
-        apellido = request.POST.get('apellido', '').strip()
-
-        # Validaciones
-        if not tipo_documento or tipo_documento not in ['V', 'CC']:
-            messages.error(request, 'Tipo de documento inválido.')
-            return redirect('cedulas')
-
-        if not numero_documento.isdigit() or not (6 <= len(numero_documento) <= 20):
-            messages.error(request, 'Número de documento inválido.')
-            return redirect('cedulas')
-
-        # Validar longitud de nombre y apellido
-        if len(nombre) > 50:
-            messages.error(request, 'El nombre no puede tener más de 50 caracteres.')
-            return redirect('cedulas')
-        if len(apellido) > 50:
-            messages.error(request, 'El apellido no puede tener más de 50 caracteres.')
-            return redirect('cedulas')
-
-        if not re.match(r"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$", nombre):
-            messages.error(request, 'Nombre inválido.')
-            return redirect('cedulas')
-
-        if not re.match(r"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$", apellido):
-            messages.error(request, 'Apellido inválido.')
-            return redirect('cedulas')
-
-        try:
-            cedula_id = request.POST.get('id')
-            if cedula_id:
-                cedula_obj = get_object_or_404(Cedula, id=cedula_id)
-
-                if Cedula.objects.exclude(id=cedula_id).filter(numero_documento=numero_documento).exists():
-                    messages.error(request, 'El número de documento ya está registrado.')
-                    return redirect('cedulas')
-
-                # Actualizar
-                cedula_obj.tipo_documento = tipo_documento
-                cedula_obj.numero_documento = numero_documento
-                cedula_obj.nombre = nombre
-                cedula_obj.apellido = apellido
-                cedula_obj.save()
-                messages.success(request, 'Registro actualizado correctamente.')
-            else:
-                if Cedula.objects.filter(numero_documento=numero_documento).exists():
-                    messages.error(request, 'El número de documento ya está registrado.')
-                    return redirect('cedulas')
-
-                # Crear nuevo
-                Cedula.objects.create(
-                    tipo_documento=tipo_documento,
-                    numero_documento=numero_documento,
-                    nombre=nombre,
-                    apellido=apellido
-                )
-                messages.success(request, 'Registro guardado correctamente.')
-
-        except Exception as e:
-            messages.error(request, f'Ocurrió un error: {str(e)}')
-
-        return redirect('cedulas')
+        return guardar_cedula(request)
 
     # GET
     cedula_obj = None
@@ -84,6 +25,52 @@ def cedulas(request):
         'cedula_obj': cedula_obj,
     })
 
+def guardar_cedula(request):
+    if request.method == 'POST':
+        cedula_id = request.POST.get('id')  # ID del registro (si existe)
+        tipo_documento = request.POST.get('tipo_documento')
+        numero_documento = request.POST.get('numero_documento', '').strip()
+        nombre = request.POST.get('nombre', '').strip()
+        apellido = request.POST.get('apellido', '').strip()
+
+        # Validaciones básicas
+        if not tipo_documento or tipo_documento not in ['V', 'CC']:
+            messages.error(request, 'Tipo de documento inválido.')
+            return redirect('cedulas')
+
+        if not numero_documento.isdigit() or len(numero_documento) > 10:
+            messages.error(request, 'Número de documento inválido.')
+            return redirect('cedulas')
+
+        if len(nombre) > 50 or len(apellido) > 50:
+            messages.error(request, 'El nombre o apellido excede los 50 caracteres.')
+            return redirect('cedulas')
+
+        try:
+            if cedula_id:  # Si hay un ID, estamos editando
+                cedula = get_object_or_404(Cedula, id=cedula_id)
+                cedula.tipo_documento = tipo_documento
+                cedula.numero_documento = numero_documento
+                cedula.nombre = nombre
+                cedula.apellido = apellido
+                cedula.save()
+                messages.success(request, 'Registro actualizado correctamente.')
+            else:  # Si no hay ID, estamos creando
+                if Cedula.objects.filter(numero_documento=numero_documento).exists():
+                    messages.error(request, 'El número de documento ya está registrado.')
+                    return redirect('cedulas')
+                Cedula.objects.create(
+                    tipo_documento=tipo_documento,
+                    numero_documento=numero_documento,
+                    nombre=nombre,
+                    apellido=apellido
+                )
+                messages.success(request, 'Registro guardado correctamente.')
+        except Exception as e:
+            messages.error(request, f'Ocurrió un error: {str(e)}')
+
+    return redirect('cedulas')
+
 def eliminar_cedula(request, id):
     if request.method == 'POST':
         try:
@@ -94,9 +81,9 @@ def eliminar_cedula(request, id):
             messages.error(request, f"Ocurrió un error al eliminar el registro: {str(e)}")
     return redirect('cedulas')
 
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .models import Usuario
+# ==============================
+# Funciones de Autenticación
+# ==============================
 
 def login_view(request):
     if request.method == 'POST':
@@ -108,15 +95,16 @@ def login_view(request):
             # Buscar al usuario en la base de datos por nombre de usuario
             usuario = Usuario.objects.get(username=username)
 
+
             # Validar la contraseña
             if usuario.contraseña == contraseña:
                 # Guardar el ID del usuario en la sesión
                 request.session['usuario_id'] = usuario.id
                 return redirect('cedulas')  # Redirigir a la página principal
             else:
-                messages.error(request, 'Contraseña incorrecta.')
+                messages.error(request, 'Credenciales incorrectas. Por favor, verifica tu nombre de usuario y contraseña.')
         except Usuario.DoesNotExist:
-            messages.error(request, 'Usuario no encontrado.')
+            messages.error(request, 'Credenciales incorrectas. Por favor, verifica tu nombre de usuario y contraseña.')
 
         return redirect('login')
 
@@ -127,9 +115,10 @@ def logout_view(request):
         del request.session['usuario_id']  # Eliminar la sesión del usuario
     return redirect('login')  # Redirigir al formulario de login
 
-from django.shortcuts import redirect
+# ==============================
+# Decorador para Proteger Vistas
+# ==============================
 
-# Decorador para proteger las vistas
 def login_required(view_func):
     def wrapper(request, *args, **kwargs):
         if 'usuario_id' not in request.session:
@@ -151,4 +140,9 @@ def cedulas(request):
     return render(request, 'cedulas.html', {
         'cedulas': cedulas_list,
         'cedula_obj': cedula_obj,
+
     })
+    
+    # CALENDARIO VIEWS
+def calendario_view(request):
+    return render(request, 'calendario.html')
