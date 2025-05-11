@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -79,6 +80,7 @@
     transform: rotate(180deg);
 }
   </style>
+
 </head>
 <body>
   <!-- Contenedor principal -->
@@ -91,79 +93,87 @@
         <div class="menu">
           <a href="#" id="control-nomina-btn" onclick="mostrarControlNomina()" class="mb-3">Control de Nómina</a>
 
-          <a href="{% url 'calendario' %}" id="calendario-btn" class="mb-3">Calendario</a>
+      <a href="{% url 'calendario' %}" id="calendario-btn" class="mb-3">Calendario</a>
 
-          <a href="#" class="mb-3">Mi Perfil</a>
-        </div>
-      </div>
-      <!-- Bloque de Logout -->
-      <div class="logout mt-auto ">
-        <a href="{% url 'logout' %}" class="btn btn-danger w-100">Cerrar Sesión</a>
-      </div>
-
+      <a href="#" class="mb-3">Mi Perfil</a>
     </div>
-    <!-- Contenido principal (Header + Main Content) -->
-    <div class="d-flex flex-column flex-grow-1">
-      <!-- Header -->
-      <nav class="navbar navbar-dark color-azul-principal-background position-relative">
-        <button id="toggleSidebarBtn" class="btn bg-transparent border-0 position-absolute start-0 ms-2">
-          <i id="btn-icon" class="bi bi-chevron-left text-danger fs-4"></i>
-      </button>
-        <div class="container-fluid d-flex justify-content-center">
-            <span class="navbar-brand h1 text-center fs-4 mt-1">Sistema de Gestión</span>
-        </div>
-      </nav>
-      <!-- Main Content -->
-      <div class="main-content bg-light flex-grow-1">
-      <div class="card shadow">
-        <div class="card-header">Lista de Usuarios</div>
-        <div class="card-body">
-          <div class="card-body">
-            <div class="d-flex justify-content-between mb-3">
-              <form class="w-50">
-                  <div class="input-group">
-                      <input type="text" class="form-control" placeholder="Buscar..." aria-label="Buscar">
-                  </div>
-              </form>
-              <button type="button" class="btn btn-primary w-25" data-bs-toggle="modal" data-bs-target="#controlNominaModal">
-                  Añadir
-              </button>
-          </div>
-          <table class="table table-bordered">
-            <thead>
-              <tr>
-                <th>Tipo de Documento</th>
-                <th>Número de Documento</th>
-                <th>Nombre</th>
-                <th>Apellido</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for cedula in cedulas %}
-                <tr>
-                  <td>{{ cedula.get_tipo_documento_display }}</td>
-                  <td>{{ cedula.numero_documento }}</td>
-                  <td>{{ cedula.nombre }}</td>
-                  <td>{{ cedula.apellido }}</td>
-                  <td>
-                    <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#controlNominaModal" data-cedula-id="{{ cedula.id }}">
-                      Editar
-                    </a>
-                    <form action="{% url 'eliminar_cedula' cedula.id %}" method="post" style="display:inline;">
-                      {% csrf_token %}
-                      <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                    </form>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+  </div>
+  <!-- Bloque de Logout -->
+  <div class="logout mt-auto ">
+    <a href="{% url 'logout' %}" class="btn btn-danger w-100">Cerrar Sesión</a>
+  </div>
 
-      <!-- Ventana Modal -->
+</div>
+<!-- Contenido principal (Header + Main Content) -->
+<div class="d-flex flex-column flex-grow-1">
+  <!-- Header -->
+  <nav class="navbar navbar-dark color-azul-principal-background position-relative">
+    <button id="toggleSidebarBtn" class="btn bg-transparent border-0 position-absolute start-0 ms-2">
+      <i id="btn-icon" class="bi bi-chevron-left text-danger fs-4"></i>
+  </button>
+    <div class="container-fluid d-flex justify-content-center">
+        <span class="navbar-brand h1 text-center fs-4 mt-1">Sistema de Gestión</span>
+    </div>
+  </nav>
+  <!-- Main Content -->
+  <div class="main-content bg-light flex-grow-1">
+  <div class="card shadow">
+    <div class="card-header">Lista de Usuarios</div>
+    <div class="card-body">
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-3">
+          <!-- Formulario de Búsqueda -->
+          <form class="d-flex w-100 mb-3" method="get" action="{% url 'cedulas' %}">
+            <div class="input-group me-2 w-75">
+              <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ query }}">
+            </div>
+            <select name="campo" class="form-select w-25 me-2">
+              <option value="todos" {% if campo == "todos" %}selected{% endif %}>Todos los campos</option>
+              <option value="nombre" {% if campo == "nombre" %}selected{% endif %}>Nombre</option>
+              <option value="apellido" {% if campo == "apellido" %}selected{% endif %}>Apellido</option>
+              <option value="numero_documento" {% if campo == "numero_documento" %}selected{% endif %}>Nro de documento</option>
+            </select>
+            <button class="btn btn-primary" type="submit">Buscar</button>
+            <a href="{% url 'cedulas' %}" class="btn btn-secondary ms-2">Limpiar Búsqueda</a>
+          </form>
+          <button type="button" class="btn btn-primary w-25" data-bs-toggle="modal" data-bs-target="#controlNominaModal">
+              Añadir
+          </button>
+      </div>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Tipo de Documento</th>
+            <th>Número de Documento</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cedula in cedulas %}
+            <tr>
+              <td>{{ cedula.get_tipo_documento_display }}</td>
+              <td>{{ cedula.numero_documento }}</td>
+              <td>{{ cedula.nombre }}</td>
+              <td>{{ cedula.apellido }}</td>
+              <td>
+                <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#controlNominaModal" data-cedula-id="{{ cedula.id }}">
+                  Editar
+                </a>
+                <form action="{% url 'eliminar_cedula' cedula.id %}" method="post" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<!-- Ventana Modal -->
 <div class="modal fade" id="controlNominaModal" tabindex="-1" aria-labelledby="controlNominaModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -172,37 +182,65 @@
         <h5 class="modal-title text-center w-100" id="modalTitle">Control de Nómina</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+
       <!-- Cuerpo del Modal -->
       <div class="modal-body">
         <!-- Formulario -->
-        <div class="mb-4">
-          <form id="nominaForm" method="POST" action="{% url 'guardar_cedula' %}">
-            {% csrf_token %}
-            <input type="hidden" name="id" id="cedulaIdInput" value="">
-            <div class="mb-3">
-              <label for="tipo_documento" class="form-label">Tipo de Documento:</label>
-              <select class="form-select" id="tipo_documento" name="tipo_documento" required>
-                <option value="" disabled selected>Seleccione un tipo de documento</option>
-                <option value="V">Cédula Venezolana (V)</option>
-                <option value="CC">Cédula Colombiana (CC)</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="numero_documento" class="form-label">Número de Documento:</label>
-              <input type="text" class="form-control" id="numero_documento" name="numero_documento" required maxlength="10">
-            </div>
-            <div class="mb-3">
-              <label for="nombre" class="form-label">Nombre:</label>
-              <input type="text" class="form-control" id="nombre" name="nombre" required maxlength="50">
-            </div>
-            <div class="mb-3">
-              <label for="apellido" class="form-label">Apellido:</label>
-              <input type="text" class="form-control" id="apellido" name="apellido" required maxlength="50">
-            </div>
-          </form>
+        <form id="nominaForm" method="POST" action="{% url 'guardar_cedula' %}">
+          {% csrf_token %}
+          <input type="hidden" name="id" id="cedulaIdInput" value="">
 
-        </div>
+          <!-- Tipo de Documento -->
+          <div class="mb-3">
+            <label for="tipo_documento" class="form-label">Tipo de Documento:</label>
+            <select class="form-select" id="tipo_documento" name="tipo_documento" required>
+              <option value="" disabled selected>Seleccione un tipo de documento</option>
+              <option value="V">Cédula Venezolana (V)</option>
+              <option value="CC">Cédula Colombiana (CC)</option>
+            </select>
+          </div>
+
+          <!-- Número de Documento -->
+          <div class="mb-3">
+            <label for="numero_documento" class="form-label">Número de Documento:</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="numero_documento" 
+              name="numero_documento" 
+              required 
+              maxlength="10"
+              oninput="validarCedula(this)">
+          </div>
+
+          <!-- Nombre -->
+          <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre:</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="nombre" 
+              name="nombre" 
+              required 
+              maxlength="50"
+              oninput="capitalizarYValidar(this)">
+          </div>
+
+          <!-- Apellido -->
+          <div class="mb-3">
+            <label for="apellido" class="form-label">Apellido:</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="apellido" 
+              name="apellido" 
+              required 
+              maxlength="50"
+              oninput="capitalizarYValidar(this)">
+          </div>
+        </form>
       </div>
+
       <!-- Pie del Modal -->
       <div class="modal-footer">
         <div class="row w-100">
@@ -218,20 +256,30 @@
   </div>
 </div>
 
+
+</div>
+
 <!-- Bootstrap Bundle with Popper -->
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <!-- Contenedor del calendario -->
+
 <div id="calendario-container" style="display: none;">
     <button id="add-event-btn" class="btn btn-primary mb-3">Agregar Evento</button>
     <h2 class="text-center mb-4 bg-success rounded-pill text-white shadow">Calendario</h2>
     <div id="calendar"></div>
 </div>
-  
-    <!-- Contenedor de Control de Nómina -->
+
+
+<!-- Contenedor de Control de Nómina -->
+
+
 <div id="control-nomina">
 </div>
 
 <!-- organizar el maldito JS -->
+
   <script>
     // Botón para alternar el sidebar
     const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
@@ -246,7 +294,9 @@
       this.classList.toggle("active"); // Alterna la animación
   });
   </script>
+
   <!-- Script para manejar el comportamiento del modal -->
+
   <script>
     // Capturar el evento de apertura del modal
     const modal = document.getElementById('controlNominaModal');
@@ -295,12 +345,41 @@
   </script>
 
   <!-- Scripts -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.all.min.js"></script>
-  <!-- FullCalendar JS -->
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js"></script>
 
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.all.min.js"></script>
+
+  <!-- FullCalendar JS -->
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js"></script>
+ <!-- Script para manejar notificaciones de  BUSQUEDA-->
+  <script>
+    $(document).ready(function(){
+      // Mostrar notificaciones solo si hay una búsqueda activa
+      {% if query %}
+        {% if no_results %}
+          Swal.fire({
+            icon: 'info',
+            title: 'No se encontraron coincidencias',
+            text: 'Se muestran todos los registros disponibles.',
+            showConfirmButton: false,
+            timer: 3000
+          });
+        {% elif result_count > 0 %}
+          Swal.fire({
+            icon: 'success',
+            title: 'Resultados encontrados',
+            text: `Se encontraron {{ result_count }} resultado(s) para tu búsqueda.`,
+            showConfirmButton: false,
+            timer: 3000
+          });
+        {% endif %}
+      {% endif %}
+    });
+  </script>
   <script>
     // Función para mostrar el Control de Nómina
     function mostrarControlNomina() {
@@ -369,5 +448,6 @@
       {% endif %}
     });
   </script>
+
 </body>
 </html>

@@ -3,7 +3,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .models import Cedula, Usuario
 import re
-
+from django.db.models import Q  # Al inicio del archivo, si no lo has hecho ya
+from django.contrib.auth.decorators import login_required
 # ==============================
 # Funciones CRUD para Cédulas
 # ==============================
@@ -129,20 +130,47 @@ def login_required(view_func):
 # Aplicar el decorador a la vista protegida
 @login_required
 def cedulas(request):
-    # Lógica de la vista...
+    query = request.GET.get('q', '').strip()  # Término de búsqueda
+    campo = request.GET.get('campo', '').strip()  # Campo seleccionado para filtrar
     cedula_obj = None
+    no_results = False  # Variable para indicar si no hay resultados
+    result_count = 0  # Para contar el número de coincidencias
+
     if request.GET.get('editar'):
         cedula_id = request.GET.get('editar')
         cedula_obj = get_object_or_404(Cedula, id=cedula_id)
 
-    cedulas_list = Cedula.objects.all()
+    if query:
+        # Filtrar según el campo seleccionado
+        if campo and campo != "todos":
+            cedulas_list = Cedula.objects.filter(
+                Q(**{f"{campo}__icontains": query})  # Filtrar dinámicamente por el campo seleccionado
+            )
+        else:
+            cedulas_list = Cedula.objects.filter(
+                Q(nombre__icontains=query) |
+                Q(apellido__icontains=query) |
+                Q(numero_documento__icontains=query) |
+                Q(tipo_documento__icontains=query)
+            )
+        result_count = cedulas_list.count()
+        if result_count == 0:  # Si no hay resultados, activamos el mensaje
+            no_results = True
+            cedulas_list = Cedula.objects.all()  # Mostrar todos los registros
+    else:
+        # Si no hay búsqueda, mostrar todas las cédulas
+        cedulas_list = Cedula.objects.all()
+        result_count = cedulas_list.count()
 
     return render(request, 'cedulas.html', {
         'cedulas': cedulas_list,
         'cedula_obj': cedula_obj,
-
+        'query': query,
+        'campo': campo,
+        'no_results': no_results,
+        'result_count': result_count,
     })
-    
+
     # CALENDARIO VIEWS
 def calendario_view(request):
     return render(request, 'calendario.html')
