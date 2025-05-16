@@ -1,9 +1,15 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from .models import Cedula, Usuario
+from .models import Calendario
+from .forms import CalendarioForm
+from django.db.models import Q  # Al inicio del archivo, si no lo has hecho ya
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 import re
-
+import json
 # ==============================
 # Funciones CRUD para Cédulas
 # ==============================
@@ -89,7 +95,7 @@ def login_view(request):
     if request.method == 'POST':
         # Obtener los datos del formulario
         username = request.POST.get('username', '').strip()
-        contraseña = request.POST.get('contraseña', '').strip()
+        password = request.POST.get('password', '').strip()
 
         try:
             # Buscar al usuario en la base de datos por nombre de usuario
@@ -97,7 +103,7 @@ def login_view(request):
 
 
             # Validar la contraseña
-            if usuario.contraseña == contraseña:
+            if usuario.password == password:
                 # Guardar el ID del usuario en la sesión
                 request.session['usuario_id'] = usuario.id
                 return redirect('cedulas')  # Redirigir a la página principal
@@ -129,20 +135,136 @@ def login_required(view_func):
 # Aplicar el decorador a la vista protegida
 @login_required
 def cedulas(request):
-    # Lógica de la vista...
+    query = request.GET.get('q', '').strip()  # Término de búsqueda
+    campo = request.GET.get('campo', '').strip()  # Campo seleccionado para filtrar
     cedula_obj = None
+    no_results = False  # Variable para indicar si no hay resultados
+    result_count = 0  # Para contar el número de coincidencias
+
     if request.GET.get('editar'):
         cedula_id = request.GET.get('editar')
         cedula_obj = get_object_or_404(Cedula, id=cedula_id)
 
-    cedulas_list = Cedula.objects.all()
+    if query:
+        # Filtrar según el campo seleccionado
+        if campo and campo != "todos":
+            cedulas_list = Cedula.objects.filter(
+                Q(**{f"{campo}__icontains": query})  # Filtrar dinámicamente por el campo seleccionado
+            )
+        else:
+            cedulas_list = Cedula.objects.filter(
+                Q(nombre__icontains=query) |
+                Q(apellido__icontains=query) |
+                Q(numero_documento__icontains=query) |
+                Q(tipo_documento__icontains=query)
+            )
+        result_count = cedulas_list.count()
+        if result_count == 0:  # Si no hay resultados, activamos el mensaje
+            no_results = True
+            cedulas_list = Cedula.objects.all()  # Mostrar todos los registros
+    else:
+        # Si no hay búsqueda, mostrar todas las cédulas
+        cedulas_list = Cedula.objects.all()
+        result_count = cedulas_list.count()
 
     return render(request, 'cedulas.html', {
         'cedulas': cedulas_list,
         'cedula_obj': cedula_obj,
-
+        'query': query,
+        'campo': campo,
+        'no_results': no_results,
+        'result_count': result_count,
     })
-    
+
     # CALENDARIO VIEWS
+# @login_required
 def calendario_view(request):
-    return render(request, 'calendario.html')
+    if request.method == 'POST':
+        form = CalendarioForm(request.POST)
+        if form.is_valid():
+            calendario = form.save(commit=False)
+            calendario.creador = request.user
+            calendario.save()
+            return redirect('calendario')
+    else:
+        form = CalendarioForm()
+
+    eventos = Calendario.objects.all()  # Mostrar todos los eventos
+    context = {
+        'form': form,
+        'eventos': eventos
+    }
+    return render(request, 'calendario.html', context)
+
+def agregar_evento(request):
+    if request.method == 'POST':
+        form = CalendarioForm(request.POST)
+        if form.is_valid():
+            evento = form.save(commit=False)
+            evento.creador = request.user
+            evento.save()
+            return redirect('calendario')
+    else:
+        form = CalendarioForm()
+
+    return render(request, 'calendario.html', {'form': form})
+
+@csrf_exempt
+def guardar_evento(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            evento = Calendario(
+                titulo=data['titulo'],
+                descripcion=data.get('descripcion'),
+                fecha_inicio=data['fecha_inicio'],
+                fecha_fin=data.get('fecha_fin'),
+                creador=request.user if request.user.is_authenticated else None
+            )
+            evento.save()
+            return JsonResponse({'success': True, 'id': evento.id})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False})
+
+@csrf_exempt
+def modificar_evento(request, evento_id):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            evento = Calendario.objects.get(id=evento_id, creador=request.user)
+            evento.titulo = data['titulo']
+            evento.descripcion = data.get('descripcion')
+            evento.fecha_inicio = data['fecha_inicio']
+            evento.fecha_fin = data.get('fecha_fin')
+            evento.save()
+            return JsonResponse({'success': True})
+        except Calendario.DoesNotExist:
+            return JsonResponse({'success': False})
+    return JsonResponse({'success': False})
+
+@csrf_exempt
+def eliminar_evento(request, evento_id):
+    if request.method == 'DELETE':
+        try:
+            if request.user.is_authenticated:
+                evento = Calendario.objects.get(id=evento_id, creador=request.user)
+            else:
+                evento = Calendario.objects.get(id=evento_id)
+                
+            evento.delete()
+            return JsonResponse({'success': True})
+        except Calendario.DoesNotExist:
+            return JsonResponse({'success': False})
+    return JsonResponse({'success': False})
+
+def eventos_json(request):
+    eventos = Calendario.objects.all()
+    data = [{
+        'id': e.id,
+        'title': e.titulo,
+        'start': e.fecha_inicio.isoformat(),
+        'end': e.fecha_fin.isoformat() if e.fecha_fin else None,
+        'description': e.descripcion
+    } for e in eventos]
+    return JsonResponse(data, safe=False)

@@ -142,7 +142,7 @@
           <div class="card-body">
             <div class="d-flex justify-content-between mb-3">
                 <div>
-                  <button id="save-event-btn" class="btn btn-primary me-2">Agregar Evento</button>
+                  <button id="add-event-btn" class="btn btn-primary me-2">Agregar Evento</button>
                   <button id="modify-event-btn" class="btn btn-warning me-2">Modificar Evento</button>
                   <button id="delete-event-btn" class="btn btn-danger">Eliminar Evento</button>
                 </div>
@@ -194,7 +194,7 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.all.min.js"></script>
-  <!-- FullCalendar JS -->
+    <!-- FullCalendar JS -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js"></script>
 
@@ -202,176 +202,294 @@
     // Variables globales para el calendario
     let calendarInstance;
     let addEventModal = null;
-  
-    // Inicialización del Modal
-    function initializeModal() {
-      const addEventModalElement = document.getElementById('addEventModal');
-      if (addEventModalElement) {
-        addEventModal = new bootstrap.Modal(addEventModalElement);
+    
+      // Inicialización del Modal
+      function initializeModal() {
+        const addEventModalElement = document.getElementById('addEventModal');
+        if (addEventModalElement) {
+          addEventModal = new bootstrap.Modal(addEventModalElement);
+        }
       }
-    }
-  
-    // Mostrar el Calendario
-    function mostrarCalendario() {
-      const controlNomina = document.getElementById('control-nomina');
-      const calendarioContainer = document.getElementById('calendario-container');
-  
-      if (controlNomina) controlNomina.style.display = 'none';
-      if (calendarioContainer) calendarioContainer.style.display = 'block';
-  
-      if (!window.calendarInitialized) {
-        const calendarEl = document.getElementById('calendar');
-        if (calendarEl) {
-          calendarInstance = new FullCalendar.Calendar(calendarEl, {
-            themeSystem: 'bootstrap',
-            initialView: 'dayGridMonth',
-            locale: 'es',
-            headerToolbar: {
-              left: 'prev,next today',
-              center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            },
-            views: {
-              timeGridWeek: {
-                dayHeaderFormat: { weekday: 'long' },
-                slotMinTime: '07:00:00',
-                slotMaxTime: '19:00:00'
-              },
-              timeGridDay: {
-                slotMinTime: '07:00:00',
-                slotMaxTime: '19:00:00'
-              }
-            },
-            events: [],
-            editable: true,
-            selectable: true,
-            select: function (info) {
-            const startInput = document.getElementById('event-start');
-            const endInput = document.getElementById('event-end');
-            if (startInput && endInput) {
-                startInput.value = info.startStr;
-                endInput.value = info.endStr || '';
-                startInput.dataset.eventId = ''; // Reiniciar el ID del evento
-                if (addEventModal) addEventModal.show();
-            }
-            },
-            eventClick: function (info) {
-              const eventObj = info.event;
-  
-              document.getElementById('event-title').value = eventObj.title;
-              document.getElementById('event-description').value = eventObj.extendedProps.description || '';
-              document.getElementById('event-start').value = info.startStr;
-              document.getElementById('event-end').value = info.endStr || '';
-              document.getElementById('event-start').dataset.eventId = eventObj.id;
-  
-              if (addEventModal) addEventModal.show();
-            },
-            eventClassNames: function (arg) {
-              return ['bg-success', 'text-white'];
-            }
+    
+        // Mostrar el Calendario
+      function mostrarCalendario() {
+          const controlNomina = document.getElementById('control-nomina');
+          const calendarioContainer = document.getElementById('calendario-container');
+      
+          if (controlNomina) controlNomina.style.display = 'none';
+          if (calendarioContainer) calendarioContainer.style.display = 'block';
+      
+          if (!window.calendarInitialized) {
+            const calendarEl = document.getElementById('calendar');
+
+            if (calendarEl) {
+              // nuevo
+              fetch('/json/') // Cargar eventos desde Django
+                .then(response => response.json())
+                .then(data => {
+                  calendarInstance = new FullCalendar.Calendar(calendarEl, {
+                    themeSystem: 'bootstrap',
+                    initialView: 'dayGridMonth',
+                    locale: 'es',
+                    headerToolbar: {
+                      left: 'prev,next today',
+                      center: 'title',
+                      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                  views: {
+                    timeGridWeek: {
+                      dayHeaderFormat: { weekday: 'long' },
+                      slotMinTime: '07:00:00',
+                      slotMaxTime: '19:00:00'
+                    },
+                    timeGridDay: {
+                      slotMinTime: '07:00:00',
+                      slotMaxTime: '19:00:00'
+                    }
+                },
+                events: data, //nuevo
+                editable: true,
+                selectable: true,
+                selectMirror: true,
+                select: function (info) {
+                    const startInput = document.getElementById('event-start');
+                    const endInput = document.getElementById('event-end');
+                    if (startInput && endInput) {
+                        startInput.value = info.startStr;
+                        endInput.value = info.endStr || '';
+                        startInput.dataset.eventId = ''; // Reiniciar el ID del evento
+                        if (addEventModal) addEventModal.show();
+                    }
+                },
+
+                eventClick: function (info) {
+                  const eventObj = info.event;
+      
+                  document.getElementById('event-title').value = eventObj.title;
+                  document.getElementById('event-description').value = eventObj.extendedProps.description || '';
+                  document.getElementById('event-start').value = info.startStr;
+                  document.getElementById('event-end').value = info.endStr || '';
+                  document.getElementById('event-start').dataset.eventId = eventObj.id;
+      
+                  if (addEventModal) addEventModal.show();
+                },
+                eventClassNames: function (arg) {
+                  return ['bg-success', 'text-white'];
+                }
+            });
+      
+              calendarInstance.render();
+              window.calendarInitialized = true; // Marcar como inicializado
+          })
+            // NUEVO
+            .catch(error => {
+                console.error('Error al cargar eventos:', error);
+                alert('Hubo un problema al cargar los eventos.');
+            });
+          }
+        }
+      }
+    
+      // Guardar Evento
+      function saveEvent() {
+          const title = document.getElementById('event-title')?.value.trim();
+          const start = document.getElementById('event-start')?.value;
+          const end = document.getElementById('event-end')?.value || start;
+          const description = document.getElementById('event-description')?.value;
+          const eventId = document.getElementById('event-start').dataset.eventId;
+      
+          if (!title || !start) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Por favor, completa todos los campos requeridos.',
+                icon: 'error',
+                confirmButtonText: 'Aceptar'
+            });
+            return;
+          }
+          const url = eventId ? '/calendario/modificar/${eventId}/' : '/calendario/guardar/';
+          fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    id: eventId,
+                    titulo: title,
+                    descripcion: description,
+                    fecha_inicio: start,
+                    fecha_fin: end
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                if (eventId) {
+                  const eventToUpdate = calendarInstance.getEventById(eventId);
+                  if (eventToUpdate) eventToUpdate.remove();
+                  
+                  calendarInstance.addEvent({
+                            id: eventId,
+                            title: title,
+                            start: start,
+                            end: end,
+                            description: description,
+                            allDay: false
+                  });
+                } else {
+                        calendarInstance.addEvent({
+                            id: data.id,
+                            title: title,
+                            start: start,
+                            end: end,
+                            description: description,
+                            allDay: false
+                        });
+                }
+                if (addEventModal) addEventModal.hide();
+          } else {
+              Swal.fire({
+                  title: 'Error',
+                  text: 'No se pudo guardar el evento.',
+                  icon: 'error',
+                  confirmButtonText: 'Aceptar'
+              });
+          }
+      })
+      .catch(error => {
+          console.error('Error al guardar el evento:', error);
+          Swal.fire({
+              title: 'Error',
+              text: 'Ocurrió un error al intentar guardar el evento.',
+              icon: 'error',
+              confirmButtonText: 'Aceptar'
           });
-  
-          calendarInstance.render();
-          window.calendarInitialized = true; // Marcar como inicializado
-        }
-      }
-    }
-  
-    // Guardar Evento
-    function saveEvent() {
-      const title = document.getElementById('event-title')?.value.trim();
-      const start = document.getElementById('event-start')?.value;
-      const end = document.getElementById('event-end')?.value || start;
-      const description = document.getElementById('event-description')?.value;
-      const eventId = document.getElementById('event-start').dataset.eventId;
-  
-      if (!title || !start) {
-        alert('Por favor, completa todos los campos requeridos.');
-        return;
-      }
-  
-      if (eventId) {
-        const eventToUpdate = calendarInstance.getEventById(eventId);
-        if (eventToUpdate) {
-          eventToUpdate.setProp('title', title);
-          eventToUpdate.setDates(start, end, { allDay: false });
-          eventToUpdate.setExtendedProp('description', description);
-        }
-      } else {
-        const newEvent = {
-          id: Date.now(),
-          title: title,
-          start: start,
-          end: end,
-          description: description,
-          allDay: false
-        };
-        calendarInstance.addEvent(newEvent);
-      }
-  
-      if (addEventModal) addEventModal.hide();
+      });
     }
 
-    // Asignar evento al botón "Guardar"
-    const saveEventBtn = document.getElementById('save-event-btn');
-    if (saveEventBtn) {
-    saveEventBtn.addEventListener('click', saveEvent);
-    }
-  
-    // Eliminar Evento
+    // Eliminar evento
     function deleteEvent() {
-      const eventId = document.getElementById('event-start').dataset.eventId;
-      if (eventId) {
-        const eventToDelete = calendarInstance.getEventById(eventId);
-        if (eventToDelete) {
-          eventToDelete.remove();
+        const eventId = document.getElementById('event-start').dataset.eventId;
+        const url = '/calendario/eliminar/' + eventId + '/';
+
+        if (confirm("¿Estás seguro de eliminar este evento?")) {
+            fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                  if (data.success) {
+                      const eventToDelete = calendarInstance.getEventById(eventId);
+                      if (eventToDelete) eventToDelete.remove();
+                      if (addEventModal) addEventModal.hide();
+                  } else {
+                      alert('No se pudo eliminar el evento.');
+                  }
+            });
         }
-      }
-      if (addEventModal) addEventModal.hide();
     }
-  
-    // Manejo de DOM
-    document.addEventListener('DOMContentLoaded', function () {
-      initializeModal();
-  
-      // Asignar eventos a botones
-      const saveEventBtn = document.getElementById('save-event-btn');
-      const deleteEventBtn = document.getElementById('delete-event-btn');
-      const modifyEventBtn = document.getElementById('modify-event-btn');
-  
-      if (saveEventBtn) {
-        saveEventBtn.addEventListener('click', saveEvent);
+    
+      // Manejo de DOM
+      document.addEventListener('DOMContentLoaded', function () {
+        initializeModal();
+    
+
+          // Botón Agregar Evento
+          const addEventBtn = document.getElementById('add-event-btn');
+          if (addEventBtn) {
+              addEventBtn.addEventListener('click', function () {
+                  // Abrir el modal directamente
+                  if (addEventModal) addEventModal.show();
+              });
+          }
+
+
+          // Asignar evento al botón Guardar
+          const saveEventBtn = document.getElementById('save-event-btn');
+          if (saveEventBtn) {
+              saveEventBtn.addEventListener('click', saveEvent);
+          }
+          // Botón Eliminar
+          const deleteEventBtn = document.getElementById('delete-event-btn');
+          if (deleteEventBtn) {
+              deleteEventBtn.addEventListener('click', deleteEvent);
+          }
+          // Botón Modificar
+          const modifyEventBtn = document.getElementById('modify-event-btn');
+          if (modifyEventBtn) {
+              modifyEventBtn.addEventListener('click', function () {
+                  const selectedEvents = calendarInstance.getEventSources()[0].events;
+
+                  if (!selectedEvents || selectedEvents.length === 0) {
+                      Swal.fire({
+                          title: 'Modificar Evento',
+                          text: 'Selecciona un evento en el calendario.',
+                          icon: 'info',
+                          confirmButtonText: 'Aceptar'
+                      });
+                  } else {
+                      const event = selectedEvents[0];
+                      document.getElementById('event-title').value = event.title;
+                      document.getElementById('event-description').value = event.extendedProps.description || '';
+                      document.getElementById('event-start').value = event.startStr;
+                      document.getElementById('event-end').value = event.endStr || '';
+                      document.getElementById('event-start').dataset.eventId = event.id;
+                      if (addEventModal) addEventModal.show();
+                  }
+              });
+          }
+
+          // Inicializar calendario
+          mostrarCalendario();
+      });
+    
+      // Función para obtener el token CSRF
+      function getCookie(name) {
+              let cookieValue = null;
+              if (document.cookie && document.cookie !== '') {
+                  const cookies = document.cookie.split(';');
+                  for (let i = 0; i < cookies.length; i++) {
+                      const cookie = cookies[i].trim();
+                      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                          break;
+                      }
+                  }
+              }
+              return cookieValue;
       }
-  
-      if (deleteEventBtn) {
-        deleteEventBtn.addEventListener('click', deleteEvent);
-      }
-  
-      if (modifyEventBtn) {
-        modifyEventBtn.addEventListener('click', function () {
-          alert('Modificar Evento');
-        });
-      }
-  
-      // Mostrar el calendario
-      mostrarCalendario();
+
+    // Configuración de FullCalendar
+    fetch('/json/', {
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Lógica para manejar los eventos
     });
   </script>
-<!-- MENU DESPLEGABLE SCRIPT -->
-<script>
-    // Botón para alternar el sidebar
-    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
-    const sidebar = document.querySelector('.sidebar');
-    toggleSidebarBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed'); // Alternar la clase 'collapsed'
-    });
-</script>
 
-<script>
-    document.getElementById("toggleSidebarBtn").addEventListener("click", function () {
-        this.classList.toggle("active"); // Alterna la animación
-    });
-</script>
+  <!-- MENU DESPLEGABLE SCRIPT -->
+  <script>
+      // Botón para alternar el sidebar
+      const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+      const sidebar = document.querySelector('.sidebar');
+      toggleSidebarBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed'); // Alternar la clase 'collapsed'
+      });
+  </script>
+
+  <script>
+      document.getElementById("toggleSidebarBtn").addEventListener("click", function () {
+          this.classList.toggle("active"); // Alterna la animación
+      });
+  </script>
 
 </body>
 </html>
