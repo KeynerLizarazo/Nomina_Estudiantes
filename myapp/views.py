@@ -5,6 +5,7 @@ from django.contrib import messages
 from .models import Cedula, Usuario
 from .models import Calendario
 from .forms import CalendarioForm
+from django.utils import timezone
 from django.db.models import Q  # Al inicio del archivo, si no lo has hecho ya
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -229,10 +230,17 @@ def guardar_evento(request):
 
 @csrf_exempt
 def modificar_evento(request, evento_id):
+    try:
+        # Convierte evento_id a entero
+        evento_id = int(evento_id)
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'ID inválido'}, status=400)
+
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            evento = Calendario.objects.get(id=evento_id, creador=request.user)
+            # Elimina la validación de creador temporalmente
+            evento = Calendario.objects.get(id=evento_id)
             evento.titulo = data['titulo']
             evento.descripcion = data.get('descripcion')
             evento.fecha_inicio = data['fecha_inicio']
@@ -240,8 +248,12 @@ def modificar_evento(request, evento_id):
             evento.save()
             return JsonResponse({'success': True})
         except Calendario.DoesNotExist:
-            return JsonResponse({'success': False})
-    return JsonResponse({'success': False})
+            return JsonResponse({'success': False, 'error': 'Evento no encontrado'}, status=404)
+        except KeyError as e:
+            return JsonResponse({'success': False, 'error': f'Campo faltante: {e}'}, status=400)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
 @csrf_exempt
 def eliminar_evento(request, evento_id):
@@ -260,11 +272,14 @@ def eliminar_evento(request, evento_id):
 
 def eventos_json(request):
     eventos = Calendario.objects.all()
-    data = [{
-        'id': e.id,
-        'title': e.titulo,
-        'start': e.fecha_inicio.isoformat(),
-        'end': e.fecha_fin.isoformat() if e.fecha_fin else None,
-        'description': e.descripcion
-    } for e in eventos]
+    data = [
+        {
+            'id': e.id,
+            'title': e.titulo,
+            'start': e.fecha_inicio.isoformat(),
+            'end': e.fecha_fin.isoformat() if e.fecha_fin else None,
+            'description': e.descripcion
+        }
+        for e in eventos
+    ]
     return JsonResponse(data, safe=False)

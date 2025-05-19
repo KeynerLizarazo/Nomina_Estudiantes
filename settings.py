@@ -91,10 +91,13 @@ USE_TZ = True  # Usar zonas horarias
 # ==============================
 # ARCHIVOS ESTÁTICOS (CSS, JS, IMÁGENES)
 # ==============================
-STATIC_URL = '/static/'  # URL para los archivos estáticos
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # Carpeta donde están los archivos estáticos
+STATIC_URL = '/static/' # URL base para archivos estáticos
+STATICFILES_DIRS = [ 
+    BASE_DIR / "static", # Carpeta estática de tu aplicación
 ]
+
+# Directorio donde se copiarán con collectstatic (en producción)
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # ==============================
 # CLAVE PRIMARIA AUTOMÁTICA
