@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',  # Tipos de contenido
     'django.contrib.sessions',      # Sesiones (puedes eliminar esto si no usas sesiones)
     'django.contrib.messages',      # Mensajes flash (opcional)
+    'django.contrib.auth',          # Autenticación de usuarios
     'django.contrib.staticfiles',   # Archivos estáticos (CSS, JS, imágenes)
     'estudiantes',                  # Tu aplicación personalizada
 ]
@@ -90,10 +91,13 @@ USE_TZ = True  # Usar zonas horarias
 # ==============================
 # ARCHIVOS ESTÁTICOS (CSS, JS, IMÁGENES)
 # ==============================
-STATIC_URL = '/static/'  # URL para los archivos estáticos
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # Carpeta donde están los archivos estáticos
+STATIC_URL = '/static/' # URL base para archivos estáticos
+STATICFILES_DIRS = [ 
+    BASE_DIR / "static", # Carpeta estática de tu aplicación
 ]
+
+# Directorio donde se copiarán con collectstatic (en producción)
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # ==============================
 # CLAVE PRIMARIA AUTOMÁTICA
