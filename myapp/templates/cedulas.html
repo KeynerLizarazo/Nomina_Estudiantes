@@ -121,10 +121,10 @@
     <div class="card-header">Lista de Usuarios</div>
     <div class="card-body">
       <div class="card-body">
-        <div class="d-flex justify-content-between mb-3">
+        <div class=" mb-3">
           <!-- Formulario de Búsqueda -->
-          <form class="d-flex w-100 mb-3" method="get" action="{% url 'cedulas' %}">
-            <div class="input-group me-2 w-75">
+          <form class="d-flex " method="get" action="{% url 'cedulas' %}">
+            <div class="input-group me-2 ">
               <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ query }}">
             </div>
             <select name="campo" class="form-select w-25 me-2">
@@ -133,12 +133,13 @@
               <option value="apellido" {% if campo == "apellido" %}selected{% endif %}>Apellido</option>
               <option value="numero_documento" {% if campo == "numero_documento" %}selected{% endif %}>Nro de documento</option>
             </select>
-            <button class="btn btn-primary" type="submit">Buscar</button>
-            <a href="{% url 'cedulas' %}" class="btn btn-secondary ms-2">Limpiar Búsqueda</a>
-          </form>
-          <button type="button" class="btn btn-primary w-25" data-bs-toggle="modal" data-bs-target="#controlNominaModal">
+            <button class="btn btn-secondary" type="submit">Buscar</button>
+            <a href="{% url 'cedulas' %}" class="btn btn-secondary ms-2 me-2">Refrescar</a>
+            <button type="button" class="btn btn-primary " data-bs-toggle="modal" data-bs-target="#controlNominaModal">
               Añadir
           </button>
+          </form>
+          
       </div>
       <table class="table table-bordered">
         <thead>
