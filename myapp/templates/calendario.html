@@ -11,99 +11,321 @@
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
   <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
-  <style>
-    /* Estilos adicionales */
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f8f9fa;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-    .color-azul-principal-background {
-      background-color: #002855;
-    }/* revisar los colores y organizar la paleta en el archivo y exportar todo esto al archivo propio del css */
-        /* Sidebar */
-    .sidebar {
-      background-color: #002855;
-      color: white;
-      width: 250px; /* Ancho normal */
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      transition: all 0.3s ease; /* Transición suave */
-    }
-    /* Estado colapsado del sidebar */
-    .sidebar.collapsed {
-      width: 0px; /* Ancho reducido */
-      padding: 0; /* Reducir padding */
-    }
-    .sidebar.collapsed h4,
-    .sidebar.collapsed .menu a {
-      display: none; /* Ocultar texto */
-    }
-    .sidebar.collapsed .menu a {
-      padding: 0.75rem; /* Ajustar padding para iconos */
-    }
-    .sidebar a {
-      color: white;
-      text-decoration: none;
-      display: block;
-      padding: 0.75rem 0;
-      cursor: pointer;
-      border-radius: 5px;
-      transition: background-color 0.3s ease;
-      margin-bottom: 0.5rem;
-    }
-    .sidebar a:hover {
-      background-color: #BF0A30;
-    }
-    .logout {
-      margin-top: auto;
-      padding-top: 1rem;
-      border-top: 1px solid #ffffff30;
-    }
-    .main-content {
-      flex-grow: 1;
-      padding: 2rem;
-      overflow-y: auto;
-    }
-    #toggleSidebarBtn {
-    transition: transform 0.3s ease-in-out;
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Biblioteca Moment.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js "></script>
+<style>
+/* =========================
+   PALETA DE COLORES
+========================= */
+:root {
+  --azul-principal: #002855;
+  --azul-claro: #f4f7fb;
+  --azul-muy-claro: #f8fafc;
+  --azul-hoy: #e3f0ff;
+  --rojo-principal: #BF0A30;
+  --gris-borde: #e0e6ed;
+  --gris-boton: #e9ecef;
+  --sombra-card: 0 4px 24px rgba(0,0,0,0.08);
+  --sombra-calendar: 0 2px 12px rgba(0,0,0,0.04);
+  --sombra-modal: 0 4px 24px rgba(0,0,0,0.12);
+}
+
+/* =========================
+   ESTILOS GENERALES
+========================= */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: var(--azul-muy-claro);
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+.color-azul-principal-background {
+  background-color: var(--azul-principal);
+}
+.sidebar {
+  background-color: var(--azul-principal);
+  color: white;
+  width: 250px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+}
+.sidebar.collapsed {
+  width: 0;
+  padding: 0;
+}
+.sidebar.collapsed h4,
+.sidebar.collapsed .menu a {
+  display: none;
+}
+.sidebar a {
+  color: white;
+  text-decoration: none;
+  display: block;
+  padding: 0.75rem 0;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+  margin-bottom: 0.5rem;
+}
+.sidebar a:hover {
+  background-color: var(--rojo-principal);
+}
+.logout {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid #ffffff30;
+}
+
+/* =========================
+   MAIN CONTENT & HEADER
+========================= */
+.main-content {
+  flex-grow: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+#toggleSidebarBtn {
+  transition: transform 0.3s ease-in-out;
 }
 #toggleSidebarBtn.active {
-    transform: rotate(180deg);
+  transform: rotate(180deg);
 }
 
+/* =========================
+   CALENDARIO - CARD
+========================= */
+.card {
+  border-radius: 18px;
+  border: none;
+  box-shadow: var(--sombra-card);
+  background: #fff;
+}
+.card-header {
+  background: var(--azul-principal);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 18px 18px 0 0;
+  font-size: 1.2rem;
+  border-bottom: none;
+}
+#calendar {
+  background: var(--azul-claro);
+  border-radius: 12px;
+  padding: 18px 10px 10px 10px;
+  box-shadow: var(--sombra-calendar);
+}
 
-/* ESTILOS CALENDARIO */
+/* =========================
+   FULLCALENDAR - BARRAS Y FONDOS
+========================= */
 .fc-timegrid-slot {
-  height: 50px;
+  border-style: dashed !important;
+  border-width: 1px 0 0 0 !important;
+  background: var(--azul-muy-claro);
 }
 .fc-timegrid-axis {
-  width: 40px;
+  background: var(--azul-claro);
+  color: var(--azul-principal);
+  font-weight: 500;
+}
+.fc-timegrid-slot, .fc-timegrid-axis {
+  border-color: var(--gris-borde) !important;
+}
+.fc-timegrid-col.fc-day-today,
+.fc-day-today,
+.fc-daygrid-day.fc-day-today {
+  background: var(--azul-hoy) !important;
+  border-radius: 8px;
+}
+
+/* =========================
+   FULLCALENDAR - CABECERAS
+========================= */
+.fc-col-header-cell {
+  background: var(--azul-claro);
+  color: var(--azul-principal);
+  font-weight: 600;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 2px solid var(--gris-borde);
+}
+.fc .fc-toolbar-title {
+  font-size: 1.4rem;
+  color: var(--azul-principal);
+  font-weight: 700;
+}
+
+/* =========================
+   FULLCALENDAR - BOTONES
+========================= */
+.fc .fc-button {
+  border-radius: 6px;
+  font-weight: 500;
+  border: none;
+  background: var(--gris-boton);
+  color: var(--azul-principal);
+  transition: background 0.2s;
+}
+.fc .fc-button-primary {
+  background: var(--azul-principal);
+  color: #fff;
+}
+.fc .fc-button-primary:not(:disabled):hover {
+  background: var(--rojo-principal);
+  color: #fff;
+}
+.fc .fc-button-active {
+  background: var(--rojo-principal) !important;
+  color: #fff !important;
+}
+
+/* Botones de cambio de vista (Mes, Semana, Día) */
+.fc .fc-button-group .fc-button {
+  border-radius: 8px !important;
+  margin-left: 4px;
+  margin-right: 0;
+  background: var(--gris-boton);
+  color: var(--azul-principal);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,40,85,0.06);
+  border: none;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.fc .fc-button-group .fc-button:first-child {
+  margin-left: 0;
+}
+.fc .fc-button-group .fc-button.fc-button-active,
+.fc .fc-button-group .fc-button:focus,
+.fc .fc-button-group .fc-button:hover {
+  background: var(--azul-principal) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px rgba(0,40,85,0.10);
+}
+
+/* Botón "Hoy" */
+.fc .fc-today-button {
+  border-radius: 8px !important;
+  background: var(--rojo-principal) !important;
+  color: #fff !important;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(191,10,48,0.10);
+  border: none;
+  margin-right: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+.fc .fc-today-button:disabled {
+  background: #ccc !important;
+  color: #fff !important;
+  opacity: 0.7;
+}
+
+/* Botones prev/next de FullCalendar como flechas grandes y modernas */
+.fc .fc-prev-button, .fc .fc-next-button {
+  background: var(--gris-boton);
+  color: var(--azul-principal);
+  border: none;
+  border-radius: 8px;
+  font-size: 1.3rem;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,40,85,0.06);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  padding: 0;
+}
+.fc .fc-prev-button:hover, .fc .fc-next-button:hover,
+.fc .fc-prev-button:focus, .fc .fc-next-button:focus {
+  background: var(--azul-principal);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0,40,85,0.10);
+}
+
+/* Íconos Bootstrap para prev/next */
+.fc .fc-prev-button .fc-icon,
+.fc .fc-next-button .fc-icon {
+  font-family: "Bootstrap Icons" !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-size: 1.5rem !important;
+  line-height: 1 !important;
+  width: auto;
+  height: auto;
+  background: none !important;
+  color: inherit;
+  display: inline-block;
+  vertical-align: middle;
+  text-indent: 0 !important;
+  overflow: visible;
+}
+.fc .fc-prev-button .fc-icon:before {
+  content: "\f284"; /* bi-chevron-left */
+}
+.fc .fc-next-button .fc-icon:before {
+  content: "\f285"; /* bi-chevron-right */
+}
+
+/* =========================
+   FULLCALENDAR - EVENTOS
+========================= */
+.fc-event {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,40,85,0.08);
+  padding: 2px 6px;
+}
+.fc-event-title {
+  font-size: 1rem;
+  font-weight: 500;
 }
 .fc-daygrid-event-dot {
   display: none;
 }
-.fc-event-title {
-  font-size: 0.9rem;
+
+/* =========================
+   MODAL
+========================= */
+.modal {
+  overflow-y: auto;
 }
-.fc .fc-toolbar-title {
-  font-size: 1.2rem;
+.modal-content {
+  border-radius: 16px;
+  box-shadow: var(--sombra-modal);
+}
+.modal-header {
+  background: var(--azul-principal);
+  color: #fff;
+  border-radius: 16px 16px 0 0;
 }
 
-
-/* ESPACIO ENTRE BOTONES */
-
+/* =========================
+   BOTONES Y UTILIDADES
+========================= */
+.btn-primary {
+  background: var(--azul-principal);
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.btn-primary:hover {
+  background: var(--rojo-principal);
+}
 .me-2 {
   margin-right: 0.5rem !important;
 }
-
-  </style>
+</style>
 </head>
 <body>
   <!-- Contenedor principal -->
@@ -142,9 +364,7 @@
           <div class="card-body">
             <div class="d-flex justify-content-between mb-3">
                 <div>
-                  <button id="save-event-btn" class="btn btn-primary me-2">Agregar Evento</button>
-                  <button id="modify-event-btn" class="btn btn-warning me-2">Modificar Evento</button>
-                  <button id="delete-event-btn" class="btn btn-danger">Eliminar Evento</button>
+                  <button id="add-event-btn" class="btn btn-primary me-2">Agregar Evento</button>
                 </div>
               </div>
             <div id="calendar"></div>
@@ -156,45 +376,48 @@
 
   <!-- Modal para Agregar/Editar Eventos Calendario -->
   <div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="addEventModalLabel">Agregar Evento</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form id="event-form">
-            <div class="mb-3">
-              <label for="event-title" class="form-label">Título:</label>
-              <input type="text" class="form-control" id="event-title" required>
-            </div>
-            <div class="mb-3">
-              <label for="event-start" class="form-label">Fecha de inicio:</label>
-              <input type="datetime-local" class="form-control" id="event-start" required>
-            </div>
-            <div class="mb-3">
-              <label for="event-end" class="form-label">Fecha de fin:</label>
-              <input type="datetime-local" class="form-control" id="event-end">
-            </div>
-            <div class="mb-3">
-              <label for="event-description" class="form-label">Descripción:</label>
-              <textarea class="form-control" id="event-description"></textarea>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-primary" id="save-event-btn">Guardar</button>
-        </div>
+      <div class="modal-dialog">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title" id="addEventModalLabel">Agregar Evento</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <form id="event-form">
+                      <div class="mb-3">
+                          <label for="event-title" class="form-label">Título:</label>
+                          <input type="text" class="form-control" id="event-title" required>
+                      </div>
+                      <div class="mb-3">
+                          <label for="event-start" class="form-label">Fecha de inicio:</label>
+                          <input type="datetime-local" class="form-control" id="event-start" required>
+                      </div>
+                      <div class="mb-3">
+                          <label for="event-end" class="form-label">Fecha de fin:</label>
+                          <input type="datetime-local" class="form-control" id="event-end">
+                      </div>
+                      <div class="mb-3">
+                          <label for="event-description" class="form-label">Descripción:</label>
+                          <textarea class="form-control" id="event-description"></textarea>
+                      </div>
+                  </form>
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="button" class="btn btn-primary" id="save-event-btn">Guardar</button>
+                  <!-- Botones de Modificar y Eliminar dentro de la modal -->
+                  <button type="button" class="btn btn-warning d-none" id="modify-event-btn">Modificar Evento</button>
+                  <button type="button" class="btn btn-danger d-none" id="delete-event-btn">Eliminar Evento</button>
+              </div>
+          </div>
       </div>
-    </div>
   </div>
 
   <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.all.min.js"></script>
-  <!-- FullCalendar JS -->
+    <!-- FullCalendar JS -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js"></script>
 
@@ -202,176 +425,340 @@
     // Variables globales para el calendario
     let calendarInstance;
     let addEventModal = null;
-  
-    // Inicialización del Modal
-    function initializeModal() {
-      const addEventModalElement = document.getElementById('addEventModal');
-      if (addEventModalElement) {
-        addEventModal = new bootstrap.Modal(addEventModalElement);
+    
+      // Inicialización del Modal
+      function initializeModal() {
+        const addEventModalElement = document.getElementById('addEventModal');
+        if (addEventModalElement) {
+          addEventModal = new bootstrap.Modal(addEventModalElement);
+        }
       }
-    }
-  
-    // Mostrar el Calendario
-    function mostrarCalendario() {
-      const controlNomina = document.getElementById('control-nomina');
-      const calendarioContainer = document.getElementById('calendario-container');
-  
-      if (controlNomina) controlNomina.style.display = 'none';
-      if (calendarioContainer) calendarioContainer.style.display = 'block';
-  
-      if (!window.calendarInitialized) {
-        const calendarEl = document.getElementById('calendar');
-        if (calendarEl) {
-          calendarInstance = new FullCalendar.Calendar(calendarEl, {
-            themeSystem: 'bootstrap',
-            initialView: 'dayGridMonth',
-            locale: 'es',
-            headerToolbar: {
-              left: 'prev,next today',
-              center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            },
-            views: {
-              timeGridWeek: {
-                dayHeaderFormat: { weekday: 'long' },
-                slotMinTime: '07:00:00',
-                slotMaxTime: '19:00:00'
-              },
-              timeGridDay: {
-                slotMinTime: '07:00:00',
-                slotMaxTime: '19:00:00'
-              }
-            },
-            events: [],
-            editable: true,
-            selectable: true,
-            select: function (info) {
-            const startInput = document.getElementById('event-start');
-            const endInput = document.getElementById('event-end');
-            if (startInput && endInput) {
-                startInput.value = info.startStr;
-                endInput.value = info.endStr || '';
-                startInput.dataset.eventId = ''; // Reiniciar el ID del evento
-                if (addEventModal) addEventModal.show();
-            }
-            },
-            eventClick: function (info) {
-              const eventObj = info.event;
-  
-              document.getElementById('event-title').value = eventObj.title;
-              document.getElementById('event-description').value = eventObj.extendedProps.description || '';
-              document.getElementById('event-start').value = info.startStr;
-              document.getElementById('event-end').value = info.endStr || '';
-              document.getElementById('event-start').dataset.eventId = eventObj.id;
-  
-              if (addEventModal) addEventModal.show();
-            },
-            eventClassNames: function (arg) {
-              return ['bg-success', 'text-white'];
-            }
+    
+        // Mostrar el Calendario
+      function mostrarCalendario() {
+          const controlNomina = document.getElementById('control-nomina');
+          const calendarioContainer = document.getElementById('calendario-container');
+      
+          if (controlNomina) controlNomina.style.display = 'none';
+          if (calendarioContainer) calendarioContainer.style.display = 'block';
+      
+          if (!window.calendarInitialized) {
+            const calendarEl = document.getElementById('calendar');
+
+            if (calendarEl) {
+              // nuevo
+              fetch('/json/') // Cargar eventos desde Django
+                .then(response => response.json())
+                .then(data => {
+                  calendarInstance = new FullCalendar.Calendar(calendarEl, {
+                    themeSystem: 'bootstrap',
+                    initialView: 'dayGridMonth',
+                    locale: 'es',
+                    headerToolbar: {
+                      left: 'prev,next today',
+                      center: 'title',
+                      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                  views: {
+                    timeGridWeek: {
+                      dayHeaderFormat: { weekday: 'long' },
+                      slotMinTime: '07:00:00',
+                      slotMaxTime: '19:00:00'
+                    },
+                    timeGridDay: {
+                      slotMinTime: '07:00:00',
+                      slotMaxTime: '19:00:00'
+                    }
+                },
+                events: data, //nuevo
+                editable: true,
+                selectable: true,
+                selectMirror: true,
+                select: function (info) {
+                    const startInput = document.getElementById('event-start');
+                    const endInput = document.getElementById('event-end');
+                    if (startInput && endInput) {
+                        startInput.value = info.startStr;
+                        endInput.value = info.endStr || '';
+                        startInput.dataset.eventId = ''; // Reiniciar el ID del evento
+                        if (addEventModal) addEventModal.show();
+                    }
+                },
+                
+                eventClick: function (info) {
+                  const eventObj = info.event;
+                  // Depuración: muestra el evento completo en consola
+                  console.log('Evento seleccionado:', eventObj);
+                  console.log('Fecha de inicio:', info.startStr);
+                  console.log('Fecha de fin:', info.endStr);
+                   // Formatear fechas al formato datetime-local
+                  const startFormatted = moment(eventObj.start).format('YYYY-MM-DDTHH:mm');
+                  const endFormatted = moment(eventObj.end).format('YYYY-MM-DDTHH:mm');
+      
+                  document.getElementById('event-title').value = eventObj.title;
+                  document.getElementById('event-description').value = eventObj.extendedProps.description || '';
+                  document.getElementById('event-start').value = startFormatted || '';
+                  document.getElementById('event-end').value = endFormatted || '';
+                  document.getElementById('event-start').dataset.eventId = eventObj.id;
+                
+                  // Ocultar botón "Guardar"
+                  document.getElementById('save-event-btn').classList.add('d-none');
+                  // Mostrar botones de Modificar y Eliminar
+                  document.getElementById('modify-event-btn').classList.remove('d-none');
+                  document.getElementById('delete-event-btn').classList.remove('d-none');
+
+                  if (addEventModal) addEventModal.show();
+                },
+                eventClassNames: function (arg) {
+                  return ['bg-success', 'text-white'];
+                }
+            });
+      
+              calendarInstance.render();
+              window.calendarInitialized = true; // Marcar como inicializado
+          })
+            // NUEVO
+            .catch(error => {
+                console.error('Error al cargar eventos:', error);
+                alert('Hubo un problema al cargar los eventos.');
+            });
+          }
+        }
+      }
+    
+      // Guardar Evento
+      function saveEvent() {
+          const title = document.getElementById('event-title')?.value.trim();
+          const start = document.getElementById('event-start')?.value;
+          const end = document.getElementById('event-end')?.value || start;
+          const description = document.getElementById('event-description')?.value;
+          const eventId = document.getElementById('event-start').dataset.eventId;
+      
+          if (!title || !start) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Por favor, completa todos los campos requeridos.',
+                icon: 'error',
+                confirmButtonText: 'Aceptar'
+            });
+            return;
+          }
+          const url = eventId ? `/calendario/modificar/${eventId}/` : '/calendario/guardar/';
+          fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    id: eventId,
+                    titulo: title,
+                    descripcion: description,
+                    fecha_inicio: start,
+                    fecha_fin: end
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.success) {
+                    // Éxito: Mostrar mensaje y actualizar el evento
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: 'El evento ha sido modificado correctamente.',
+                        icon: 'success',
+                        confirmButtonText: 'Aceptar'
+                    });
+
+                    // Actualizar el evento en el calendario
+                    const eventToUpdate = calendarInstance.getEventById(eventId);
+                    if (eventToUpdate) eventToUpdate.remove();
+
+                    calendarInstance.addEvent({
+                        id: eventId,
+                        title: title,
+                        start: start,
+                        end: end,
+                        description: description,
+                        allDay: false
+                    });
+
+                    if (addEventModal) addEventModal.hide();
+                } else {
+                    // Error: Mostrar mensaje de fallo
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.message || 'No se pudo modificar el evento. Inténtalo nuevamente.',
+                        icon: 'error',
+                        confirmButtonText: 'Aceptar'
+                    });
+                }
+            })
+      .catch(error => {
+          console.error('Error al guardar el evento:', error);
+          Swal.fire({
+              title: 'Error',
+              text: 'Ocurrió un error al intentar guardar el evento.',
+              icon: 'error',
+              confirmButtonText: 'Aceptar'
           });
-  
-          calendarInstance.render();
-          window.calendarInitialized = true; // Marcar como inicializado
-        }
-      }
-    }
-  
-    // Guardar Evento
-    function saveEvent() {
-      const title = document.getElementById('event-title')?.value.trim();
-      const start = document.getElementById('event-start')?.value;
-      const end = document.getElementById('event-end')?.value || start;
-      const description = document.getElementById('event-description')?.value;
-      const eventId = document.getElementById('event-start').dataset.eventId;
-  
-      if (!title || !start) {
-        alert('Por favor, completa todos los campos requeridos.');
-        return;
-      }
-  
-      if (eventId) {
-        const eventToUpdate = calendarInstance.getEventById(eventId);
-        if (eventToUpdate) {
-          eventToUpdate.setProp('title', title);
-          eventToUpdate.setDates(start, end, { allDay: false });
-          eventToUpdate.setExtendedProp('description', description);
-        }
-      } else {
-        const newEvent = {
-          id: Date.now(),
-          title: title,
-          start: start,
-          end: end,
-          description: description,
-          allDay: false
-        };
-        calendarInstance.addEvent(newEvent);
-      }
-  
-      if (addEventModal) addEventModal.hide();
+      });
     }
 
-    // Asignar evento al botón "Guardar"
-    const saveEventBtn = document.getElementById('save-event-btn');
-    if (saveEventBtn) {
-    saveEventBtn.addEventListener('click', saveEvent);
-    }
-  
-    // Eliminar Evento
+    // Eliminar evento
     function deleteEvent() {
       const eventId = document.getElementById('event-start').dataset.eventId;
-      if (eventId) {
-        const eventToDelete = calendarInstance.getEventById(eventId);
-        if (eventToDelete) {
-          eventToDelete.remove();
-        }
+
+      if (!eventId) {
+          Swal.fire({
+              title: 'Error',
+              text: 'No se ha seleccionado ningún evento para eliminar.',
+              icon: 'error',
+              confirmButtonText: 'Aceptar'
+          });
+          return;
       }
-      if (addEventModal) addEventModal.hide();
+
+      Swal.fire({
+          title: '¿Estás seguro?',
+          text: "Este evento se eliminará permanentemente.",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Sí, eliminar',
+          cancelButtonText: 'Cancelar'
+      }).then((result) => {
+          if (result.isConfirmed) {
+              const url = `/calendario/eliminar/${eventId}/`;
+
+              fetch(url, {
+                  method: 'DELETE',
+                  headers: {
+                      'X-CSRFToken': getCookie('csrftoken')
+                  }
+              })
+              .then(response => {
+                  if (!response.ok) {
+                      throw new Error(`Error HTTP: ${response.status}`);
+                  }
+                  return response.json();
+              })
+              .then(data => {
+                  if (data && data.success) {
+                      const eventToDelete = calendarInstance.getEventById(eventId);
+                      if (eventToDelete) eventToDelete.remove();
+
+                      if (addEventModal) addEventModal.hide();
+
+                      Swal.fire({
+                          title: '¡Eliminado!',
+                          text: 'El evento ha sido eliminado correctamente.',
+                          icon: 'success',
+                          confirmButtonText: 'Aceptar'
+                      });
+                  } else {
+                      throw new Error('La respuesta del servidor no indica éxito.');
+                  }
+              })
+              .catch(error => {
+                  console.error("Error al eliminar el evento:", error);
+                  Swal.fire({
+                      title: 'Error',
+                      text: 'No se pudo eliminar el evento. Inténtalo nuevamente.',
+                      icon: 'error',
+                      confirmButtonText: 'Aceptar'
+                  });
+              });
+          }
+      });
     }
-  
-    // Manejo de DOM
-    document.addEventListener('DOMContentLoaded', function () {
-      initializeModal();
-  
-      // Asignar eventos a botones
-      const saveEventBtn = document.getElementById('save-event-btn');
-      const deleteEventBtn = document.getElementById('delete-event-btn');
-      const modifyEventBtn = document.getElementById('modify-event-btn');
-  
-      if (saveEventBtn) {
-        saveEventBtn.addEventListener('click', saveEvent);
+    
+      // Manejo de DOM
+      document.addEventListener('DOMContentLoaded', function () {
+        initializeModal();
+    
+
+          // Botón Agregar Evento
+          const addEventBtn = document.getElementById('add-event-btn');
+          // Asignar evento al botón Guardar
+          const saveEventBtn = document.getElementById('save-event-btn');
+          // Botón Modificar
+          const modifyEventBtn = document.getElementById('modify-event-btn');
+          // Botón Eliminar
+          const deleteEventBtn = document.getElementById('delete-event-btn');
+          if (addEventBtn) {
+              addEventBtn.addEventListener('click', function () {
+                  // Reiniciar el ID del evento
+                  document.getElementById('event-start').dataset.eventId = '';
+                  // Mostrar botón "Guardar"
+                  document.getElementById('save-event-btn').classList.remove('d-none');
+                  // Ocultar botones de Modificar y Eliminar
+                  document.getElementById('modify-event-btn').classList.add('d-none');
+                  document.getElementById('delete-event-btn').classList.add('d-none');
+
+                  // Abrir el modal directamente
+                  if (addEventModal) addEventModal.show();
+              });
+          }
+          if (saveEventBtn) {
+              saveEventBtn.addEventListener('click', saveEvent);
+          }
+
+          if (modifyEventBtn) {
+              modifyEventBtn.addEventListener('click', saveEvent);
+          }
+
+          if (deleteEventBtn) {
+              deleteEventBtn.addEventListener('click', deleteEvent);
+          }
+
+          // Inicializar calendario
+          mostrarCalendario();
+      });
+    
+      // Función para obtener el token CSRF
+      function getCookie(name) {
+              let cookieValue = null;
+              if (document.cookie && document.cookie !== '') {
+                  const cookies = document.cookie.split(';');
+                  for (let i = 0; i < cookies.length; i++) {
+                      const cookie = cookies[i].trim();
+                      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                          break;
+                      }
+                  }
+              }
+              return cookieValue;
       }
-  
-      if (deleteEventBtn) {
-        deleteEventBtn.addEventListener('click', deleteEvent);
-      }
-  
-      if (modifyEventBtn) {
-        modifyEventBtn.addEventListener('click', function () {
-          alert('Modificar Evento');
-        });
-      }
-  
-      // Mostrar el calendario
-      mostrarCalendario();
+
+    // Configuración de FullCalendar
+    fetch('/json/', {
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Lógica para manejar los eventos
     });
   </script>
-<!-- MENU DESPLEGABLE SCRIPT -->
-<script>
-    // Botón para alternar el sidebar
-    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
-    const sidebar = document.querySelector('.sidebar');
-    toggleSidebarBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed'); // Alternar la clase 'collapsed'
-    });
-</script>
 
-<script>
-    document.getElementById("toggleSidebarBtn").addEventListener("click", function () {
-        this.classList.toggle("active"); // Alterna la animación
-    });
-</script>
+  <!-- MENU DESPLEGABLE SCRIPT -->
+  <script>
+      // Botón para alternar el sidebar
+      const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+      const sidebar = document.querySelector('.sidebar');
+      toggleSidebarBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed'); // Alternar la clase 'collapsed'
+      });
+  </script>
+
+  <script>
+      document.getElementById("toggleSidebarBtn").addEventListener("click", function () {
+          this.classList.toggle("active"); // Alterna la animación
+      });
+  </script>
 
 </body>
 </html>

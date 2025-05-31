@@ -1,10 +1,16 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from .models import Cedula, Usuario
-import re
+from .models import Calendario
+from .forms import CalendarioForm
+from django.utils import timezone
 from django.db.models import Q  # Al inicio del archivo, si no lo has hecho ya
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+import re
+import json
 # ==============================
 # Funciones CRUD para Cédulas
 # ==============================
@@ -90,7 +96,7 @@ def login_view(request):
     if request.method == 'POST':
         # Obtener los datos del formulario
         username = request.POST.get('username', '').strip()
-        contraseña = request.POST.get('contraseña', '').strip()
+        password = request.POST.get('password', '').strip()
 
         try:
             # Buscar al usuario en la base de datos por nombre de usuario
@@ -98,7 +104,7 @@ def login_view(request):
 
 
             # Validar la contraseña
-            if usuario.contraseña == contraseña:
+            if usuario.password == password:
                 # Guardar el ID del usuario en la sesión
                 request.session['usuario_id'] = usuario.id
                 return redirect('cedulas')  # Redirigir a la página principal
@@ -172,5 +178,108 @@ def cedulas(request):
     })
 
     # CALENDARIO VIEWS
+# @login_required
 def calendario_view(request):
-    return render(request, 'calendario.html')
+    if request.method == 'POST':
+        form = CalendarioForm(request.POST)
+        if form.is_valid():
+            calendario = form.save(commit=False)
+            calendario.creador = request.user
+            calendario.save()
+            return redirect('calendario')
+    else:
+        form = CalendarioForm()
+
+    eventos = Calendario.objects.all()  # Mostrar todos los eventos
+    context = {
+        'form': form,
+        'eventos': eventos
+    }
+    return render(request, 'calendario.html', context)
+
+def agregar_evento(request):
+    if request.method == 'POST':
+        form = CalendarioForm(request.POST)
+        if form.is_valid():
+            evento = form.save(commit=False)
+            evento.creador = request.user
+            evento.save()
+            return redirect('calendario')
+    else:
+        form = CalendarioForm()
+
+    return render(request, 'calendario.html', {'form': form})
+
+@csrf_exempt
+def guardar_evento(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            evento = Calendario(
+                titulo=data['titulo'],
+                descripcion=data.get('descripcion'),
+                fecha_inicio=data['fecha_inicio'],
+                fecha_fin=data.get('fecha_fin'),
+                creador=request.user if request.user.is_authenticated else None
+            )
+            evento.save()
+            return JsonResponse({'success': True, 'id': evento.id})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False})
+
+@csrf_exempt
+def modificar_evento(request, evento_id):
+    try:
+        # Convierte evento_id a entero
+        evento_id = int(evento_id)
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'ID inválido'}, status=400)
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            # Elimina la validación de creador temporalmente
+            evento = Calendario.objects.get(id=evento_id)
+            evento.titulo = data['titulo']
+            evento.descripcion = data.get('descripcion')
+            evento.fecha_inicio = data['fecha_inicio']
+            evento.fecha_fin = data.get('fecha_fin')
+            evento.save()
+            return JsonResponse({'success': True})
+        except Calendario.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Evento no encontrado'}, status=404)
+        except KeyError as e:
+            return JsonResponse({'success': False, 'error': f'Campo faltante: {e}'}, status=400)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+@csrf_exempt
+def eliminar_evento(request, evento_id):
+    if request.method == 'DELETE':
+        try:
+            if request.user.is_authenticated:
+                evento = Calendario.objects.get(id=evento_id, creador=request.user)
+            else:
+                evento = Calendario.objects.get(id=evento_id)
+                
+            evento.delete()
+            return JsonResponse({'success': True})
+        except Calendario.DoesNotExist:
+            return JsonResponse({'success': False})
+    return JsonResponse({'success': False})
+
+def eventos_json(request):
+    eventos = Calendario.objects.all()
+    data = [
+        {
+            'id': e.id,
+            'title': e.titulo,
+            'start': e.fecha_inicio.isoformat(),
+            'end': e.fecha_fin.isoformat() if e.fecha_fin else None,
+            'description': e.descripcion
+        }
+        for e in eventos
+    ]
+    return JsonResponse(data, safe=False)
