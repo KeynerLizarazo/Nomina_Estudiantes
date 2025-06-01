@@ -8,9 +8,6 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    # Ruta para el panel de administración
     path('admin/', admin.site.urls),
-
-    # Incluir las URLs de la aplicación 'myapp'
-    path('', include('myapp.urls')),  # Todas las rutas de 'myapp' estarán bajo la raíz ('/')
+    path('', include('myapp.urls')),  # Carga todas las URLs de myapp desde '/'
 ]

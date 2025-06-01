@@ -1,16 +1,22 @@
 from django.urls import path
 from . import views
+from django.shortcuts import redirect
 
 urlpatterns = [
-    path('', views.login_view, name='login'),  # Ruta para el login
-    path('logout/', views.logout_view, name='logout'),  # Ruta para cerrar sesión
-    path('cedulas/', views.cedulas, name='cedulas'),  # Ruta protegida para cedulas.html
-    path('eliminar/<int:id>/', views.eliminar_cedula, name='eliminar_cedula'),  # Ruta para eliminar un registro
-    path('guardar/', views.guardar_cedula, name='guardar_cedula'),  # Nueva ruta para guardar/actualizar registros
+    # Autenticación
+    path('', views.home, name='home'),  # Raíz del sitio
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+
+    # Gestión de cédulas
+    path('cedulas/', views.cedulas, name='cedulas'),
+    path('guardar/', views.guardar_cedula, name='guardar_cedula'),
+    path('eliminar/<int:id>/', views.eliminar_cedula, name='eliminar_cedula'),
+
+    # Calendario
     path('calendario/', views.calendario_view, name='calendario'),
-    path('agregar/', views.agregar_evento, name='agregar_evento'),
-    path('json/', views.eventos_json, name='eventos_json'),
-    path('calendario/guardar/', views.guardar_evento, name='guardar_evento'),
-    path('calendario/modificar/<int:evento_id>/', views.modificar_evento, name='modificar_evento'),
-    path('calendario/eliminar/<int:evento_id>/', views.eliminar_evento, name='eliminar_evento'),
+    path('eventos-json/', views.eventos_json, name='eventos_json'),
+    path('guardar-evento/', views.guardar_evento, name='guardar_evento'),
+    path('modificar-evento/<int:evento_id>/', views.modificar_evento, name='modificar_evento'),
+    path('eliminar-evento/<int:evento_id>/', views.eliminar_evento, name='eliminar_evento'),
 ]

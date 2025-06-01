@@ -80,7 +80,9 @@
     transform: rotate(180deg);
 }
   </style>
-
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 </head>
 <body>
   <!-- Contenedor principal -->
@@ -121,10 +123,10 @@
     <div class="card-header">Lista de Usuarios</div>
     <div class="card-body">
       <div class="card-body">
-        <div class="d-flex justify-content-between mb-3">
+        <div class="mb-3">
           <!-- Formulario de Búsqueda -->
-          <form class="d-flex w-100 mb-3" method="get" action="{% url 'cedulas' %}">
-            <div class="input-group me-2 w-75">
+          <form class="d-flex" method="get" action="{% url 'cedulas' %}">
+            <div class="input-group me-2">
               <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ query }}">
             </div>
             <select name="campo" class="form-select w-25 me-2">
@@ -133,43 +135,57 @@
               <option value="apellido" {% if campo == "apellido" %}selected{% endif %}>Apellido</option>
               <option value="numero_documento" {% if campo == "numero_documento" %}selected{% endif %}>Nro de documento</option>
             </select>
-            <button class="btn btn-primary" type="submit">Buscar</button>
-            <a href="{% url 'cedulas' %}" class="btn btn-secondary ms-2">Limpiar Búsqueda</a>
-          </form>
-          <button type="button" class="btn btn-primary w-25" data-bs-toggle="modal" data-bs-target="#controlNominaModal">
+
+            <!-- Filtro por Tipo de Documento -->
+            <select name="tipo_documento" class="form-select w-25 me-2">
+              <option value="todos" {% if tipo_documento == "todos" or not tipo_documento %}selected{% endif %}>Todos</option>
+              <option value="V" {% if tipo_documento == "V" %}selected{% endif %}>Venezolano</option>
+              <option value="CC" {% if tipo_documento == "CC" %}selected{% endif %}>Extranjero</option>
+            </select>
+
+            <button class="btn btn-secondary" type="submit">Buscar</button>
+            <a href="{% url 'cedulas' %}" class="btn btn-secondary ms-2 me-2">Refrescar</a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#controlNominaModal">
               Añadir
-          </button>
-      </div>
-      <table class="table table-bordered">
-        <thead>
-          <tr>
-            <th>Tipo de Documento</th>
-            <th>Número de Documento</th>
-            <th>Nombre</th>
-            <th>Apellido</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for cedula in cedulas %}
+            </button>
+          </form>
+        </div>
+
+        <!-- Tabla de Resultados -->
+        <table class="table table-bordered">
+          <thead>
             <tr>
-              <td>{{ cedula.get_tipo_documento_display }}</td>
-              <td>{{ cedula.numero_documento }}</td>
-              <td>{{ cedula.nombre }}</td>
-              <td>{{ cedula.apellido }}</td>
-              <td>
-                <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#controlNominaModal" data-cedula-id="{{ cedula.id }}">
-                  Editar
-                </a>
-                <form action="{% url 'eliminar_cedula' cedula.id %}" method="post" style="display:inline;">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                </form>
-              </td>
+              <th>Tipo de Documento</th>
+              <th>Número de Documento</th>
+              <th>Nombre</th>
+              <th>Apellido</th>
+              <th>Acciones</th>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody id="tabla-resultados">
+            {% if cedulas %}
+              {% for cedula in cedulas %}
+                <tr data-tipo="{{ cedula.tipo_documento }}">
+                  <td>{{ cedula.get_tipo_documento_display }}</td>
+                  <td>{{ cedula.numero_documento }}</td>
+                  <td>{{ cedula.nombre }}</td>
+                  <td>{{ cedula.apellido }}</td>
+                  <td>
+                    <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#controlNominaModal" data-cedula-id="{{ cedula.id }}">Editar</a>
+                    <form action="{% url 'eliminar_cedula' cedula.id %}" method="post" style="display:inline;">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="5" class="text-center text-muted">No se encontraron registros.</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
     </div>
   </div>
 </div>
@@ -196,7 +212,7 @@
             <select class="form-select" id="tipo_documento" name="tipo_documento" required>
               <option value="" disabled selected>Seleccione un tipo de documento</option>
               <option value="V">Cédula Venezolana (V)</option>
-              <option value="CC">Cédula Colombiana (CC)</option>
+              <option value="CC">Extranjero (CC)</option>
             </select>
           </div>
 
@@ -355,31 +371,27 @@
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js"></script>
- <!-- Script para manejar notificaciones de  BUSQUEDA-->
   <script>
-    $(document).ready(function(){
-      // Mostrar notificaciones solo si hay una búsqueda activa
-      {% if query %}
-        {% if no_results %}
-          Swal.fire({
-            icon: 'info',
-            title: 'No se encontraron coincidencias',
-            text: 'Se muestran todos los registros disponibles.',
-            showConfirmButton: false,
-            timer: 3000
-          });
-        {% elif result_count > 0 %}
-          Swal.fire({
-            icon: 'success',
-            title: 'Resultados encontrados',
-            text: `Se encontraron {{ result_count }} resultado(s) para tu búsqueda.`,
-            showConfirmButton: false,
-            timer: 3000
-          });
-        {% endif %}
-      {% endif %}
-    });
-  </script>
+  window.onpageshow = function(event) {
+    if (event.persisted || performance.navigation.type === PerformanceNavigation.TYPE_BACK_FORWARD) {
+      // Si viene del historial → redirigir al login
+      window.location.href = "{% url 'login' %}";
+    }
+  };
+ </script>
+  <script>
+  // Verifica si el usuario está autenticado (usando una variable de contexto)
+  const isAuthenticated = {{ request.session.usuario_id|default:"null" }} !== null;
+
+  window.onpageshow = function(event) {
+    if (event.persisted || performance.navigation.type === PerformanceNavigation.TYPE_BACK_FORWARD) {
+      // Si viene del historial y no está autenticado → redirigir
+      if (!isAuthenticated) {
+        window.location.href = "{% url 'login' %}";
+      }
+    }
+  };
+</script>
   <script>
     // Función para mostrar el Control de Nómina
     function mostrarControlNomina() {
