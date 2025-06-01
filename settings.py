@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent  # Ruta base del proyecto
 SECRET_KEY = 'django-insecure-abc123'  # Clave secreta para cifrado (cámbiala en producción)
 DEBUG = True  # Modo de depuración (cambia a False en producción)
 ALLOWED_HOSTS = []  # Lista de dominios permitidos (agrega aquí tu dominio si es necesario)
-
+LOGIN_URL = '/login/'
 # ==============================
 # APLICACIONES INSTALADAS
 # ==============================
