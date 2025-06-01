@@ -1,40 +1,90 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
-from .models import Cedula, Usuario
-from .models import Calendario
+from .models import Cedula, Usuario, Calendario
 from .forms import CalendarioForm
 from django.utils import timezone
-from django.db.models import Q  # Al inicio del archivo, si no lo has hecho ya
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-import re
+from django.db.models import Q
+from functools import wraps
 import json
+import re
+
+
+# ==============================
+# Decorador personalizado para login requerido
+# ==============================
+
+def login_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if 'usuario_id' not in request.session:
+            return redirect('login')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
 # ==============================
 # Funciones CRUD para Cédulas
 # ==============================
 
+@login_required
 def cedulas(request):
-    if request.method == 'POST':
-        return guardar_cedula(request)
-
-    # GET
+    """
+    Vista principal para mostrar y filtrar registros de cédulas.
+    Incluye búsqueda y filtro opcional por tipo_documento.
+    """
+    query = request.GET.get('q', '').strip()
+    campo = request.GET.get('campo', '').strip()
+    tipo_documento = request.GET.get('tipo_documento', 'todos')  # Nuevo parámetro
     cedula_obj = None
+
     if request.GET.get('editar'):
         cedula_id = request.GET.get('editar')
         cedula_obj = get_object_or_404(Cedula, id=cedula_id)
 
+    # Iniciar queryset base
     cedulas_list = Cedula.objects.all()
 
-    return render(request, 'cedulas.html', {
+    # Filtrar por tipo_documento
+    if tipo_documento != 'todos':
+        cedulas_list = cedulas_list.filter(tipo_documento=tipo_documento)
+
+    # Aplicar búsqueda si hay término
+    if query:
+        if campo and campo != "todos":
+            kwargs = {f"{campo}__icontains": query}
+            cedulas_list = cedulas_list.filter(**kwargs)
+        else:
+            cedulas_list = cedulas_list.filter(
+                Q(nombre__icontains=query) |
+                Q(apellido__icontains=query) |
+                Q(numero_documento__icontains=query) |
+                Q(tipo_documento__icontains=query)
+            )
+
+    response = render(request, 'cedulas.html', {
         'cedulas': cedulas_list,
         'cedula_obj': cedula_obj,
+        'query': query,
+        'campo': campo,
+        'tipo_documento': tipo_documento,
     })
 
+    # Prevenir almacenamiento en caché del navegador
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+
+    return response
+
+
 def guardar_cedula(request):
+    """
+    Guarda o actualiza un registro de cédula desde el formulario.
+    """
     if request.method == 'POST':
-        cedula_id = request.POST.get('id')  # ID del registro (si existe)
+        cedula_id = request.POST.get('id')
         tipo_documento = request.POST.get('tipo_documento')
         numero_documento = request.POST.get('numero_documento', '').strip()
         nombre = request.POST.get('nombre', '').strip()
@@ -54,7 +104,7 @@ def guardar_cedula(request):
             return redirect('cedulas')
 
         try:
-            if cedula_id:  # Si hay un ID, estamos editando
+            if cedula_id:  # Editando
                 cedula = get_object_or_404(Cedula, id=cedula_id)
                 cedula.tipo_documento = tipo_documento
                 cedula.numero_documento = numero_documento
@@ -62,7 +112,7 @@ def guardar_cedula(request):
                 cedula.apellido = apellido
                 cedula.save()
                 messages.success(request, 'Registro actualizado correctamente.')
-            else:  # Si no hay ID, estamos creando
+            else:  # Creando
                 if Cedula.objects.filter(numero_documento=numero_documento).exists():
                     messages.error(request, 'El número de documento ya está registrado.')
                     return redirect('cedulas')
@@ -75,10 +125,14 @@ def guardar_cedula(request):
                 messages.success(request, 'Registro guardado correctamente.')
         except Exception as e:
             messages.error(request, f'Ocurrió un error: {str(e)}')
-
+    
     return redirect('cedulas')
 
+
 def eliminar_cedula(request, id):
+    """
+    Elimina un registro de cédula.
+    """
     if request.method == 'POST':
         try:
             cedula = get_object_or_404(Cedula, id=id)
@@ -86,100 +140,58 @@ def eliminar_cedula(request, id):
             messages.success(request, "Registro eliminado correctamente.")
         except Exception as e:
             messages.error(request, f"Ocurrió un error al eliminar el registro: {str(e)}")
+    
     return redirect('cedulas')
+
 
 # ==============================
 # Funciones de Autenticación
 # ==============================
-
+def home(request):
+    if 'usuario_id' in request.session:
+        return redirect('cedulas')
+    else:
+        return redirect('login')
+    
 def login_view(request):
+    """
+    Gestiona el inicio de sesión del usuario.
+    """
     if request.method == 'POST':
-        # Obtener los datos del formulario
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '').strip()
-
         try:
-            # Buscar al usuario en la base de datos por nombre de usuario
             usuario = Usuario.objects.get(username=username)
-
-
-            # Validar la contraseña
             if usuario.password == password:
-                # Guardar el ID del usuario en la sesión
                 request.session['usuario_id'] = usuario.id
-                return redirect('cedulas')  # Redirigir a la página principal
+                return redirect('cedulas')
             else:
-                messages.error(request, 'Credenciales incorrectas. Por favor, verifica tu nombre de usuario y contraseña.')
+                messages.error(request, 'Credenciales incorrectas.')
         except Usuario.DoesNotExist:
-            messages.error(request, 'Credenciales incorrectas. Por favor, verifica tu nombre de usuario y contraseña.')
+            messages.error(request, 'Usuario no encontrado.')
 
         return redirect('login')
 
     return render(request, 'login.html')
 
+
 def logout_view(request):
-    if 'usuario_id' in request.session:
-        del request.session['usuario_id']  # Eliminar la sesión del usuario
-    return redirect('login')  # Redirigir al formulario de login
+    """
+    Cierra la sesión del usuario y borra todos los datos de sesión.
+    """
+    request.session.flush()  # Elimina completamente la sesión
+    return redirect('login')
+
 
 # ==============================
-# Decorador para Proteger Vistas
+# Vistas del Calendario
 # ==============================
 
-def login_required(view_func):
-    def wrapper(request, *args, **kwargs):
-        if 'usuario_id' not in request.session:
-            return redirect('login')  # Redirigir al login si no hay sesión activa
-        return view_func(request, *args, **kwargs)
-    return wrapper
-
-# Aplicar el decorador a la vista protegida
 @login_required
-def cedulas(request):
-    query = request.GET.get('q', '').strip()  # Término de búsqueda
-    campo = request.GET.get('campo', '').strip()  # Campo seleccionado para filtrar
-    cedula_obj = None
-    no_results = False  # Variable para indicar si no hay resultados
-    result_count = 0  # Para contar el número de coincidencias
-
-    if request.GET.get('editar'):
-        cedula_id = request.GET.get('editar')
-        cedula_obj = get_object_or_404(Cedula, id=cedula_id)
-
-    if query:
-        # Filtrar según el campo seleccionado
-        if campo and campo != "todos":
-            cedulas_list = Cedula.objects.filter(
-                Q(**{f"{campo}__icontains": query})  # Filtrar dinámicamente por el campo seleccionado
-            )
-        else:
-            cedulas_list = Cedula.objects.filter(
-                Q(nombre__icontains=query) |
-                Q(apellido__icontains=query) |
-                Q(numero_documento__icontains=query) |
-                Q(tipo_documento__icontains=query)
-            )
-        result_count = cedulas_list.count()
-        if result_count == 0:  # Si no hay resultados, activamos el mensaje
-            no_results = True
-            cedulas_list = Cedula.objects.all()  # Mostrar todos los registros
-    else:
-        # Si no hay búsqueda, mostrar todas las cédulas
-        cedulas_list = Cedula.objects.all()
-        result_count = cedulas_list.count()
-
-    return render(request, 'cedulas.html', {
-        'cedulas': cedulas_list,
-        'cedula_obj': cedula_obj,
-        'query': query,
-        'campo': campo,
-        'no_results': no_results,
-        'result_count': result_count,
-    })
-
-    # CALENDARIO VIEWS
-# @login_required
 def calendario_view(request):
+    """
+    Muestra el calendario con eventos registrados.
+    """
     if request.method == 'POST':
         form = CalendarioForm(request.POST)
         if form.is_valid():
@@ -189,29 +201,19 @@ def calendario_view(request):
             return redirect('calendario')
     else:
         form = CalendarioForm()
-
-    eventos = Calendario.objects.all()  # Mostrar todos los eventos
+    eventos = Calendario.objects.all()
     context = {
         'form': form,
         'eventos': eventos
     }
     return render(request, 'calendario.html', context)
 
-def agregar_evento(request):
-    if request.method == 'POST':
-        form = CalendarioForm(request.POST)
-        if form.is_valid():
-            evento = form.save(commit=False)
-            evento.creador = request.user
-            evento.save()
-            return redirect('calendario')
-    else:
-        form = CalendarioForm()
-
-    return render(request, 'calendario.html', {'form': form})
 
 @csrf_exempt
 def guardar_evento(request):
+    """
+    Guarda un evento nuevo en el calendario (AJAX).
+    """
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -228,49 +230,52 @@ def guardar_evento(request):
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False})
 
+
 @csrf_exempt
 def modificar_evento(request, evento_id):
+    """
+    Modifica un evento existente (AJAX).
+    """
     try:
-        # Convierte evento_id a entero
-        evento_id = int(evento_id)
-    except ValueError:
-        return JsonResponse({'success': False, 'error': 'ID inválido'}, status=400)
+        evento = Calendario.objects.get(id=evento_id)
+    except Calendario.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Evento no encontrado'}, status=404)
 
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            # Elimina la validación de creador temporalmente
-            evento = Calendario.objects.get(id=evento_id)
             evento.titulo = data['titulo']
             evento.descripcion = data.get('descripcion')
             evento.fecha_inicio = data['fecha_inicio']
             evento.fecha_fin = data.get('fecha_fin')
             evento.save()
             return JsonResponse({'success': True})
-        except Calendario.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Evento no encontrado'}, status=404)
         except KeyError as e:
             return JsonResponse({'success': False, 'error': f'Campo faltante: {e}'}, status=400)
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
+
 @csrf_exempt
 def eliminar_evento(request, evento_id):
+    """
+    Elimina un evento del calendario (AJAX).
+    """
     if request.method == 'DELETE':
         try:
-            if request.user.is_authenticated:
-                evento = Calendario.objects.get(id=evento_id, creador=request.user)
-            else:
-                evento = Calendario.objects.get(id=evento_id)
-                
+            evento = Calendario.objects.get(id=evento_id)
             evento.delete()
             return JsonResponse({'success': True})
         except Calendario.DoesNotExist:
             return JsonResponse({'success': False})
-    return JsonResponse({'success': False})
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
 
 def eventos_json(request):
+    """
+    Devuelve todos los eventos en formato JSON para FullCalendar.
+    """
     eventos = Calendario.objects.all()
     data = [
         {
