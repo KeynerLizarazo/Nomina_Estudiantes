@@ -10,7 +10,12 @@ from django.db.models import Q  # Al inicio del archivo, si no lo has hecho ya
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 import re
-import json
+from django.db.models import Q  # Al inicio del archivo, si no lo has hecho ya
+from django.contrib.auth.decorators import login_required
+import json, pytz, datetime
+
+# Formato esperado: ISO 8601 como "2025-05-20T14:30"
+from django.utils import timezone
 # ==============================
 # Funciones CRUD para Cédulas
 # ==============================
@@ -215,23 +220,69 @@ def guardar_evento(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            evento = Calendario(
-                titulo=data['titulo'],
-                descripcion=data.get('descripcion'),
-                fecha_inicio=data['fecha_inicio'],
-                fecha_fin=data.get('fecha_fin'),
-                creador=request.user if request.user.is_authenticated else None
-            )
-            evento.save()
-            return JsonResponse({'success': True, 'id': evento.id})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-    return JsonResponse({'success': False})
+            titulo = data.get('titulo')
+            descripcion = data.get('descripcion')
+            fecha_inicio = data.get('fecha_inicio')
+            fecha_fin = data.get('fecha_fin')
+
+            # Validar campos obligatorios
+            if not titulo or not fecha_inicio:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Por favor, completa todos los campos requeridos.'
+                }, status=400)
+
+            # Crear o actualizar el evento
+            try:
+                evento_id = data.get('id')
+                if evento_id:
+                    evento = Calendario.objects.get(id=evento_id)
+                    evento.titulo = titulo
+                    evento.descripcion = descripcion
+                    evento.fecha_inicio = timezone.make_aware(
+                        timezone.datetime.fromisoformat(fecha_inicio)
+                    )
+                    if fecha_fin:
+                        evento.fecha_fin = timezone.make_aware(
+                            timezone.datetime.fromisoformat(fecha_fin)
+                        )
+                    else:
+                        evento.fecha_fin = None
+                    # Asignar el creador si es necesario
+                    if request.user.is_authenticated:
+                        evento.creador = request.user
+                    evento.save()
+                else:
+                    # Si no hay ID, crear un nuevo evento
+                    evento = Calendario.objects.create(
+                        titulo=titulo,
+                        descripcion=descripcion,
+                        fecha_inicio=timezone.make_aware(
+                            timezone.datetime.fromisoformat(fecha_inicio)
+                        ),
+                        fecha_fin=timezone.make_aware(
+                            timezone.datetime.fromisoformat(fecha_fin)
+                        ) if fecha_fin else None,
+                        creador=request.user if request.user.is_authenticated else None
+                    )
+
+                return JsonResponse({'success': True})
+            except Exception as e:
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e)
+                }, status=500)
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Formato JSON inválido.'
+            }, status=400)
+
+    return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
 
 @csrf_exempt
 def modificar_evento(request, evento_id):
     try:
-        # Convierte evento_id a entero
         evento_id = int(evento_id)
     except ValueError:
         return JsonResponse({'success': False, 'error': 'ID inválido'}, status=400)
@@ -239,21 +290,63 @@ def modificar_evento(request, evento_id):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            # Elimina la validación de creador temporalmente
             evento = Calendario.objects.get(id=evento_id)
-            evento.titulo = data['titulo']
-            evento.descripcion = data.get('descripcion')
-            evento.fecha_inicio = data['fecha_inicio']
-            evento.fecha_fin = data.get('fecha_fin')
+
+            # Validar y parsear fechas con zona horaria
+            tz = pytz.UTC  # Puedes cambiarlo si usas una zona horaria específica
+
+            fecha_inicio = data.get('fecha_inicio')
+            if not fecha_inicio:
+                return JsonResponse({'success': False, 'error': 'Fecha de inicio requerida'}, status=400)
+
+            # Convertir fecha_inicio a datetime aware
+            evento.fecha_inicio = tz.localize(datetime.fromisoformat(fecha_inicio))
+
+            fecha_fin = data.get('fecha_fin')
+            if fecha_fin:
+                evento.fecha_fin = tz.localize(datetime.fromisoformat(fecha_fin))
+            else:
+                evento.fecha_fin = None
+
+            # Guardar otros campos
+            evento.titulo = data.get('titulo', evento.titulo)
+            evento.descripcion = data.get('descripcion', evento.descripcion)
             evento.save()
+
             return JsonResponse({'success': True})
         except Calendario.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Evento no encontrado'}, status=404)
-        except KeyError as e:
-            return JsonResponse({'success': False, 'error': f'Campo faltante: {e}'}, status=400)
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
-    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+    return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
+    
+    
+    
+    
+    # try:
+    #     # Convierte evento_id a entero
+    #     evento_id = int(evento_id)
+    # except ValueError:
+    #     return JsonResponse({'success': False, 'error': 'ID inválido'}, status=400)
+
+    # if request.method == 'POST':
+    #     try:
+    #         data = json.loads(request.body)
+    #         # Elimina la validación de creador temporalmente
+    #         evento = Calendario.objects.get(id=evento_id)
+    #         evento.titulo = data['titulo']
+    #         evento.descripcion = data.get('descripcion')
+    #         evento.fecha_inicio = data['fecha_inicio']
+    #         evento.fecha_fin = data.get('fecha_fin')
+    #         evento.save()
+    #         return JsonResponse({'success': True})
+    #     except Calendario.DoesNotExist:
+    #         return JsonResponse({'success': False, 'error': 'Evento no encontrado'}, status=404)
+    #     except KeyError as e:
+    #         return JsonResponse({'success': False, 'error': f'Campo faltante: {e}'}, status=400)
+    #     except Exception as e:
+    #         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    # return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
 @csrf_exempt
 def eliminar_evento(request, evento_id):

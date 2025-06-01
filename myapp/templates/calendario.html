@@ -471,9 +471,14 @@ body {
                     }
                 },
                 events: data, //nuevo
-                editable: true,
+                editable: true, // Desactiva la edición de eventos
                 selectable: true,
                 selectMirror: true,
+                eventDraggable: false, // Desactiva el arrastre de eventos
+                disableDragging: true, // Deshabilita el arrastre de eventos
+                eventDurationEditable: false,
+                eventResizableFromStart: false,
+                eventDragMinDistance: 9999,
                 select: function (info) {
                     const startInput = document.getElementById('event-start');
                     const endInput = document.getElementById('event-end');
@@ -484,30 +489,63 @@ body {
                         if (addEventModal) addEventModal.show();
                     }
                 },
-                
                 eventClick: function (info) {
-                  const eventObj = info.event;
-                  // Depuración: muestra el evento completo en consola
-                  console.log('Evento seleccionado:', eventObj);
-                  console.log('Fecha de inicio:', info.startStr);
-                  console.log('Fecha de fin:', info.endStr);
-                   // Formatear fechas al formato datetime-local
-                  const startFormatted = moment(eventObj.start).format('YYYY-MM-DDTHH:mm');
-                  const endFormatted = moment(eventObj.end).format('YYYY-MM-DDTHH:mm');
-      
-                  document.getElementById('event-title').value = eventObj.title;
-                  document.getElementById('event-description').value = eventObj.extendedProps.description || '';
-                  document.getElementById('event-start').value = startFormatted || '';
-                  document.getElementById('event-end').value = endFormatted || '';
-                  document.getElementById('event-start').dataset.eventId = eventObj.id;
-                
-                  // Ocultar botón "Guardar"
-                  document.getElementById('save-event-btn').classList.add('d-none');
-                  // Mostrar botones de Modificar y Eliminar
-                  document.getElementById('modify-event-btn').classList.remove('d-none');
-                  document.getElementById('delete-event-btn').classList.remove('d-none');
+                    const eventObj = info.event;
+                    const modalTitleElement = document.getElementById('addEventModalLabel');
+                    const startInput = document.getElementById('event-start');
+                    const endInput = document.getElementById('event-end');
+                    const titleInput = document.getElementById('event-title');
+                    const descriptionInput = document.getElementById('event-description');
 
-                  if (addEventModal) addEventModal.show();
+                    // Si NO hay evento seleccionado (es decir, hacer clic en una fecha vacía)
+                    if (!eventObj) {
+                        // Reiniciar todos los campos
+                        titleInput.value = '';
+                        descriptionInput.value = '';
+                        startInput.value = new Date().toISOString().slice(0, 16); // Fecha y hora actual
+                        endInput.value = '';
+
+                        // Actualizar dataset
+                        startInput.dataset.eventId = ''; 
+
+                        // Cambiar título del modal
+                        modalTitleElement.textContent = 'Agregar Evento';
+
+                        // Mostrar botón "Guardar"
+                        document.getElementById('save-event-btn').classList.remove('d-none');
+                        // Ocultar botones "Modificar" y "Eliminar"
+                        document.getElementById('modify-event-btn').classList.add('d-none');
+                        document.getElementById('delete-event-btn').classList.add('d-none');
+
+                        // Abrir el modal
+                        if (addEventModal) addEventModal.show();
+                        return;
+                    }
+
+                    // Si SÍ hay evento (seleccionado), es MODIFICAR
+                    // Formatear fechas al formato datetime-local
+                    const startFormatted = moment(eventObj.start).format('YYYY-MM-DDTHH:mm');
+                    const endFormatted = moment(eventObj.end).format('YYYY-MM-DDTHH:mm');
+
+                    // Llenar los campos con los datos del evento
+                    titleInput.value = eventObj.title;
+                    descriptionInput.value = eventObj.extendedProps.description || '';
+                    startInput.value = startFormatted;
+                    endInput.value = endFormatted;
+                    startInput.dataset.eventId = eventObj.id;
+
+                    // Cambiar título del modal
+                    modalTitleElement.textContent = 'Modificar Evento';
+
+                    // Ocultar botón "Guardar"
+                    document.getElementById('save-event-btn').classList.add('d-none');
+
+                    // Mostrar botones "Modificar" y "Eliminar"
+                    document.getElementById('modify-event-btn').classList.remove('d-none');
+                    document.getElementById('delete-event-btn').classList.remove('d-none');
+
+                    // Abrir el modal
+                    if (addEventModal) addEventModal.show();
                 },
                 eventClassNames: function (arg) {
                   return ['bg-success', 'text-white'];
@@ -528,23 +566,25 @@ body {
     
       // Guardar Evento
       function saveEvent() {
-          const title = document.getElementById('event-title')?.value.trim();
-          const start = document.getElementById('event-start')?.value;
-          const end = document.getElementById('event-end')?.value || start;
-          const description = document.getElementById('event-description')?.value;
-          const eventId = document.getElementById('event-start').dataset.eventId;
-      
-          if (!title || !start) {
-            Swal.fire({
-                title: 'Error',
-                text: 'Por favor, completa todos los campos requeridos.',
-                icon: 'error',
-                confirmButtonText: 'Aceptar'
-            });
-            return;
-          }
-          const url = eventId ? `/calendario/modificar/${eventId}/` : '/calendario/guardar/';
-          fetch(url, {
+            const title = document.getElementById('event-title')?.value.trim();
+            const start = document.getElementById('event-start')?.value;
+            const end = document.getElementById('event-end')?.value || start;
+            const description = document.getElementById('event-description')?.value;
+            const eventId = document.getElementById('event-start').dataset.eventId;
+
+            if (!title || !start) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Por favor, completa todos los campos requeridos.',
+                    icon: 'error',
+                    confirmButtonText: 'Aceptar'
+                });
+                return;
+            }
+
+            const url = `/calendario/modificar/${eventId}/`;
+
+            fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -558,10 +598,15 @@ body {
                     fecha_fin: end
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data && data.success) {
-                    // Éxito: Mostrar mensaje y actualizar el evento
+                    // Mostrar mensaje personalizado
                     Swal.fire({
                         title: '¡Éxito!',
                         text: 'El evento ha sido modificado correctamente.',
@@ -573,6 +618,7 @@ body {
                     const eventToUpdate = calendarInstance.getEventById(eventId);
                     if (eventToUpdate) eventToUpdate.remove();
 
+                    // Agregar la versión actualizada
                     calendarInstance.addEvent({
                         id: eventId,
                         title: title,
@@ -584,25 +630,24 @@ body {
 
                     if (addEventModal) addEventModal.hide();
                 } else {
-                    // Error: Mostrar mensaje de fallo
                     Swal.fire({
                         title: 'Error',
-                        text: data.message || 'No se pudo modificar el evento. Inténtalo nuevamente.',
+                        text: data.message || 'No se pudo guardar el evento.',
                         icon: 'error',
-                        confirmButtonText: 'Aceptar'
+                        confirmButtonText: 'Cerrar'
                     });
                 }
             })
-      .catch(error => {
-          console.error('Error al guardar el evento:', error);
-          Swal.fire({
-              title: 'Error',
-              text: 'Ocurrió un error al intentar guardar el evento.',
-              icon: 'error',
-              confirmButtonText: 'Aceptar'
-          });
-      });
-    }
+            .catch(error => {
+                console.error("Error al guardar el evento:", error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Hubo un problema al guardar los cambios.',
+                    icon: 'error',
+                    confirmButtonText: 'Cerrar'
+                });
+            });
+      }
 
     // Eliminar evento
     function deleteEvent() {
@@ -676,42 +721,66 @@ body {
       // Manejo de DOM
       document.addEventListener('DOMContentLoaded', function () {
         initializeModal();
-    
 
-          // Botón Agregar Evento
+          const modalTitleElement = document.getElementById('addEventModalLabel');
+
+          // Botones del DOM
           const addEventBtn = document.getElementById('add-event-btn');
-          // Asignar evento al botón Guardar
           const saveEventBtn = document.getElementById('save-event-btn');
-          // Botón Modificar
           const modifyEventBtn = document.getElementById('modify-event-btn');
-          // Botón Eliminar
           const deleteEventBtn = document.getElementById('delete-event-btn');
+
+          // Fecha actual para nuevo evento
+          const now = new Date().toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+          modalTitleElement.textContent = 'Agregar Evento';
+          // --- BOTÓN AGREGAR EVENTO ---
           if (addEventBtn) {
               addEventBtn.addEventListener('click', function () {
-                  // Reiniciar el ID del evento
+                  // Lógica para abrir modal de agregar evento
+                  document.getElementById('event-title').value = '';
+                  document.getElementById('event-description').value = '';
+                  document.getElementById('event-start').value = now;
+                  document.getElementById('event-end').value = '';
                   document.getElementById('event-start').dataset.eventId = '';
-                  // Mostrar botón "Guardar"
+                  document.getElementById('addEventModalLabel').textContent = 'Agregar Evento';
                   document.getElementById('save-event-btn').classList.remove('d-none');
-                  // Ocultar botones de Modificar y Eliminar
                   document.getElementById('modify-event-btn').classList.add('d-none');
                   document.getElementById('delete-event-btn').classList.add('d-none');
-
-                  // Abrir el modal directamente
                   if (addEventModal) addEventModal.show();
               });
           }
+
+          // --- EVENT LISTENERS DE LOS BOTONES ---
           if (saveEventBtn) {
               saveEventBtn.addEventListener('click', saveEvent);
           }
-
           if (modifyEventBtn) {
               modifyEventBtn.addEventListener('click', saveEvent);
           }
-
           if (deleteEventBtn) {
               deleteEventBtn.addEventListener('click', deleteEvent);
           }
 
+          // --- REINICIAR EL MODAL CUANDO SE CIERRA ---
+          document.getElementById('addEventModal').addEventListener('hidden.bs.modal', function () {
+              const startInput = document.getElementById('event-start');
+              const modalTitleElement = document.getElementById('addEventModalLabel');
+
+              // Limpiar formulario
+              document.getElementById('event-title').value = '';
+              document.getElementById('event-description').value = '';
+              document.getElementById('event-end').value = '';
+              startInput.value = '';
+              startInput.dataset.eventId = '';
+
+              // Restablecer título del modal
+              modalTitleElement.textContent = 'Agregar Evento';
+
+              // Mostrar/ocultar botones según contexto
+              document.getElementById('save-event-btn').classList.remove('d-none');
+              document.getElementById('modify-event-btn').classList.add('d-none');
+              document.getElementById('delete-event-btn').classList.add('d-none');
+          });
           // Inicializar calendario
           mostrarCalendario();
       });
