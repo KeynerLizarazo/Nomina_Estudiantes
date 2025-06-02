@@ -11,7 +11,7 @@ urlpatterns = [
     
     # Calendario
     path('calendario/', views.calendario_view, name='calendario'),
-    path('eventos-json/', views.eventos_json, name='eventos_json'),
+    path('json/', views.eventos_json, name='eventos_json'),
     path('guardar-evento/', views.guardar_evento, name='guardar_evento'),
     path('modificar-evento/<int:evento_id>/', views.modificar_evento, name='modificar_evento'),
     path('eliminar-evento/<int:evento_id>/', views.eliminar_evento, name='eliminar_evento'),
