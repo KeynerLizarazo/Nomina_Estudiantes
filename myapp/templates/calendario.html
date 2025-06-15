@@ -582,7 +582,7 @@ body {
                 return;
             }
 
-            const url = `/calendario/modificar/${eventId}/`;
+            const url = eventId ? `/calendario/modificar/${eventId}/` : '/calendario/guardar/';
 
             fetch(url, {
                 method: 'POST',
