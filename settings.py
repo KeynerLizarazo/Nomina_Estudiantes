@@ -60,14 +60,17 @@ WSGI_APPLICATION = 'nomina_estudiantes.wsgi.application'  # Configuración WSGI
 
 DATABASES = {
     'default': {
-
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'railway',  # Nombre de la base de datos PostgreSQL
         'USER': 'postgres',        # Usuario de PostgreSQL
         'PASSWORD': 'XwOqzcKviSyqtqFsyEHPnLCfAYifgIhL', # Contraseña del usuario
         'HOST': 'gondola.proxy.rlwy.net',                  # Host de PostgreSQL
-        'PORT': '25214',                       # Puerto predeterminado de PostgreSQL
-
+        'PORT': '25214',                          # Puerto predeterminado de PostgreSQL
+    },
+        # Configuración para la base de datos local (SQLite)
+    'local_db': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / "db.sqlite3",
     }
 }
 
@@ -95,6 +98,7 @@ STATIC_URL = '/static/' # URL base para archivos estáticos
 STATICFILES_DIRS = [ 
     BASE_DIR / "static", # Carpeta estática de tu aplicación
 ]
+DATABASES_ROUTERS= ['routers_db.db_routers.AuthRouter']
 
 # Directorio donde se copiarán con collectstatic (en producción)
 STATIC_ROOT = BASE_DIR / "staticfiles"

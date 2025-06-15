@@ -218,6 +218,19 @@ def calendario_view(request):
     }
     return render(request, 'calendario.html', context)
 
+# def agregar_evento(request):
+#     if request.method == 'POST':
+#         form = CalendarioForm(request.POST)
+#         if form.is_valid():
+#             evento = form.save(commit=False)
+#             evento.creador = request.user
+#             evento.save()
+#             return redirect('calendario')
+#     else:
+#         form = CalendarioForm()
+
+#     return render(request, 'calendario.html', {'form': form})
+
 
 @csrf_exempt
 def guardar_evento(request):
@@ -249,6 +262,46 @@ def guardar_evento(request):
 
 @csrf_exempt
 def modificar_evento(request, evento_id):
+    # try:
+    #     evento_id = int(evento_id)
+    # except ValueError:
+    #     return JsonResponse({'success': False, 'error': 'ID inválido'}, status=400)
+
+    # if request.method == 'POST':
+    #     try:
+    #         data = json.loads(request.body)
+    #         evento = Calendario.objects.get(id=evento_id)
+
+    #         # Validar y parsear fechas con zona horaria
+    #         tz = pytz.UTC  # Puedes cambiarlo si usas una zona horaria específica
+
+    #         fecha_inicio = data.get('fecha_inicio')
+    #         if not fecha_inicio:
+    #             return JsonResponse({'success': False, 'error': 'Fecha de inicio requerida'}, status=400)
+
+    #         # Convertir fecha_inicio a datetime aware
+    #         evento.fecha_inicio = tz.localize(datetime.fromisoformat(fecha_inicio))
+
+    #         fecha_fin = data.get('fecha_fin')
+    #         if fecha_fin:
+    #             evento.fecha_fin = tz.localize(datetime.fromisoformat(fecha_fin))
+    #         else:
+    #             evento.fecha_fin = None
+
+    #         # Guardar otros campos
+    #         evento.titulo = data.get('titulo', evento.titulo)
+    #         evento.descripcion = data.get('descripcion', evento.descripcion)
+    #         evento.save()
+
+    #         return JsonResponse({'success': True})
+    #     except Calendario.DoesNotExist:
+    #         return JsonResponse({'success': False, 'error': 'Evento no encontrado'}, status=404)
+    #     except Exception as e:
+    #         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    # return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
+    
+    
+    
     """
     Modifica un evento existente (AJAX).
     """

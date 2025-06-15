@@ -62,6 +62,11 @@ DATABASES = {
         'HOST': 'gondola.proxy.rlwy.net',                  # Host de PostgreSQL
         'PORT': '25214',                       # Puerto predeterminado de PostgreSQL
 
+    },
+    # Configuración para la base de datos local (SQLite)
+    'local_db': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / "db.sqlite3",
     }
 }
 # Password validation
