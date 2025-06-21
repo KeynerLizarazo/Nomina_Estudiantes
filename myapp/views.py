@@ -354,20 +354,7 @@ def eliminar_evento(request, evento_id):
             return JsonResponse({'success': False, 'error': 'Evento no encontrado.'}, status=404)
     return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
 
-
 def eventos_json(request):
-    """
-    Devuelve todos los eventos en formato JSON para FullCalendar.
-    """
     eventos = Calendario.objects.all()
-    data = [
-        {
-            'id': e.id,
-            'title': e.titulo,
-            'start': e.fecha_inicio.isoformat(),
-            'end': e.fecha_fin.isoformat() if e.fecha_fin else None,
-            'description': e.descripcion
-        }
-        for e in eventos
-    ]
+    data = [{'title': e.titulo, 'start': e.fecha_inicio.isoformat(), 'end': e.fecha_fin.isoformat() if e.fecha_fin else null} for e in eventos]
     return JsonResponse(data, safe=False)
