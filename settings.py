@@ -7,8 +7,11 @@ from pathlib import Path
 # ==============================
 BASE_DIR = Path(__file__).resolve().parent.parent  # Ruta base del proyecto
 SECRET_KEY = 'django-insecure-abc123'  # Clave secreta para cifrado (cámbiala en producción)
+# SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-abc123')
 DEBUG = True  # Modo de depuración (cambia a False en producción)
+# DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = []  # Lista de dominios permitidos (agrega aquí tu dominio si es necesario)
+# ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 LOGIN_URL = '/login/'
 # ==============================
 # APLICACIONES INSTALADAS
@@ -57,22 +60,33 @@ WSGI_APPLICATION = 'nomina_estudiantes.wsgi.application'  # Configuración WSGI
 # ==============================
 # BASE DE DATOS
 # ==============================
+# Cambia tu configuración para que 'default' apunte a SQLite cuando Railway no esté disponible.
+# Puedes hacerlo manualmente o con una variable de entorno:
+USE_SQLITE = os.getenv('USE_SQLITE', 'False') == 'True'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'railway',  # Nombre de la base de datos PostgreSQL
-        'USER': 'postgres',        # Usuario de PostgreSQL
-        'PASSWORD': 'XwOqzcKviSyqtqFsyEHPnLCfAYifgIhL', # Contraseña del usuario
-        'HOST': 'gondola.proxy.rlwy.net',                  # Host de PostgreSQL
-        'PORT': '25214',                          # Puerto predeterminado de PostgreSQL
-    },
-        # Configuración para la base de datos local (SQLite)
-    'local_db': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / "db.sqlite3",
+if USE_SQLITE:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'railway',  # Nombre de la base de datos PostgreSQL
+            'USER': 'postgres',        # Usuario de PostgreSQL
+            'PASSWORD': 'XwOqzcKviSyqtqFsyEHPnLCfAYifgIhL', # Contraseña del usuario
+            'HOST': 'gondola.proxy.rlwy.net',                  # Host de PostgreSQL
+            'PORT': '25214',                          # Puerto predeterminado de PostgreSQL
+        },
+        # Configuración para la base de datos local (SQLite)
+        'local_db': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # ==============================
 # VALIDACIÓN DE CONTRASEÑAS (OPCIONAL)

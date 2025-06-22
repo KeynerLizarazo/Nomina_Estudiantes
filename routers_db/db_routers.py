@@ -1,3 +1,6 @@
+import logging
+from django.db import connections, OperationalError
+
 class AuthRouter:
     """
     AuthRouter es un router de bases de datos personalizado para Django.
@@ -8,6 +11,23 @@ class AuthRouter:
     # Conjunto de etiquetas de aplicaciones que serán dirigidas a 'local_db'
     route_app_labels = {'admin', 'contenttypes', 'sessions', 'auth', 'messages', 'staticfiles'}
 
+    # Puedes definir una lista de preferencia de bases de datos
+    preferred_dbs = ['default', 'local_db']
+    
+    def _get_available_db(self):
+        """
+        Devuelve la primera base de datos disponible según el orden de preferred_dbs.
+        """
+        for db in self.preferred_dbs:
+            try:
+                # Intenta abrir una conexión (no ejecuta queries)
+                connections[db].ensure_connection()
+                return db
+            except OperationalError:
+                logging.warning(f"Base de datos '{db}' no disponible.")
+        # Si ninguna está disponible, retorna None
+        return None
+    
     def db_for_read(self, model, **hints):
         """
         Indica a Django que las operaciones de lectura (SELECT) para los modelos de las apps internas
