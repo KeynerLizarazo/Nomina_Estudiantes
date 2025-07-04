@@ -5,6 +5,7 @@ urlpatterns = [
     path('', views.home, name='home'),  # Esto debe estar definido en views.py
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('welcome/', views.welcome, name='welcome'),
     path('cedulas/', views.cedulas, name='cedulas'),
     path('guardar/', views.guardar_cedula, name='guardar_cedula'),
     path('eliminar/<int:id>/', views.eliminar_cedula, name='eliminar_cedula'),

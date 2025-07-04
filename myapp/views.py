@@ -16,10 +16,13 @@ from datetime import datetime
 # Función home - Redirigir raíz a login o cedulas
 # ==============================
 def home(request):
+    request.session.flush()
     print("DEBUG - Sesión actual:", request.session.items())  # Ver contenido de sesión
     if 'usuario_id' in request.session:
-        return redirect('cedulas')
+        return redirect('welcome')
     else:
+        request.session.flush()
+        #esto es una linea nueva
         return redirect('login')
 
 
@@ -38,6 +41,15 @@ def login_required(view_func):
 # ==============================
 # Funciones CRUD para Cédulas
 # ==============================
+
+@login_required
+def welcome(request):
+    
+    return render(request, 'welcome.html')
+
+    
+    
+
 @login_required
 def cedulas(request):
     """
@@ -164,7 +176,7 @@ def login_view(request):
             usuario = Usuario.objects.get(username=username)
             if usuario.password == password:
                 request.session['usuario_id'] = usuario.id
-                return redirect('cedulas')
+                return redirect('welcome')
             else:
                 messages.error(request, 'Credenciales incorrectas.')
         except Usuario.DoesNotExist:
