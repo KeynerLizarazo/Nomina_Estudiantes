@@ -1,0 +1,48 @@
+.main-content {
+      transition: all 0.3s ease;
+    }
+
+    .sidebar {
+      width: 60px;
+      background-color: #212529;
+      transition: width 0.3s ease;
+    }
+
+    .sidebar:hover {
+      width: 180px;
+    }
+
+    .nav-link {
+      padding: 12px 15px;
+      display: flex;
+      align-items: center;
+      transition: background-color 0.2s ease;
+    }
+
+    .nav-link:hover {
+      background-color: #922323;
+    }
+
+    .nav-text {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      white-space: nowrap;
+      margin-left: 10px;
+    }
+
+    .sidebar:hover .nav-text {
+      opacity: 1;
+    }
+
+    
+    .aguila-trans {
+      opacity: 0.3;
+      width: 780px;
+      height: auto;
+      
+    }
+
+    .degradado-sidebar {
+      background: linear-gradient(to bottom, #272872, #5776af);
+      /* Degradado de arriba hacia abajo */
+    }
