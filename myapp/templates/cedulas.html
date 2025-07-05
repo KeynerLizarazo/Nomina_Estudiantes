@@ -19,7 +19,7 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
 
   <style>
-    
+
   </style>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -29,14 +29,14 @@
 <body class="m-0 p-0">
   <div class="bg-my-background-color d-flex text-white ">
     <!-- Barra lateral izquierda -->
-    <div class="sidebar degradado-sidebar d-flex flex-column text-white 100vh overflow-hidden">
+    <div class="sidebar degradado-sidebar d-flex flex-column text-white min-vh-100 overflow-hidden">
       <!-- Sidebar -->
-      <a class="mt-3 nav-link" href="#">
+      <a class="mt-3 nav-link" href="{% url 'welcome' %}" id="welcome-btn">
         <img src="../../static/assets/images/main.png" height="26" width="30">
         <span class="nav-text">Inicio</span>
       </a>
       <hr class="">
-      <a class="mt-2 nav-link" href="#" id="control-nomina-btn" onclick="mostrarControlNomina()">
+      <a class="mt-2 nav-link" href="{% url 'cedulas' %}" id="control-nomina-btn" style="background-color: #922323"> <!-- talvez deberia agregarse a la paleta de boostrap? -->
         <img src="../../static/assets/images/estudiantes.png" width="28" height="28">
         <span class="nav-text">Estudiantes</span>
       </a>
@@ -44,7 +44,7 @@
         <img src="../../static/assets/images/usuarios.png" width="28" height="28">
         <span class="nav-text">Usuarios</span>
       </a>
-      <a class="nav-link" href="{% url 'calendario' %}" id="calendario-btn">
+      <a class="nav-link" href="#">
         <img src="../../static/assets/images/cursos.png" width="28" height="28">
         <span class="nav-text">Cursos</span>
       </a>
@@ -52,7 +52,7 @@
         <img src="../../static/assets/images/mipefil.png" width="28" height="28">
         <span class="nav-text">Mi Perfil</span>
       </a>
-      <a class="nav-link" href="#">
+      <a class="nav-link" href="{% url 'calendario' %}" id="calendario-btn">
         <span class="nav-text">Calendario</span>
       </a>
       <a class="nav-link mt-auto" href="{% url 'logout' %}">
@@ -64,333 +64,267 @@
     </div>
 
     <!-- Contenido principal -->
-    <main class="main-content vh-100 d-flex flex-grow-1 p-3 align-items-center justify-content-center">
-      <div class="container-fluid">
-        <div class="row justify-content-center align-items-center ">
-          <img src="../../static/assets/images/aguila.png" alt="Imagen transparente"
-            class="aguila-trans img-fluid mx-auto z-0 position-absolute pe-none">
-          <!-- Columna izquierda - Logo y texto -->
-          <div class="col-md-6 text-center z-1">
-            <img src="../../static/assets/images/minilogowhite.png" alt="Logo" class="img-fluid pe-none"
-              style="max-height: 100px;">
-            <h1 class="display-5 fw-bold"><b>Bienvenid@</b></h1>
-            <p class="fs-2">Aprende con nosotros</p>
 
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
-  <div class="main-content bg-light flex-grow-1" style="display: none;">
-    <div class="card shadow">
-      <div class="card-header">Lista de Usuarios</div>
-      <div class="card-body">
-        <div class="card-body">
-          <div class="mb-3">
-            <!-- Formulario de Búsqueda -->
-            <form class="d-flex" method="get" action="{% url 'cedulas' %}">
-              <div class="input-group me-2">
-                <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ query }}">
-              </div>
-              <select name="campo" class="form-select w-25 me-2">
-                <option value="todos" {% if campo == "todos" %}selected{% endif %}>Todos los campos</option>
-                <option value="nombre" {% if campo == "nombre" %}selected{% endif %}>Nombre</option>
-                <option value="apellido" {% if campo == "apellido" %}selected{% endif %}>Apellido</option>
-                <option value="numero_documento" {% if campo == "numero_documento" %}selected{% endif %}>Nro de documento
-                </option>
-              </select>
-
-              <!-- Filtro por Tipo de Documento -->
-              <select name="tipo_documento" class="form-select w-25 me-2">
-                <option value="todos" {% if tipo_documento == "todos" or not tipo_documento %}selected{% endif %}>Todos
-                </option>
-                <option value="V" {% if tipo_documento == "V" %}selected{% endif %}>Venezolano</option>
-                <option value="CC" {% if tipo_documento == "CC" %}selected{% endif %}>Extranjero</option>
-              </select>
-
-              <button class="btn btn-secondary" type="submit">Buscar</button>
-              <a href="{% url 'cedulas' %}" class="btn btn-secondary ms-2 me-2">Refrescar</a>
-              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#controlNominaModal">
-                Añadir
-              </button>
-            </form>
-          </div>
-
-          <!-- Tabla de Resultados -->
-          <table class="table table-bordered">
-            <thead>
-              <tr>
-                <th>Tipo de Documento</th>
-                <th>Número de Documento</th>
-                <th>Nombre</th>
-                <th>Apellido</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-resultados">
-              {% if cedulas %}
-              {% for cedula in cedulas %}
-              <tr data-tipo="{{ cedula.tipo_documento }}">
-                <td>{{ cedula.get_tipo_documento_display }}</td>
-                <td>{{ cedula.numero_documento }}</td>
-                <td>{{ cedula.nombre }}</td>
-                <td>{{ cedula.apellido }}</td>
-                <td>
-                  <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#controlNominaModal"
-                    data-cedula-id="{{ cedula.id }}">Editar</a>
-                  <form action="{% url 'eliminar_cedula' cedula.id %}" method="post" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                  </form>
-                </td>
-              </tr>
-              {% endfor %}
-              {% else %}
-              <tr>
-                <td colspan="5" class="text-center text-muted">No se encontraron registros.</td>
-              </tr>
-              {% endif %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <!-- Ventana Modal -->
-    <div class="modal fade" id="controlNominaModal" tabindex="-1" aria-labelledby="controlNominaModalLabel"
-      aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <!-- Encabezado del Modal -->
-          <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title text-center w-100" id="modalTitle">Control de Nómina</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-
-          <!-- Cuerpo del Modal -->
-          <div class="modal-body">
-            <!-- Formulario -->
-            <form id="nominaForm" method="POST" action="{% url 'guardar_cedula' %}">
-              {% csrf_token %}
-              <input type="hidden" name="id" id="cedulaIdInput" value="">
-
-              <!-- Tipo de Documento -->
-              <div class="mb-3">
-                <label for="tipo_documento" class="form-label">Tipo de Documento:</label>
-                <select class="form-select" id="tipo_documento" name="tipo_documento" required>
-                  <option value="" disabled selected>Seleccione un tipo de documento</option>
-                  <option value="V">Cédula Venezolana (V)</option>
-                  <option value="CC">Extranjero (CC)</option>
+    <div class="flex-grow-1 " style="padding: 2rem;">
+      <div class="card shadow">
+        <div class="card-header">Lista de Usuarios</div>
+        <div class="card-body ">
+          <div class="card-body">
+            <div class="mb-3">
+              <!-- Formulario de Búsqueda -->
+              <form class="d-flex" method="get" action="{% url 'cedulas' %}">
+                <div class="input-group me-2">
+                  <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ query }}">
+                </div>
+                <select name="campo" class="form-select w-25 me-2">
+                  <option value="todos" {% if campo == "todos" %}selected{% endif %}>Todos los campos</option>
+                  <option value="nombre" {% if campo == "nombre" %}selected{% endif %}>Nombre</option>
+                  <option value="apellido" {% if campo == "apellido" %}selected{% endif %}>Apellido</option>
+                  <option value="numero_documento" {% if campo == "numero_documento" %}selected{% endif %}>Nro de
+                    documento
+                  </option>
                 </select>
-              </div>
 
-              <!-- Número de Documento -->
-              <div class="mb-3">
-                <label for="numero_documento" class="form-label">Número de Documento:</label>
-                <input type="text" class="form-control" id="numero_documento" name="numero_documento" required
-                  maxlength="10" oninput="validarCedula(this)">
-              </div>
+                <!-- Filtro por Tipo de Documento -->
+                <select name="tipo_documento" class="form-select w-25 me-2">
+                  <option value="todos" {% if tipo_documento == "todos" or not tipo_documento %}selected{% endif %}>Todos
+                  </option>
+                  <option value="V" {% if tipo_documento == "V" %}selected{% endif %}>Venezolano</option>
+                  <option value="CC" {% if tipo_documento == "CC" %}selected{% endif %}>Extranjero</option>
+                </select>
 
-              <!-- Nombre -->
-              <div class="mb-3">
-                <label for="nombre" class="form-label">Nombre:</label>
-                <input type="text" class="form-control" id="nombre" name="nombre" required maxlength="50"
-                  oninput="capitalizarYValidar(this)">
-              </div>
+                <button class="btn btn-secondary" type="submit">Buscar</button>
+                <a href="{% url 'cedulas' %}" class="btn btn-secondary ms-2 me-2">Refrescar</a>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                  data-bs-target="#controlNominaModal">
+                  Añadir
+                </button>
+              </form>
+            </div>
 
-              <!-- Apellido -->
-              <div class="mb-3">
-                <label for="apellido" class="form-label">Apellido:</label>
-                <input type="text" class="form-control" id="apellido" name="apellido" required maxlength="50"
-                  oninput="capitalizarYValidar(this)">
-              </div>
-            </form>
+            <!-- Tabla de Resultados -->
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Tipo de Documento</th>
+                  <th>Número de Documento</th>
+                  <th>Nombre</th>
+                  <th>Apellido</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-resultados">
+                {% if cedulas %}
+                {% for cedula in cedulas %}
+                <tr data-tipo="{{ cedula.tipo_documento }}">
+                  <td>{{ cedula.get_tipo_documento_display }}</td>
+                  <td>{{ cedula.numero_documento }}</td>
+                  <td>{{ cedula.nombre }}</td>
+                  <td>{{ cedula.apellido }}</td>
+                  <td>
+                    <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                      data-bs-target="#controlNominaModal" data-cedula-id="{{ cedula.id }}">Editar</a>
+                    <form action="{% url 'eliminar_cedula' cedula.id %}" method="post" style="display:inline;">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                  <td colspan="5" class="text-center text-muted">No se encontraron registros.</td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
           </div>
+        </div>
+      </div>
+      <!-- Ventana Modal -->
+      <div class="modal fade" id="controlNominaModal" tabindex="-1" aria-labelledby="controlNominaModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content ">
+            <!-- Encabezado del Modal -->
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title text-center w-100" id="modalTitle">Control de Nómina</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
 
-          <!-- Pie del Modal -->
-          <div class="modal-footer">
-            <div class="row w-100">
-              <div class="col">
-                <button type="submit" form="nominaForm" class="btn btn-primary w-100">Guardar</button>
-              </div>
-              <div class="col">
-                <button type="button" class="btn btn-danger w-100" data-bs-dismiss="modal">Cancelar</button>
+            <!-- Cuerpo del Modal -->
+            <div class="modal-body">
+              <!-- Formulario -->
+              <form id="nominaForm" method="POST" action="{% url 'guardar_cedula' %}">
+                {% csrf_token %}
+                <input type="hidden" name="id" id="cedulaIdInput" value="">
+
+                <!-- Tipo de Documento -->
+                <div class="mb-3">
+                  <label for="tipo_documento" class="form-label">Tipo de Documento:</label>
+                  <select class="form-select" id="tipo_documento" name="tipo_documento" required>
+                    <option value="" disabled selected>Seleccione un tipo de documento</option>
+                    <option value="V">Cédula Venezolana (V)</option>
+                    <option value="CC">Extranjero (CC)</option>
+                  </select>
+                </div>
+
+                <!-- Número de Documento -->
+                <div class="mb-3">
+                  <label for="numero_documento" class="form-label">Número de Documento:</label>
+                  <input type="text" class="form-control" id="numero_documento" name="numero_documento" required
+                    maxlength="10" oninput="validarCedula(this)">
+                </div>
+
+                <!-- Nombre -->
+                <div class="mb-3">
+                  <label for="nombre" class="form-label">Nombre:</label>
+                  <input type="text" class="form-control" id="nombre" name="nombre" required maxlength="50"
+                    oninput="capitalizarYValidar(this)">
+                </div>
+
+                <!-- Apellido -->
+                <div class="mb-3">
+                  <label for="apellido" class="form-label">Apellido:</label>
+                  <input type="text" class="form-control" id="apellido" name="apellido" required maxlength="50"
+                    oninput="capitalizarYValidar(this)">
+                </div>
+              </form>
+            </div>
+
+            <!-- Pie del Modal -->
+            <div class="modal-footer">
+              <div class="row w-100">
+                <div class="col">
+                  <button type="submit" form="nominaForm" class="btn btn-primary w-100">Guardar</button>
+                </div>
+                <div class="col">
+                  <button type="button" class="btn btn-danger w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+      <!-- Bootstrap JS Bundle -->
+      <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
     </div>
-    <!-- Bootstrap JS Bundle -->
-    <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-
-
     <!-- organizar el maldito JS -->
+  </div>
 
-    <script>
-      // Botón para alternar el sidebar
-      const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
-      const sidebar = document.querySelector('.sidebar');
-      toggleSidebarBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('collapsed'); // Alternar la clase 'collapsed'
-      });
-    </script>
+  <!-- Scripts -->
+  <!-- Script para manejar el comportamiento del modal -->
 
-    <script>
-      document.getElementById("toggleSidebarBtn").addEventListener("click", function () {
-        this.classList.toggle("active"); // Alterna la animación
-      });
-    </script>
+  <script>
+    // Capturar el evento de apertura del modal
+    const modal = document.getElementById('controlNominaModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const cedulaIdInput = document.getElementById('cedulaIdInput');
 
-    <!-- Script para manejar el comportamiento del modal -->
+    // Escuchar el evento 'show.bs.modal' para detectar cuándo se abre el modal
+    modal.addEventListener('show.bs.modal', function (event) {
+      // Obtener el botón que activó el modal
+      const button = event.relatedTarget;
 
-    <script>
-      // Capturar el evento de apertura del modal
-      const modal = document.getElementById('controlNominaModal');
-      const modalTitle = document.getElementById('modalTitle');
-      const cedulaIdInput = document.getElementById('cedulaIdInput');
+      // Obtener el ID del objeto desde el atributo 'data-cedula-id'
+      const cedulaId = button.getAttribute('data-cedula-id');
 
-      // Escuchar el evento 'show.bs.modal' para detectar cuándo se abre el modal
-      modal.addEventListener('show.bs.modal', function (event) {
-        // Obtener el botón que activó el modal
-        const button = event.relatedTarget;
+      // Si hay un ID, significa que estamos editando
+      if (cedulaId) {
+        modalTitle.textContent = 'Editar Datos';
+        cedulaIdInput.value = cedulaId;
 
-        // Obtener el ID del objeto desde el atributo 'data-cedula-id'
-        const cedulaId = button.getAttribute('data-cedula-id');
-
-        // Si hay un ID, significa que estamos editando
-        if (cedulaId) {
-          modalTitle.textContent = 'Editar Datos';
-          cedulaIdInput.value = cedulaId;
-
-          // Aquí puedes hacer una solicitud AJAX para cargar los datos del objeto
-          // Por ejemplo:
-          /*
-          fetch(`/api/cedulas/${cedulaId}/`)
-            .then(response => response.json())
-            .then(data => {
-              document.getElementById('tipo_documento').value = data.tipo_documento;
-              document.getElementById('numero_documento').value = data.numero_documento;
-              document.getElementById('nombre').value = data.nombre;
-              document.getElementById('apellido').value = data.apellido;
-            });
-          */
-        } else {
-          modalTitle.textContent = 'Ingresar Datos';
-          cedulaIdInput.value = '';
-        }
-      });
-
-      // Escuchar el evento 'hidden.bs.modal' para restablecer el estado al cerrar el modal
-      modal.addEventListener('hidden.bs.modal', function () {
+        // Aquí puedes hacer una solicitud AJAX para cargar los datos del objeto
+        // Por ejemplo:
+        /*
+        fetch(`/api/cedulas/${cedulaId}/`)
+          .then(response => response.json())
+          .then(data => {
+            document.getElementById('tipo_documento').value = data.tipo_documento;
+            document.getElementById('numero_documento').value = data.numero_documento;
+            document.getElementById('nombre').value = data.nombre;
+            document.getElementById('apellido').value = data.apellido;
+          });
+        */
+      } else {
         modalTitle.textContent = 'Ingresar Datos';
         cedulaIdInput.value = '';
+      }
+    });
 
-        // Limpiar el formulario
-        document.getElementById('nominaForm').reset();
-      });
-    </script>
+    // Escuchar el evento 'hidden.bs.modal' para restablecer el estado al cerrar el modal
+    modal.addEventListener('hidden.bs.modal', function () {
+      modalTitle.textContent = 'Ingresar Datos';
+      cedulaIdInput.value = '';
 
-    <!-- Scripts -->
+      // Limpiar el formulario
+      document.getElementById('nominaForm').reset();
+    });
+  </script>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.all.min.js"></script>
 
-    <!-- FullCalendar JS -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.all.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js"></script>
-    <script>
-      window.onpageshow = function (event) {
-        if (event.persisted || performance.navigation.type === PerformanceNavigation.TYPE_BACK_FORWARD) {
-          // Si viene del historial → redirigir al login
+
+  <script>
+    window.onpageshow = function (event) {
+      if (event.persisted || performance.navigation.type === PerformanceNavigation.TYPE_BACK_FORWARD) {
+        // Si viene del historial → redirigir al login
+        window.location.href = "{% url 'login' %}";
+      }
+    };
+  </script>
+  <script>
+    // Verifica si el usuario está autenticado (usando una variable de contexto)
+    const isAuthenticated = {{ request.session.usuario_id|default:"null" }} !== null;
+
+    window.onpageshow = function (event) {
+      if (event.persisted || performance.navigation.type === PerformanceNavigation.TYPE_BACK_FORWARD) {
+        // Si viene del historial y no está autenticado → redirigir
+        if (!isAuthenticated) {
           window.location.href = "{% url 'login' %}";
         }
-      };
-    </script>
-    <script>
-      // Verifica si el usuario está autenticado (usando una variable de contexto)
-      const isAuthenticated = {{ request.session.usuario_id|default:"null" }} !== null;
+      }
+    };
+  </script>
+  <script>
 
-      window.onpageshow = function (event) {
-        if (event.persisted || performance.navigation.type === PerformanceNavigation.TYPE_BACK_FORWARD) {
-          // Si viene del historial y no está autenticado → redirigir
-          if (!isAuthenticated) {
-            window.location.href = "{% url 'login' %}";
-          }
-        }
-      };
-    </script>
-    <script>
-      // Función para mostrar el Control de Nómina
-      function mostrarControlNomina() {
-        document.getElementById('control-nomina').style.display = 'block';
-        document.getElementById('calendario-container').style.display = 'none';
+
+    // Función para capitalizar y validar caracteres en nombre y apellido
+    function capitalizarYValidar(input) {
+      input.value = input.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
+      input.value = input.value
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+    // Función para validar la cédula según el tipo de documento
+    function validarCedula(input) {
+      const tipoDocumento = document.getElementById('tipo_documento').value;
+      let longitudMaxima = tipoDocumento === 'V' ? 8 : 10;
+      input.value = input.value.replace(/\D/g, '');
+      if (input.value.length > longitudMaxima) {
+        input.value = input.value.slice(0, longitudMaxima);
       }
-      // Función para mostrar el calendario
-      function mostrarCalendario() {
-        document.getElementById('control-nomina').style.display = 'none';
-        document.getElementById('calendario-container').style.display = 'block';
-        // Inicializar FullCalendar si no está inicializado
-        if (!window.calendarInitialized) {
-          var calendarEl = document.getElementById('calendar');
-          var calendar = new FullCalendar.Calendar(calendarEl, {
-            themeSystem: 'bootstrap', // Usa estilos de Bootstrap
-            initialView: 'dayGridMonth', // Vista inicial: mes
-            locale: 'es', // Idioma español
-            events: [
-              {
-                title: 'Evento 1',
-                start: '2023-10-07',
-              },
-              {
-                title: 'Evento 2',
-                start: '2023-10-14',
-                end: '2023-10-16',
-              },
-              {
-                title: 'Reunión',
-                start: '2023-10-20T10:00:00',
-                end: '2023-10-20T12:00:00',
-              },
-            ],
-          });
-          calendar.render();
-          window.calendarInitialized = true; // Marcar como inicializado
-        }
-      }
-      // Función para capitalizar y validar caracteres en nombre y apellido
-      function capitalizarYValidar(input) {
-        input.value = input.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
-        input.value = input.value
-          .toLowerCase()
-          .split(' ')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-      }
-      // Función para validar la cédula según el tipo de documento
-      function validarCedula(input) {
-        const tipoDocumento = document.getElementById('tipo_documento').value;
-        let longitudMaxima = tipoDocumento === 'V' ? 8 : 10;
-        input.value = input.value.replace(/\D/g, '');
-        if (input.value.length > longitudMaxima) {
-          input.value = input.value.slice(0, longitudMaxima);
-        }
-      }
-      $(document).ready(function () {
-        {% if messages %}
-        {% for message in messages %}
-        Swal.fire({
-          icon: '{{ message.tags }}',
-          title: '{{ message.message }}',
-          showConfirmButton: true
-        });
-        {% endfor %}
-        {% endif %}
+    }
+    $(document).ready(function () {
+      {% if messages %}
+      {% for message in messages %}
+      Swal.fire({
+        icon: '{{ message.tags }}',
+        title: '{{ message.message }}',
+        showConfirmButton: true
       });
-    </script>
-
+      {% endfor %}
+      {% endif %}
+    });
+  </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

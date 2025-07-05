@@ -29,14 +29,14 @@
 <body class="m-0 p-0">
   <div class="bg-my-background-color d-flex text-white ">
     <!-- Barra lateral izquierda -->
-    <div class="sidebar degradado-sidebar d-flex flex-column text-white 100vh overflow-hidden">
+    <div class="sidebar degradado-sidebar d-flex flex-column text-white min-vh-100 overflow-hidden">
       <!-- Sidebar -->
-      <a class="mt-3 nav-link" href="#">
+      <a class="mt-3 nav-link " href="{% url 'welcome' %}" id="welcome-btn">
         <img src="../../static/assets/images/main.png" height="26" width="30">
         <span class="nav-text">Inicio</span>
       </a>
       <hr class="">
-      <a class="mt-2 nav-link" href="#" id="control-nomina-btn" onclick="mostrarControlNomina()">
+      <a class="mt-2 nav-link" href="{% url 'cedulas' %}" id="control-nomina-btn">
         <img src="../../static/assets/images/estudiantes.png" width="28" height="28">
         <span class="nav-text">Estudiantes</span>
       </a>
@@ -44,7 +44,7 @@
         <img src="../../static/assets/images/usuarios.png" width="28" height="28">
         <span class="nav-text">Usuarios</span>
       </a>
-      <a class="nav-link" href="{% url 'calendario' %}" id="calendario-btn">
+      <a class="nav-link" href="#" >
         <img src="../../static/assets/images/cursos.png" width="28" height="28">
         <span class="nav-text">Cursos</span>
       </a>
@@ -52,7 +52,7 @@
         <img src="../../static/assets/images/mipefil.png" width="28" height="28">
         <span class="nav-text">Mi Perfil</span>
       </a>
-      <a class="nav-link" href="#">
+      <a class="nav-link" href="{% url 'calendario' %}" id="calendario-btn">
         <span class="nav-text">Calendario</span>
       </a>
       <a class="nav-link mt-auto" href="{% url 'logout' %}">
