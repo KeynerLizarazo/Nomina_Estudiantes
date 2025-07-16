@@ -1,6 +1,5 @@
 {% load static %}
 <!DOCTYPE html>
-
 <html lang="es">
 
 <head>
@@ -8,10 +7,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Control de Nómina - The Professor</title>
   <!-- Bootstrap CSS -->
-
   <link href="{% static 'assets/styles/custom.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/styles/main-style.css' %}" rel="stylesheet" />
-
 
   <!-- SweetAlert2 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
@@ -19,7 +16,8 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
 
   <style>
-    
+
+
   </style>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -27,7 +25,7 @@
 </head>
 
 <body class="m-0 p-0">
-  <div class="bg-my-background-color d-flex text-white ">
+  <div class="bg-my-background-color d-flex text-white">
     <!-- Barra lateral izquierda -->
     <div class="sidebar degradado-sidebar d-flex flex-column text-white min-vh-100 overflow-hidden">
       <!-- Sidebar -->
@@ -44,7 +42,7 @@
         <img src="../../static/assets/images/usuarios.png" width="28" height="28">
         <span class="nav-text">Usuarios</span>
       </a>
-      <a class="nav-link" href="{% url 'cursos' %}" id="cursos-btn" >
+      <a class="nav-link" href="{% url 'cursos' %}" id="cursos-btn">
         <img src="../../static/assets/images/cursos.png" width="28" height="28">
         <span class="nav-text">Cursos</span>
       </a>
@@ -52,37 +50,48 @@
         <img src="../../static/assets/images/mipefil.png" width="28" height="28">
         <span class="nav-text">Mi Perfil</span>
       </a>
-      <a class="nav-link" href="{% url 'test_zone' %}" id="test_zone-btn">
-        <span class="nav-text">test_zone</span>
+      <a class="nav-link" href="{% url 'calendario' %}" id="calendario-btn">
+        <span class="nav-text">Calendario</span>
       </a>
       <a class="nav-link mt-auto" href="{% url 'logout' %}">
         <img src="../../static/assets/images/logout1.png" width="28" height="28">
         <span class="nav-text">Cerrar Sesión</span>
       </a>
-
-
     </div>
 
-    <!-- Contenido principal -->
-    <main class="main-content vh-100 d-flex flex-grow-1 p-3 align-items-center justify-content-center">
-      <div class="container-fluid">
-        <div class="row justify-content-center align-items-center ">
-          <img src="../../static/assets/images/aguila.png" alt="Imagen transparente"
-            class="aguila-trans img-fluid mx-auto z-0 position-absolute pe-none">
-          <!-- Columna izquierda - Logo y texto -->
-          <div class="col-md-6 text-center z-1">
-            <img src="../../static/assets/images/minilogowhite.png" alt="Logo" class="img-fluid pe-none"
-              style="max-height: 100px;">
-            <h1 class="display-5 fw-bold"><b>Bienvenid@</b></h1>
-            <p class="fs-2">Aprende con nosotros</p>
+    
 
-          </div>
-        </div>
-      </div>
-    </main>
+    <!-- Contenido principal -->
+      <div class="dropdown">
+      <button
+        class="btn more-options-btn dropdown-toggle"
+        type="button"
+        id="dropdownMenuButton"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+        aria-label="Más opciones"
+      >
+        ⋮
+      </button>
+
+      <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        <li><a class="dropdown-item" href="#editar">Editar</a></li>
+        <li><a class="dropdown-item" href="#compartir">Compartir</a></li>
+        <li><hr class="dropdown-divider" /></li>
+        <li><a class="dropdown-item text-danger" href="#eliminar">Eliminar</a></li>
+      </ul>
+    </div>
+
   </div>
+
+  <!-- Importar Bootstrap Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+
+  <!-- Importar Bootstrap JS (opcional) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
   <!-- Bootstrap JS Bundle -->
-  <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script> 
+  <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

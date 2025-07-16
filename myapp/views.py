@@ -47,8 +47,15 @@ def welcome(request):
     
     return render(request, 'welcome.html')
 
-    
-    
+@login_required
+def cursos(request):
+
+    return render(request, 'cursos.html')
+
+@login_required
+def test_zone(request):
+
+    return render(request, 'test_zone.html')
 
 @login_required
 def cedulas(request):

@@ -7,9 +7,12 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('welcome/', views.welcome, name='welcome'),
     path('cedulas/', views.cedulas, name='cedulas'),
+    path('cursos/', views.cursos, name='cursos'),
     path('guardar/', views.guardar_cedula, name='guardar_cedula'),
     path('eliminar/<int:id>/', views.eliminar_cedula, name='eliminar_cedula'),
-    
+
+    path('test-zone/', views.test_zone, name='test_zone'),
+
     # Calendario
     path('calendario/', views.calendario_view, name='calendario'),
     path('json/', views.eventos_json, name='eventos_json'),

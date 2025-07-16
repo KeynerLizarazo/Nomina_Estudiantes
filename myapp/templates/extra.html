@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursos</title>
+    <!-- Enlazar Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap @5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Estilo básico para el fondo oscuro -->
+    <style>
+        body {
+            background-color: #0d1117; /* Fondo oscuro */
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-4">
+        <!-- Encabezado -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h1>Cursos</h1>
+            </div>
+            <div class="col-md-6 text-end">
+                <!-- Botón para añadir curso -->
+                <a href="#" class="btn btn-primary rounded-circle d-inline-flex align-items-center justify-content-center">
+                    <i class="bi bi-plus-lg"></i>
+                </a>
+                <span class="ms-2">Añadir Curso</span>
+            </div>
+        </div>
+
+        <!-- Barra de búsqueda -->
+        <div class="input-group mb-4">
+            <input type="text" class="form-control" placeholder="Buscar..." aria-label="Buscar">
+            <button class="btn btn-primary" type="button">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+
+        <!-- Lista de cursos -->
+        <div class="list-group">
+            <!-- Curso 1: English -->
+            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Flag_of_the_United_Kingdom.svg/1200px-Flag_of_the_United_Kingdom.svg.png " alt="Bandera del Reino Unido" width="30" height="30" class="me-2">
+                    <div>
+                        <strong>English</strong> (Inglés)
+                    </div>
+                </div>
+                <div>
+                    <span class="badge bg-secondary rounded-pill">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </span>
+                </div>
+            </a>
+
+            <!-- Curso 2: Français -->
+            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Flag_of_France.svg/1200px-Flag_of_France.svg.png " alt="Bandera de Francia" width="30" height="30" class="me-2">
+                    <div>
+                        <strong>Français</strong> (Francés)
+                    </div>
+                </div>
+                <div>
+                    <span class="badge bg-secondary rounded-pill">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </span>
+                </div>
+            </a>
+
+            <!-- Curso 3: Italiano -->
+            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Flag_of_Italy.svg/1200px-Flag_of_Italy.svg.png " alt="Bandera de Italia" width="30" height="30" class="me-2">
+                    <div>
+                        <strong>Italiano</strong> (Italiano)
+                    </div>
+                </div>
+                <div>
+                    <span class="badge bg-secondary rounded-pill">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </span>
+                </div>
+            </a>
+
+            <!-- Curso 4: 日本語 -->
+            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Flag_of_Japan.svg/1200px-Flag_of_Japan.svg.png " alt="Bandera de Japón" width="30" height="30" class="me-2">
+                    <div>
+                        <strong>日本語</strong> (Japonés)
+                    </div>
+                </div>
+                <div>
+                    <span class="badge bg-secondary rounded-pill">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Enlazar Bootstrap JS y Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap @5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Enlazar iconos de Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons @1.10.5/font/bootstrap-icons.css">
+</body>
+</html>
