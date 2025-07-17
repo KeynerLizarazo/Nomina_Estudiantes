@@ -11,6 +11,7 @@
 $theme-colors: map-merge($theme-colors, (
   "my-background-color": #010029,
   "my-text-purple":      #260e69,
+  "my-red":             #c62300,
 ));
 
 // 5. Finalmente importa todo Bootstrap

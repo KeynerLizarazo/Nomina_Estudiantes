@@ -67,61 +67,57 @@
 
 
     <!-- Contenido principal -->
-    <main class="main-content vh-100 container-fluid p-3 ">
+
+    <main class="main-content vh-100 p-3 mx-3 flex-grow-1">
       <!-- Encabezado y barra de búsqueda -->
+      <div class="container-fluid ">
+        <div class="d-flex justify-content-between align-items-center ">
+          <!-- Título "Cursos" a la izquierda -->
 
-      <div class="d-flex justify-content-between align-items-center">
-        <!-- Título "Cursos" a la izquierda -->
-
-        <!-- Barra de búsqueda -->
-        <div class="d-flex flex-column flex-grow-1">
-          <h2>Cursos</h2>
-          <div class="input-group mb-4  search-bar search-lens z-0">
-            <input type="text" class="w-25  bg-dark text-white border rounded p-2 pe-5" aria-label="Buscar">
-            <button class="btn btn-sm rounded-circle mt-1 z-4" type="button">
-              <i class="bi bi-search"></i>
-            </button>
-          </div>
-        </div>
-        <!-- Botón "+" y texto "Añadir Curso" a la derecha -->
-        <div class="d-flex flex-column align-items-center align-items-end">
-          <button type="button" class="btn btn-primary rounded-circle me-2"
-            style="background-color: #1e40af; border-color: #1e40af;">
-            <i class="">+</i>
-          </button>
-          <span class="text-white me-2 mt-2">Añadir Curso</span>
-        </div>
-      </div>
-
-
-
-
-
-      <!-- Lista de cursos -->
-      <div class="list-group gap-4 ">
-        <!-- Curso 1: English -->
-        <div class="list-group-item d-flex justify-content-between align-items-center rounded ">
-
-          <!-- Link clickeable que cubre todo el item -->
-          <a href="{% url 'cedulas' %}" class="position-absolute w-100 h-100 top-0 start-0 list-group-item-action"></a>
-
-          <!-- Contenido del item -->
-          <div class="d-flex z-2">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Flag_of_the_United_Kingdom.svg/1200px-Flag_of_the_United_Kingdom.svg.png "
-              alt="Bandera del Reino Unido" class="flag-icon rounded-circle me-2" width="30" height="30">
-            <div>
-              <strong>English</strong>
+          <!-- Barra de búsqueda -->
+          <div class="d-flex flex-column flex-grow-1">
+            <h2>Cursos</h2>
+            <div class="input-group mb-4  search-bar search-lens z-0">
+              <input type="text" class="w-25  bg-dark text-white border rounded p-2 pe-5" aria-label="Buscar">
+              <button class="btn btn-sm rounded-circle mt-1 z-4" type="button">
+                <i class="bi bi-search"></i>
+              </button>
             </div>
           </div>
-
-          <!-- Dropdown -->
-          <div class="dropdown z-1">
-            <button class="btn more-options-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
-              aria-expanded="false">
-              ⋮
+          <!-- Botón "+" y texto "Añadir Curso" a la derecha -->
+          <div class="d-flex flex-column align-items-center align-items-end">
+            <button type="button" class="btn btn-primary rounded-circle me-2"
+              style="background-color: #1e40af; border-color: #1e40af;">
+              <i class="">+</i>
             </button>
-            <ul class="dropdown-menu dropdown-menu-higher">
+            <span class="text-white me-2 mt-2">Añadir Curso</span>
+          </div>
+        </div>
+
+
+
+
+
+        <div class="list-group d-flex flex-column gap-4 w-100 mt-2">
+          <!-- Botón 1 -->
+
+          <div class="btn-group ">
+            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1"
+              href="{% url 'cedulas' %}" type="button">
+
+              <img src="../../static/assets/images/flag.png" alt="Bandera" width="40" height="40"
+                class="rounded-circle me-4">
+              <span class="fs-1 text-my-text-purple">English</span>
+            </a>
+            <!-- el boton flecha -->
+
+            <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
+              aria-expanded="false">
+              <span class="visually-hidden">Toggle Dropdown</span>
+              <span class="dropdown-icon">⋮</span> <!-- Aquí va tu icono personalizado -->
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" href="#">Editar</a></li>
               <li>
                 <hr class="dropdown-divider">
@@ -129,31 +125,25 @@
               <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
             </ul>
           </div>
-        </div>
-        <!-- Curso 2: Français -->
 
-        <div class="list-group-item d-flex justify-content-between align-items-center rounded">
 
-          <!-- Link clickeable que cubre todo el item -->
-          <a href="{% url 'cedulas' %}" class="position-absolute w-100 h-100 top-0 start-0 list-group-item-action"></a>
+          <!-- Botón 2 -->
 
-          <!-- Contenido del item -->
-          <div class="d-flex z-2">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Flag_of_the_United_Kingdom.svg/1200px-Flag_of_the_United_Kingdom.svg.png "
-              alt="Bandera del Reino Unido" class="flag-icon rounded-circle me-2" width="30" height="30">
-            <div>
-              <strong>English</strong>
-            </div>
-          </div>
+          <div class="btn-group ">
+            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button">
+              <img src="../../static/assets/images/flag.png" alt="Bandera" width="40" height="40"
+                class="rounded-circle me-4">
+              <span class="fs-1 text-my-text-purple">English</span>
+            </a>
+            <!-- el boton flecha -->
 
-          <!-- Dropdown -->
-          <div class="dropdown z-1">
-            <button class="btn more-options-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+            <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
               aria-expanded="false">
-              ⋮
+              <span class="visually-hidden">Toggle Dropdown</span>
+              <span class="dropdown-icon">⋮</span> <!-- Aquí va tu icono personalizado -->
             </button>
-            <ul class="dropdown-menu dropdown-menu-higher">
+
+            <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" href="#">Editar</a></li>
               <li>
                 <hr class="dropdown-divider">
@@ -161,132 +151,73 @@
               <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
             </ul>
           </div>
-        </div>
-        <!-- Curso 3: italiano -->
-        <div class="list-group-item d-flex justify-content-between align-items-center rounded ">
 
-          <!-- Link clickeable que cubre todo el item -->
-          <a href="{% url 'cedulas' %}" class="position-absolute w-100 h-100 top-0 start-0 list-group-item-action"></a>
+          <!-- Botón 3 -->
 
-          <!-- Contenido del item -->
-          <div class="d-flex z-2">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Flag_of_the_United_Kingdom.svg/1200px-Flag_of_the_United_Kingdom.svg.png "
-              alt="Bandera del Reino Unido" class="flag-icon rounded-circle me-2" width="30" height="30">
-            <div>
-              <strong>English</strong>
-            </div>
-          </div>
+          <div class="btn-group ">
+            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button">
+              <img src="../../static/assets/images/flag.png" alt="Bandera" width="40" height="40"
+                class="rounded-circle me-4">
+              <span class="fs-1 text-my-text-purple">English</span>
+            </a>
+            <!-- el boton flecha -->
 
-          <!-- Dropdown -->
-          <div class="dropdown z-2">
-            <!-- esta es la clase culpable, el unico z index que importa!!!, si es mayor o igual al z index de arriva entonces el dropdown menu sera atravesa por el boton de los 3 puntos -->
-            <!-- borrar el resto de index de esta parte? -->
-            <button class="btn more-options-btn dropdown-toggle" type="button" id="dropdownMenuButton"
-              data-bs-toggle="dropdown" aria-expanded="false" aria-label="Más opciones">
-              ⋮
+            <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
+              aria-expanded="false">
+              <span class="visually-hidden">Toggle Dropdown</span>
+              <span class="dropdown-icon">⋮</span> <!-- Aquí va tu icono personalizado -->
             </button>
 
-            <ul class="dropdown-menu z-2" aria-labelledby="dropdownMenuButton">
-              <li><a class="dropdown-item" href="#editar">Editar</a></li>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="#">Editar</a></li>
               <li>
                 <hr class="dropdown-divider">
               </li>
-              <li><a class="dropdown-item text-danger" href="#eliminar">Eliminar</a></li>
+              <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
             </ul>
           </div>
-        </div>
 
-        <!-- Curso 4: 日本語 -->
-        <div class="list-group-item d-flex justify-content-between align-items-center rounded ">
+          <!-- Botón 4 -->
 
-          <!-- Link clickeable que cubre todo el item -->
-          <a href="{% url 'cedulas' %}" class="position-absolute w-100 h-100 top-0 start-0 list-group-item-action"></a>
+          <div class="btn-group ">
+            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button">
+              <img src="../../static/assets/images/flag.png" alt="Bandera" width="40" height="40"
+                class="rounded-circle me-4">
+              <span class="fs-1 text-my-text-purple">English</span>
+            </a>
+            <!-- el boton flecha -->
 
-          <!-- Contenido del item -->
-          <div class="d-flex z-2">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Flag_of_the_United_Kingdom.svg/1200px-Flag_of_the_United_Kingdom.svg.png "
-              alt="Bandera del Reino Unido" class="flag-icon rounded-circle me-2" width="30" height="30">
-            <div>
-              <strong>English</strong>
-            </div>
-          </div>
-
-          <!-- Dropdown -->
-          <div class="dropdown z-1">
-            <!-- esta es la clase culpable, el unico z index que importa!!!, si es mayor o igual al z index de arriva entonces el dropdown menu sera atravesa por el boton de los 3 puntos -->
-
-            <button class="btn more-options-btn dropdown-toggle" type="button" id="dropdownMenuButton"
-              data-bs-toggle="dropdown" aria-expanded="false" aria-label="Más opciones">
-              ⋮
+            <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
+              aria-expanded="false">
+              <span class="visually-hidden">Toggle Dropdown</span>
+              <span class="dropdown-icon">⋮</span> <!-- Aquí va tu icono personalizado -->
             </button>
 
-            <ul class="dropdown-menu z-2" aria-labelledby="dropdownMenuButton">
-              <li><a class="dropdown-item" href="#editar">Editar</a></li>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="#">Editar</a></li>
               <li>
                 <hr class="dropdown-divider">
               </li>
-              <li><a class="dropdown-item text-danger" href="#eliminar">Eliminar</a></li>
+              <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
             </ul>
           </div>
+
+
+
+
+
+
+
+          <!--  -->
         </div>
-
-
-
-
-
-
-
-        <!--  -->
       </div>
     </main>
   </div>
-  <script>
-    document.querySelectorAll('.more-options-btn').forEach(button => {
-      button.addEventListener('click', function (event) {
-        event.stopPropagation(); // Evita que el clic afecte al padre
-      });
-    });
-
-
-  </script>
-
-
 
   <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <!-- <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script> -->
 
-
-  <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Cerrar otros dropdowns al abrir uno nuevo
-    document.querySelectorAll('.dropdown').forEach(dropdown => {
-      dropdown.addEventListener('show.bs.dropdown', function (event) {
-        const current = event.currentTarget;
-
-        document.querySelectorAll('.dropdown.show').forEach(other => {
-          if (other !== current) {
-            const instance = bootstrap.Dropdown.getInstance(other);
-            if (instance) instance.hide();
-          }
-        });
-      });
-    });
-
-    // Opcional: Cerrar dropdown al hacer clic fuera
-    document.addEventListener('click', function (event) {
-      document.querySelectorAll('.dropdown.show').forEach(dropdown => {
-        const toggle = dropdown.querySelector('[data-bs-toggle="dropdown"]');
-        if (!dropdown.contains(event.target) && !event.target.closest('.dropdown')) {
-          const instance = bootstrap.Dropdown.getInstance(dropdown);
-          if (instance) instance.hide();
-        }
-      });
-    });
-  });
-</script>
 </body>
 
 </html>

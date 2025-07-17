@@ -16,8 +16,25 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
 
   <style>
+    /* Oculta la flecha original del dropdown */
+    .dropdown-toggle::after {
+      display: none;
+    }
+
+    /* Estilo opcional para los tres puntos */
+    .dropdown-icon {
+
+      background-color: transparent;
+      /* Fondo transparente */
+      border: none;
+      /* Sin borde */
+      color: #c62300;
+      /* Color del texto (⋮) */
+      font-size: 1.5rem;
+      padding: 0.25rem 0.25rem;
 
 
+    }
   </style>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -25,7 +42,7 @@
 </head>
 
 <body class="m-0 p-0">
-  <div class="bg-my-background-color d-flex text-white">
+  <div class="bg-my-background-color d-flex text-white ">
     <!-- Barra lateral izquierda -->
     <div class="sidebar degradado-sidebar d-flex flex-column text-white min-vh-100 overflow-hidden">
       <!-- Sidebar -->
@@ -50,48 +67,147 @@
         <img src="../../static/assets/images/mipefil.png" width="28" height="28">
         <span class="nav-text">Mi Perfil</span>
       </a>
-      <a class="nav-link" href="{% url 'calendario' %}" id="calendario-btn">
-        <span class="nav-text">Calendario</span>
+      <a class="nav-link" href="{% url 'test_zone' %}" id="test_zone-btn">
+        <span class="nav-text">test_zone</span>
       </a>
       <a class="nav-link mt-auto" href="{% url 'logout' %}">
         <img src="../../static/assets/images/logout1.png" width="28" height="28">
         <span class="nav-text">Cerrar Sesión</span>
       </a>
+
+
     </div>
 
-    
+
 
     <!-- Contenido principal -->
-      <div class="dropdown">
-      <button
-        class="btn more-options-btn dropdown-toggle"
-        type="button"
-        id="dropdownMenuButton"
-        data-bs-toggle="dropdown"
-        aria-expanded="false"
-        aria-label="Más opciones"
-      >
-        ⋮
-      </button>
 
-      <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-        <li><a class="dropdown-item" href="#editar">Editar</a></li>
-        <li><a class="dropdown-item" href="#compartir">Compartir</a></li>
-        <li><hr class="dropdown-divider" /></li>
-        <li><a class="dropdown-item text-danger" href="#eliminar">Eliminar</a></li>
-      </ul>
+
+    <div class="list-group d-flex flex-column gap-3 w-100 mx-5">
+      <!-- Botón 1 -->
+
+      <div class="btn-group ">
+        <button class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button">
+          <img src="../../static/assets/images/flag.png" alt="Bandera" width="40" height="40"
+            class="rounded-circle me-4">
+          <span class="fs-1 text-sucess">English</span>
+        </button>
+        <!-- el boton flecha -->
+
+        <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
+          aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+          <span class="dropdown-icon">⋮</span> <!-- Aquí va tu icono personalizado -->
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#">Editar</a></li>
+          <li>
+            <hr class="dropdown-divider">
+          </li>
+          <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
+        </ul>
+      </div>
+
+
+      <!-- Botón 2 -->
+
+      <div class="btn-group ">
+        <button class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button">
+          <img src="../../static/assets/images/flag.png" alt="Bandera" width="40" height="40"
+            class="rounded-circle me-4">
+          <span class="fs-1 text-my-text-purple">English</span>
+        </button>
+        <!-- el boton flecha -->
+
+        <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
+          aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+          <span class="dropdown-icon">⋮</span> <!-- Aquí va tu icono personalizado -->
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#">Editar</a></li>
+          <li>
+            <hr class="dropdown-divider">
+          </li>
+          <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
+        </ul>
+      </div>
+
+      <!-- Botón 3 -->
+
+      <div class="btn-group ">
+        <button class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button">
+          <img src="../../static/assets/images/flag.png" alt="Bandera" width="40" height="40"
+            class="rounded-circle me-4">
+          <span class="fs-1 text-my-text-purple">English</span>
+        </button>
+        <!-- el boton flecha -->
+
+        <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
+          aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+          <span class="dropdown-icon">⋮</span> <!-- Aquí va tu icono personalizado -->
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#">Editar</a></li>
+          <li>
+            <hr class="dropdown-divider">
+          </li>
+          <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
+        </ul>
+      </div>
+
+      <!-- Botón 4 -->
+
+      <div class="btn-group ">
+        <button class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button">
+          <img src="../../static/assets/images/flag.png" alt="Bandera" width="40" height="40"
+            class="rounded-circle me-4">
+          <span class="fs-1 text-my-text-purple">English</span>
+        </button>
+        <!-- el boton flecha -->
+
+        <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
+          aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+          <span class="dropdown-icon">⋮</span> <!-- Aquí va tu icono personalizado -->
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#">Editar</a></li>
+          <li>
+            <hr class="dropdown-divider">
+          </li>
+          <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
+        </ul>
+      </div>
+
+
+
+
+
+
+
+
+
+      <!-- no borrar a partir de aquí -->
     </div>
 
-  </div>
+    <!-- Importar Bootstrap Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
 
-  <!-- Importar Bootstrap Icons -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+    <!-- Importar Bootstrap JS (opcional) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Importar Bootstrap JS (opcional) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS Bundle -->
+    <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Bootstrap JS Bundle -->
-  <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
 </body>
 
 </html>

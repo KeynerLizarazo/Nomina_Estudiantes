@@ -39,6 +39,7 @@
   --bs-dark: #212529;
   --bs-my-background-color: #010029;
   --bs-my-text-purple: #260e69;
+  --bs-my-red: #c62300;
   --bs-primary-rgb: 13, 110, 253;
   --bs-secondary-rgb: 108, 117, 125;
   --bs-success-rgb: 25, 135, 84;
@@ -3178,6 +3179,23 @@ textarea.form-control-lg {
   --bs-btn-disabled-border-color: #260e69;
 }
 
+.btn-my-red {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: #c62300;
+  --bs-btn-border-color: #c62300;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #a81e00;
+  --bs-btn-hover-border-color: #9e1c00;
+  --bs-btn-focus-shadow-rgb: 207, 68, 38;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #9e1c00;
+  --bs-btn-active-border-color: #951a00;
+  --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-disabled-bg: #c62300;
+  --bs-btn-disabled-border-color: #c62300;
+}
+
 .btn-outline-primary {
   --bs-btn-color: #0d6efd;
   --bs-btn-border-color: #0d6efd;
@@ -3345,6 +3363,23 @@ textarea.form-control-lg {
   --bs-btn-disabled-color: #260e69;
   --bs-btn-disabled-bg: transparent;
   --bs-btn-disabled-border-color: #260e69;
+  --bs-gradient: none;
+}
+
+.btn-outline-my-red {
+  --bs-btn-color: #c62300;
+  --bs-btn-border-color: #c62300;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #c62300;
+  --bs-btn-hover-border-color: #c62300;
+  --bs-btn-focus-shadow-rgb: 198, 35, 0;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #c62300;
+  --bs-btn-active-border-color: #c62300;
+  --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  --bs-btn-disabled-color: #c62300;
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: #c62300;
   --bs-gradient: none;
 }
 
@@ -4987,6 +5022,13 @@ textarea.form-control-lg {
   --bs-alert-link-color: var(--bs-my-text-purple-text-emphasis);
 }
 
+.alert-my-red {
+  --bs-alert-color: var(--bs-my-red-text-emphasis);
+  --bs-alert-bg: var(--bs-my-red-bg-subtle);
+  --bs-alert-border-color: var(--bs-my-red-border-subtle);
+  --bs-alert-link-color: var(--bs-my-red-text-emphasis);
+}
+
 @keyframes progress-bar-stripes {
   0% {
     background-position-x: var(--bs-progress-height);
@@ -5416,6 +5458,19 @@ textarea.form-control-lg {
   --bs-list-group-active-color: var(--bs-my-text-purple-bg-subtle);
   --bs-list-group-active-bg: var(--bs-my-text-purple-text-emphasis);
   --bs-list-group-active-border-color: var(--bs-my-text-purple-text-emphasis);
+}
+
+.list-group-item-my-red {
+  --bs-list-group-color: var(--bs-my-red-text-emphasis);
+  --bs-list-group-bg: var(--bs-my-red-bg-subtle);
+  --bs-list-group-border-color: var(--bs-my-red-border-subtle);
+  --bs-list-group-action-hover-color: var(--bs-emphasis-color);
+  --bs-list-group-action-hover-bg: var(--bs-my-red-border-subtle);
+  --bs-list-group-action-active-color: var(--bs-emphasis-color);
+  --bs-list-group-action-active-bg: var(--bs-my-red-border-subtle);
+  --bs-list-group-active-color: var(--bs-my-red-bg-subtle);
+  --bs-list-group-active-bg: var(--bs-my-red-text-emphasis);
+  --bs-list-group-active-border-color: var(--bs-my-red-text-emphasis);
 }
 
 .btn-close {
@@ -6960,6 +7015,11 @@ textarea.form-control-lg {
   background-color: RGBA(var(--bs-my-text-purple-rgb), var(--bs-bg-opacity, 1)) !important;
 }
 
+.text-bg-my-red {
+  color: #fff !important;
+  background-color: RGBA(var(--bs-my-red-rgb), var(--bs-bg-opacity, 1)) !important;
+}
+
 .link-primary {
   color: RGBA(var(--bs-primary-rgb), var(--bs-link-opacity, 1)) !important;
   text-decoration-color: RGBA(var(--bs-primary-rgb), var(--bs-link-underline-opacity, 1)) !important;
@@ -7048,6 +7108,15 @@ textarea.form-control-lg {
 .link-my-text-purple:hover, .link-my-text-purple:focus {
   color: RGBA(30, 11, 84, var(--bs-link-opacity, 1)) !important;
   text-decoration-color: RGBA(30, 11, 84, var(--bs-link-underline-opacity, 1)) !important;
+}
+
+.link-my-red {
+  color: RGBA(var(--bs-my-red-rgb), var(--bs-link-opacity, 1)) !important;
+  text-decoration-color: RGBA(var(--bs-my-red-rgb), var(--bs-link-underline-opacity, 1)) !important;
+}
+.link-my-red:hover, .link-my-red:focus {
+  color: RGBA(158, 28, 0, var(--bs-link-opacity, 1)) !important;
+  text-decoration-color: RGBA(158, 28, 0, var(--bs-link-underline-opacity, 1)) !important;
 }
 
 .link-body-emphasis {
@@ -12230,4 +12299,16 @@ textarea.form-control-lg {
 
 .border-my-text-purple {
   border-color: #260e69 !important;
+}
+
+.bg-my-red {
+  background-color: #c62300 !important;
+}
+
+.text-my-red {
+  color: #c62300 !important;
+}
+
+.border-my-red {
+  border-color: #c62300 !important;
 }/*# sourceMappingURL=custom.css.map */

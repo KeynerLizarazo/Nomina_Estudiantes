@@ -1,52 +1,90 @@
 .main-content {
-      transition: all 0.3s ease;
-    }
+  transition: all 0.3s ease;
+}
 
-    body {
-      font-family: 'Segoe UI', sans-serif;
-    }
+body {
+  font-family: 'Segoe UI', sans-serif;
+}
 
-    .sidebar {
-      width: 60px;
-      background-color: #212529;
-      transition: width 0.3s ease;
-    }
+.sidebar {
+  width: 60px;
+  background-color: #212529;
+  transition: width 0.3s ease;
+}
 
-    .sidebar:hover {
-      width: 180px;
-    }
+.sidebar:hover {
+  width: 180px;
+}
 
-    .nav-link {
-      padding: 12px 15px;
-      display: flex;
-      align-items: center;
-      transition: background-color 0.2s ease;
-    }
+.nav-link {
+  padding: 12px 15px;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
 
-    .nav-link:hover {
-      background-color: #922323;
-    }
+.nav-link:hover {
+  background-color: #922323;
+}
 
-    .nav-text {
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      white-space: nowrap;
-      margin-left: 10px;
-    }
+.nav-text {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  margin-left: 10px;
+}
 
-    .sidebar:hover .nav-text {
-      opacity: 1;
-    }
+.sidebar:hover .nav-text {
+  opacity: 1;
+}
 
 
-    .aguila-trans {
-      opacity: 0.3;
-      width: 780px;
-      height: auto;
+.aguila-trans {
+  opacity: 0.3;
+  width: 780px;
+  height: auto;
 
-    }
+}
 
-    .degradado-sidebar {
-      background: linear-gradient(to bottom, #272872, #5776af);
-      /* Degradado de arriba hacia abajo */
-    }
+.degradado-sidebar {
+  background: linear-gradient(to bottom, #272872, #5776af);
+  /* Degradado de arriba hacia abajo */
+}
+
+
+
+
+
+
+
+
+
+
+
+.search-lens button {
+  background: blue;
+  aspect-ratio: 1;
+  height: 80%;
+  right: 40px;
+
+}
+
+/* Oculta la flecha original del dropdown */
+.dropdown-toggle::after {
+  display: none;
+}
+
+/* Estilo opcional para los tres puntos */
+.dropdown-icon {
+
+  background-color: transparent;
+  /* Fondo transparente */
+  border: none;
+  /* Sin borde */
+  color: #c62300;
+  /* Color del texto (⋮) */
+  font-size: 1.5rem;
+  padding: 0.25rem 0.25rem;
+
+
+}
