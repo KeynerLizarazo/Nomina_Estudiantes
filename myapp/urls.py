@@ -8,6 +8,7 @@ urlpatterns = [
     path('welcome/', views.welcome, name='welcome'),
     path('cedulas/', views.cedulas, name='cedulas'),
     path('cursos/', views.cursos, name='cursos'),
+    path('niveles/', views.niveles, name='niveles'),
     path('guardar/', views.guardar_cedula, name='guardar_cedula'),
     path('eliminar/<int:id>/', views.eliminar_cedula, name='eliminar_cedula'),
 

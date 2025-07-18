@@ -53,6 +53,11 @@ def cursos(request):
     return render(request, 'cursos.html')
 
 @login_required
+def niveles(request):
+
+    return render(request, 'niveles.html')
+
+@login_required
 def test_zone(request):
 
     return render(request, 'test_zone.html')
