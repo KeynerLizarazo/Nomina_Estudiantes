@@ -12,24 +12,23 @@ import re
 import pytz
 from datetime import datetime
 
-
 # ==============================
 # Función home - Redirigir raíz a login o cedulas
 # ==============================
-
 def home(request):
-    """
-    Redirige automáticamente a 'cedulas' o 'login' según el estado de sesión.
-    """
+    request.session.flush()
+    print("DEBUG - Sesión actual:", request.session.items())  # Ver contenido de sesión
     if 'usuario_id' in request.session:
-        return redirect('cedulas')
+        return redirect('welcome')
     else:
+        request.session.flush()
+        #esto es una linea nueva
         return redirect('login')
+
 
 # ==============================
 # Decorador personalizado para login requerido
 # ==============================
-
 def login_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
@@ -42,6 +41,26 @@ def login_required(view_func):
 # ==============================
 # Funciones CRUD para Cédulas
 # ==============================
+
+@login_required
+def welcome(request):
+    
+    return render(request, 'welcome.html')
+
+@login_required
+def cursos(request):
+
+    return render(request, 'cursos.html')
+
+@login_required
+def niveles(request):
+
+    return render(request, 'niveles.html')
+
+@login_required
+def test_zone(request):
+
+    return render(request, 'test_zone.html')
 
 @login_required
 def cedulas(request):
@@ -109,11 +128,9 @@ def guardar_cedula(request):
         if not tipo_documento or tipo_documento not in ['V', 'CC']:
             messages.error(request, 'Tipo de documento inválido.')
             return redirect('cedulas')
-
         if not numero_documento.isdigit() or len(numero_documento) > 10:
             messages.error(request, 'Número de documento inválido.')
             return redirect('cedulas')
-
         if len(nombre) > 50 or len(apellido) > 50:
             messages.error(request, 'El nombre o apellido excede los 50 caracteres.')
             return redirect('cedulas')
@@ -140,7 +157,7 @@ def guardar_cedula(request):
                 messages.success(request, 'Registro guardado correctamente.')
         except Exception as e:
             messages.error(request, f'Ocurrió un error al guardar: {str(e)}')
-    
+
     return redirect('cedulas')
 
 
@@ -155,26 +172,23 @@ def eliminar_cedula(request, id):
             messages.success(request, "Registro eliminado correctamente.")
         except Exception as e:
             messages.error(request, f"Ocurrió un error al eliminar: {str(e)}")
-    
     return redirect('cedulas')
 
 
 # ==============================
 # Funciones de Autenticación
 # ==============================
-
 def login_view(request):
-    """
-    Gestiona el inicio de sesión del usuario.
-    """
     if request.method == 'POST':
+        request.session.flush()  # Limpia cualquier sesión residual
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '').strip()
+
         try:
             usuario = Usuario.objects.get(username=username)
             if usuario.password == password:
                 request.session['usuario_id'] = usuario.id
-                return redirect('cedulas')
+                return redirect('welcome')
             else:
                 messages.error(request, 'Credenciales incorrectas.')
         except Usuario.DoesNotExist:
@@ -196,7 +210,6 @@ def logout_view(request):
 # ==============================
 # Vistas del Calendario
 # ==============================
-
 @login_required
 def calendario_view(request):
     """
@@ -206,11 +219,12 @@ def calendario_view(request):
         form = CalendarioForm(request.POST)
         if form.is_valid():
             calendario = form.save(commit=False)
-            calendario.creador = request.user
+            calendario.creador = request.user if request.user.is_authenticated else None
             calendario.save()
             return redirect('calendario')
     else:
         form = CalendarioForm()
+
     eventos = Calendario.objects.all()
     context = {
         'form': form,
@@ -257,6 +271,7 @@ def guardar_evento(request):
             return JsonResponse({'success': False, 'error': 'Formato de fecha inválido.'}, status=400)
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
     return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
 
 
@@ -329,9 +344,10 @@ def modificar_evento(request, evento_id):
             fecha_inicio = data.get('fecha_inicio')
             if not fecha_inicio:
                 return JsonResponse({'success': False, 'error': 'Fecha de inicio es obligatoria.'}, status=400)
-            evento.fecha_inicio = tz.localize(datetime.fromisoformat(fecha_inicio))
 
+            evento.fecha_inicio = tz.localize(datetime.fromisoformat(fecha_inicio))
             fecha_fin = data.get('fecha_fin')
+
             if fecha_fin:
                 evento.fecha_fin = tz.localize(datetime.fromisoformat(fecha_fin))
             else:
@@ -339,6 +355,7 @@ def modificar_evento(request, evento_id):
 
             evento.save()
             return JsonResponse({'success': True})
+
         except KeyError as e:
             return JsonResponse({'success': False, 'error': f'Campo faltante: {e}'}, status=400)
         except Exception as e:
@@ -358,7 +375,7 @@ def eliminar_evento(request, evento_id):
             evento.delete()
             return JsonResponse({'success': True})
         except Calendario.DoesNotExist:
-            return JsonResponse({'success': False})
+            return JsonResponse({'success': False, 'error': 'Evento no encontrado.'}, status=404)
     return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
 
 

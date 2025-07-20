@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Página Inicial</title>
+  <!-- Bootstrap CSS -->
+  <link href="../../scss/custom.css" rel="stylesheet" />
+  <link href="style.css" rel="stylesheet" />
+  <!-- Font Awesome para íconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css " />
+  <style>
+    body {
+      color: white;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    .sidebar {
+      width: 60px;
+      min-height: 100vh;
+      background-color: #212529;
+      transition: width 0.3s ease;
+      overflow: hidden;
+      position: fixed; /* Fija el sidebar */
+      top: 0;
+      left: 0;
+    }
+
+    .sidebar:hover {
+      width: 200px;
+    }
+
+    .nav-link {
+      color: white;
+      padding: 12px 15px;
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      transition: background-color 0.2s ease;
+    }
+
+    .nav-link:hover {
+      background-color: #343a40;
+    }
+
+    .nav-text {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      white-space: nowrap;
+      margin-left: 10px;
+    }
+
+    .sidebar:hover .nav-text {
+      opacity: 1;
+    }
+
+    .main-content {
+      margin-left: 60px; /* Debe coincidir con el ancho inicial del sidebar */
+      min-height: 100vh; /* Ocupa toda la altura */
+      display: flex;
+      align-items: center; /* Centrado vertical */
+      justify-content: center; /* Centrado horizontal */
+      padding: 2rem;
+      flex-grow: 1;
+    }
+
+    .centered-image {
+      position: absolute;
+      /* o relative dependiendo del efecto deseado */
+      opacity: 0.3;
+      width: 780px;
+      height: auto;
+
+
+      /* Ahora sí funciona correctamente */
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-my-background-color">
+    <!-- Barra lateral fija -->
+    <div class="sidebar bg-primary  flex-column text-white">
+      <!-- Sidebar -->
+      <a class="nav-link" href="#">
+        <img src="../../static/assets/images/main.png" width="28" height="28">
+        <span class="nav-text">Inicio</span>
+      </a>
+      <a class="nav-link" href="#">
+        <span class="nav-text">Proyectos</span>
+      </a>
+      <a class="nav-link" href="#">
+        <img src="../../static/assets/images/usuarios.png" width="28" height="28">
+        <span class="nav-text">Usuarios</span>
+      </a>
+      <a class="nav-link" href="#">
+        <img src="../../static/assets/images/cursos.png" width="28" height="28">
+        <span class="nav-text">Cursos</span>
+      </a>
+      <a class="nav-link" href="#">
+        <img src="../../static/assets/images/mipefil.png" width="28" height="28">
+        <span class="nav-text">Mi Perfil</span>
+      </a>
+    </div>
+
+    <!-- Contenido principal -->
+    <main class="main-content z-n1 ">
+      <div class="container-fluid">
+        <div class="row justify-content-center align-items-center">
+          <img src="../../static/assets/images/aguila.png" alt="Imagen transparente" class="centered-image img-fluid mx-auto z-0 ">
+          <!-- Columna izquierda - Logo y texto -->
+          <div class="col-md-6 text-center z-1">
+            <img src="../../static/assets/images/minilogowhite.png" alt="Logo" class="img-fluid"
+              style="max-height: 100px;">
+            <h1 class="display-5 fw-bold"><b>Bienvenid@</b></h1>
+            <p class="fs-2">Aprende con nosotros</p>
+            
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
