@@ -1,15 +1,13 @@
+import os, dj_database_url
 from pathlib import Path
-
+from decouple import config, Csv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent  # Ruta base del proyecto
+SECRET_KEY = config('SECRET_KEY')  # Clave secreta para cifrado (cámbiala en producción)
+DEBUG = config('DEBUG', default=True, cast=bool)  # Modo de depuración (cambia a False en producción)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())  # Lista de dominios permitidos (agrega aquí tu dominio si es necesario)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-suej4id5j^tuzm-$qxm!y%8(ws8dc3a-r1t+6mwm69oea5m!lv'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 LOGIN_URL = '/login/'
-ALLOWED_HOSTS = []
 
 # Application definition
 INSTALLED_APPS = [
@@ -52,23 +50,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'nomina.wsgi.application'
 
-DATABASES = {
-    'default': {
+USE_SQLITE = os.getenv('USE_SQLITE', 'False') == 'True'
 
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'railway',  # Nombre de la base de datos PostgreSQL
-        'USER': 'postgres',        # Usuario de PostgreSQL
-        'PASSWORD': 'XwOqzcKviSyqtqFsyEHPnLCfAYifgIhL', # Contraseña del usuario
-        'HOST': 'gondola.proxy.rlwy.net',                  # Host de PostgreSQL
-        'PORT': '25214',                       # Puerto predeterminado de PostgreSQL
-
-    },
-    # Configuración para la base de datos local (SQLite)
-    'local_db': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / "db.sqlite3",
+if USE_SQLITE:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': dj_database_url.parse(config('DATABASE_URL')),  # Puerto predeterminado de PostgreSQL,
+        # Configuración para la base de datos local (SQLite)
+        'local_db': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / "db.sqlite3",
+        }
+    }
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
