@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
                 ('documento', models.CharField(max_length=20, unique=True)),
                 ('correo', models.EmailField(max_length=254, unique=True)),
                 ('username', models.CharField(max_length=50, unique=True)),
-                ('contraseña', models.CharField(max_length=100)),
+                ('password', models.CharField(max_length=100)),
             ],
         ),
     ]

@@ -4,14 +4,12 @@ from .models import *
 
 # Register your models here.
 admin.site.register(Students) #Registro para estudiantes
-admin.site.register(Person) #Registro para personas
-admin.site.register(User) #Registro para usuarios
 admin.site.register(Units) #Registro para unidades
 admin.site.register(Courses) #Registro para cursos
 admin.site.register(Levels) #Registro para niveles
 admin.site.register(Group_Courses) #Registro para grupos de cursos
 
-@admin.register(Students)
+@admin.register(Person)
 class PersonAdmin(admin.ModelAdmin):
     list_display= ('id', 'name', 'surname','type_document', 
                    'document_number','telephone_number','progenitor_name',
