@@ -68,7 +68,7 @@
 
     <!-- Contenido principal -->
 
-    <main class="main-content vh-100 p-3 mx-3 flex-grow-1">
+    <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto">
       <!-- Encabezado y barra de búsqueda -->
       <div class="container-fluid ">
         <div class="d-flex justify-content-between align-items-center ">
@@ -78,7 +78,8 @@
           <div class="d-flex flex-column flex-grow-1">
             <h2 class="fw-bold">Cursos</h2>
             <div class="input-group mb-4  search-bar search-lens z-0">
-              <input type="text" class="w-25  bg-dark text-white border rounded p-2 pe-5" aria-label="Buscar">
+              <input type="text" class="w-25  bg-my-background-color text-white border rounded p-2 pe-5"
+                aria-label="Buscar">
               <button class="btn btn-sm rounded-circle mt-1 z-4" type="button">
                 <i class="bi bi-search"></i>
               </button>
@@ -86,11 +87,10 @@
           </div>
           <!-- Botón "+" y texto "Añadir Curso" a la derecha -->
           <div class="d-flex flex-column align-items-center align-items-end">
-            <button type="button" class="btn btn-primary rounded-circle me-2"
-              style="background-color: #1e40af; border-color: #1e40af;">
-              <i class="">+</i>
+            <button type="button" class="btn rounded-circle">
+              <img src="../../static/assets/images/agregar.png" alt="Bandera" width="70" height="70" class="">
             </button>
-            <span class="text-white me-2 mt-2">Añadir Curso</span>
+            <span class="text-white fw-bold mt-2 mb-2">Añadir Curso</span>
           </div>
         </div>
 
@@ -101,7 +101,7 @@
         <div class="list-group d-flex flex-column gap-4 w-100 mt-2 ">
           <!-- Botón 1 -->
 
-          <div class="btn-group ">
+          <div class="btn-group cursos_btn_size">
             <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1"
               href="{% url 'niveles' %}" type="button">
 
@@ -114,7 +114,7 @@
             <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
               aria-expanded="false">
               <span class="visually-hidden">Toggle Dropdown</span>
-              <span class="dropdown-icon">⋮</span> <!-- Aquí va tu icono personalizado -->
+              <span class="dropdown-icon">⋮</span>
             </button>
 
             <ul class="dropdown-menu dropdown-menu-end">
@@ -129,8 +129,9 @@
 
           <!-- Botón 2 -->
 
-          <div class="btn-group ">
-            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button" href="{% url 'niveles' %}">
+          <div class="btn-group cursos_btn_size">
+            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button"
+              href="{% url 'niveles' %}">
               <img src="../../static/assets/images/flag.png" alt="Bandera" width="40" height="40"
                 class="rounded-circle me-4">
               <span class="fs-1 text-my-text-purple fw-bold">English</span>
@@ -140,7 +141,7 @@
             <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
               aria-expanded="false">
               <span class="visually-hidden">Toggle Dropdown</span>
-              <span class="dropdown-icon">⋮</span> <!-- Aquí va tu icono personalizado -->
+              <span class="dropdown-icon">⋮</span>
             </button>
 
             <ul class="dropdown-menu dropdown-menu-end">
@@ -154,8 +155,9 @@
 
           <!-- Botón 3 -->
 
-          <div class="btn-group ">
-            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button" href="{% url 'niveles' %}">
+          <div class="btn-group cursos_btn_size">
+            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button"
+              href="{% url 'niveles' %}">
               <img src="../../static/assets/images/flag.png" alt="Bandera" width="40" height="40"
                 class="rounded-circle me-4">
               <span class="fs-1 text-my-text-purple fw-bold">English</span>
@@ -165,7 +167,7 @@
             <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
               aria-expanded="false">
               <span class="visually-hidden">Toggle Dropdown</span>
-              <span class="dropdown-icon">⋮</span> <!-- Aquí va tu icono personalizado -->
+              <span class="dropdown-icon">⋮</span>
             </button>
 
             <ul class="dropdown-menu dropdown-menu-end">
@@ -179,8 +181,9 @@
 
           <!-- Botón 4 -->
 
-          <div class="btn-group ">
-            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button" href="{% url 'niveles' %}">
+          <div class="btn-group cursos_btn_size">
+            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button"
+              href="{% url 'niveles' %}">
               <img src="../../static/assets/images/flag.png" alt="Bandera" width="40" height="40"
                 class="rounded-circle me-4">
               <span class="fs-1 text-my-text-purple fw-bold">English</span>
@@ -190,7 +193,7 @@
             <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
               aria-expanded="false">
               <span class="visually-hidden">Toggle Dropdown</span>
-              <span class="dropdown-icon">⋮</span> <!-- Aquí va tu icono personalizado -->
+              <span class="dropdown-icon">⋮</span>
             </button>
 
             <ul class="dropdown-menu dropdown-menu-end">
@@ -205,7 +208,43 @@
 
 
 
+          <!-- Botón 5 -->
 
+          <div class="btn-group cursos_btn_size">
+            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button"
+              href="{% url 'niveles' %}">
+              <img src="../../static/assets/images/flag.png" alt="Bandera" width="40" height="40"
+                class="rounded-circle me-4">
+              <span class="fs-1 text-my-text-purple fw-bold">English</span>
+            </a>
+            <!-- el boton flecha -->
+
+            <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
+              aria-expanded="false">
+              <span class="visually-hidden">Toggle Dropdown</span>
+              <span class="dropdown-icon">⋮</span>
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="#">Editar</a></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
+            </ul>
+          </div>
+
+
+
+          <div class="pagination-container d-flex justify-content-center align-items-center ">
+            <button id="prev-page" class="btn pagination-btn">
+              <img src="../../static/assets/images/flecha_izq.png" alt="Anterior" width="40" height="30">
+            </button>
+            <span id="page-info" class="page-info text-white mx-3">1/1</span>
+            <button id="next-page" class="btn pagination-btn">
+              <img src="../../static/assets/images/flecha_der.png" alt="Siguiente" width="40" height="30">
+            </button>
+          </div>
 
 
           <!--  -->
@@ -216,6 +255,73 @@
 
   <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const itemsPerPage = 4;
+    const items = document.querySelectorAll('.list-group .btn-group');
+    const totalPages = Math.ceil(items.length / itemsPerPage);
+    let currentPage = 1;
+
+    function showPage(page) {
+      // Validar rango
+      if (page < 1 || page > totalPages) return;
+
+      // Ocultar todos los elementos
+      items.forEach(item => {
+        item.style.display = 'none';
+      });
+
+      // Mostrar solo los de la página actual
+      const start = (page - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      for (let i = start; i < end && i < items.length; i++) {
+        items[i].style.display = 'inline-flex'; // o 'flex', dependiendo del diseño
+      }
+
+      // Actualizar estado
+      currentPage = page;
+      updatePaginationInfo();
+    }
+
+    function updatePaginationInfo() {
+      const prevBtn = document.getElementById('prev-page');
+      const nextBtn = document.getElementById('next-page');
+      const pageInfo = document.getElementById('page-info');
+
+      // Actualizar texto de página
+      pageInfo.textContent = `${currentPage}/${totalPages}`;
+
+      // Mostrar u ocultar botones según la página actual
+      if (currentPage === 1) {
+        prevBtn.style.display = 'none';  // Ocultar botón "Anterior"
+      } else {
+        prevBtn.style.display = '';      // Mostrar (restaurar valor por defecto)
+      }
+
+      if (currentPage === totalPages) {
+        nextBtn.style.display = 'none';  // Ocultar botón "Siguiente"
+      } else {
+        nextBtn.style.display = '';      // Mostrar (restaurar valor por defecto)
+      }
+    }
+    // Eventos para los botones
+    document.getElementById('prev-page').addEventListener('click', () => {
+      if (currentPage > 1) {
+        showPage(currentPage - 1);
+      }
+    });
+
+    document.getElementById('next-page').addEventListener('click', () => {
+      if (currentPage < totalPages) {
+        showPage(currentPage + 1);
+      }
+    });
+
+    // Inicializar
+    showPage(1);
+
+
+  </script>
   <!-- <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script> -->
 
 </body>
