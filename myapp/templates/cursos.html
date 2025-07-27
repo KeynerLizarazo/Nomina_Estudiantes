@@ -87,8 +87,9 @@
           </div>
           <!-- Botón "+" y texto "Añadir Curso" a la derecha -->
           <div class="d-flex flex-column align-items-center align-items-end">
-            <button type="button" class="btn rounded-circle">
-              <img src="../../static/assets/images/agregar.png" alt="Bandera" width="70" height="70" class="">
+            <button type="button" class="btn rounded-circle" data-bs-toggle="modal"
+              data-bs-target="#controlNominaModal">
+              <img src="../../static/assets/images/agregar.png" alt="agregar" width="70" height="70" class="">
             </button>
             <span class="text-white fw-bold mt-2 mb-2">Añadir Curso</span>
           </div>
@@ -250,6 +251,73 @@
           <!--  -->
         </div>
       </div>
+      <!-- Ventana Modal -->
+      <div class="modal fade" id="controlNominaModal" tabindex="-1" aria-labelledby="controlNominaModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content ">
+            <!-- Encabezado del Modal -->
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title text-center w-100" id="modalTitle">Agregar Curso</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Cuerpo del Modal -->
+            <div class="modal-body">
+              <!-- Formulario -->
+              <form id="nominaForm" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="id" id="cedulaIdInput" value="">
+
+
+
+
+
+                <!-- Nombre -->
+                <div class="mb-3">
+                  <label for="nombre" class="form-label">Nombre Del Curso:</label>
+                  <input type="text" class="form-control" id="nombre" name="nombre" required maxlength="50">
+                </div>
+
+                <!-- Descripción -->
+                <div class="mb-3">
+                  <label for="descripcion" class="form-label">Descripción del Curso (opcional):</label>
+                  <textarea class="form-control" id="descripcion" name="descripcion" rows="3" maxlength="200"
+                    oninput="updateCharCount()"></textarea>
+
+                  <!-- Contador de caracteres -->
+                  <div class="form-text text-end" id="charCount">0/200</div>
+                </div>
+
+                <!-- Campo de imagen -->
+                <div class="mb-3">
+                  <label for="imagen" class="form-label">Imagen del Curso (opcional):</label>
+                  <input type="file" class="form-control" id="imagen" name="imagen" accept="image/*"
+                    onchange="previewImage(event)">
+
+                  <div class="mt-2">
+                    <img id="imagenPreview" src="#" alt="Vista previa" class="img-fluid rounded"
+                      style="max-height: 150px; display: none;">
+                  </div>
+                  <small class="text-muted">Formatos permitidos: JPG, PNG. Tamaño recomendado: 200x200 px.</small>
+                </div>
+              </form>
+            </div>
+
+            <!-- Pie del Modal -->
+            <div class="modal-footer">
+              <div class="row w-100">
+                <div class="col">
+                  <button type="submit" form="nominaForm" class="btn btn-primary w-100">Guardar</button>
+                </div>
+                <div class="col">
+                  <button type="button" class="btn btn-danger w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 
@@ -321,6 +389,45 @@
     showPage(1);
 
 
+  </script>
+
+  <script>
+    function previewImage(event) {
+      const preview = document.getElementById('imagenPreview');
+      const file = event.target.files[0];
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        preview.src = '#';
+        preview.style.display = 'none';
+      }
+    }
+  </script>
+
+  <script>
+    function updateCharCount() {
+      const textarea = document.getElementById('descripcion');
+      const charCount = document.getElementById('charCount');
+      const currentLength = textarea.value.length;
+      const maxLength = textarea.getAttribute('maxlength');
+
+      charCount.textContent = `${currentLength}/${maxLength}`;
+
+      // Cambiar color cuando se acerca al límite
+      if (currentLength > maxLength * 0.9) {
+        charCount.className = 'form-text text-end text-danger';
+      } else {
+        charCount.className = 'form-text text-end';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', updateCharCount);
   </script>
   <!-- <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script> -->
 
