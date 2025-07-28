@@ -2,7 +2,7 @@ from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
-from .models import Cedula, Usuario, Calendario
+from .models import Cedula, User, Calendario
 from .forms import CalendarioForm
 from django.utils import timezone
 from django.db.models import Q
@@ -185,13 +185,13 @@ def login_view(request):
         password = request.POST.get('password', '').strip()
 
         try:
-            usuario = Usuario.objects.get(username=username)
+            usuario = User.objects.get(username=username)
             if usuario.password == password:
                 request.session['usuario_id'] = usuario.id
                 return redirect('welcome')
             else:
                 messages.error(request, 'Credenciales incorrectas.')
-        except Usuario.DoesNotExist:
+        except User.DoesNotExist:
             messages.error(request, 'Usuario no encontrado.')
 
         return redirect('login')
@@ -210,27 +210,27 @@ def logout_view(request):
 # ==============================
 # Vistas del Calendario
 # ==============================
-@login_required
-def calendario_view(request):
-    """
-    Muestra el calendario con eventos registrados.
-    """
-    if request.method == 'POST':
-        form = CalendarioForm(request.POST)
-        if form.is_valid():
-            calendario = form.save(commit=False)
-            calendario.creador = request.user if request.user.is_authenticated else None
-            calendario.save()
-            return redirect('calendario')
-    else:
-        form = CalendarioForm()
+# @login_required
+# def calendario_view(request):
+#     """
+#     Muestra el calendario con eventos registrados.
+#     """
+#     if request.method == 'POST':
+#         form = CalendarioForm(request.POST)
+#         if form.is_valid():
+#             calendario = form.save(commit=False)
+#             calendario.creador = request.user if request.user.is_authenticated else None
+#             calendario.save()
+#             return redirect('calendario')
+#     else:
+#         form = CalendarioForm()
 
-    eventos = Calendario.objects.all()
-    context = {
-        'form': form,
-        'eventos': eventos
-    }
-    return render(request, 'calendario.html', context)
+#     eventos = Calendario.objects.all()
+#     context = {
+#         'form': form,
+#         'eventos': eventos
+#     }
+#     return render(request, 'calendario.html', context)
 
 # def agregar_evento(request):
 #     if request.method == 'POST':
@@ -246,37 +246,37 @@ def calendario_view(request):
 #     return render(request, 'calendario.html', {'form': form})
 
 
-@csrf_exempt
-def guardar_evento(request):
-    """
-    Guarda un evento nuevo en el calendario (AJAX).
-    """
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            tz = pytz.UTC  # Puedes cambiar a otra zona horaria si es necesario
+# @csrf_exempt
+# def guardar_evento(request):
+#     """
+#     Guarda un evento nuevo en el calendario (AJAX).
+#     """
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+#             tz = pytz.UTC  # Puedes cambiar a otra zona horaria si es necesario
 
-            evento = Calendario(
-                titulo=data['titulo'],
-                descripcion=data.get('descripcion'),
-                fecha_inicio=tz.localize(datetime.fromisoformat(data['fecha_inicio'])),
-                fecha_fin=tz.localize(datetime.fromisoformat(data['fecha_fin'])) if data.get('fecha_fin') else None,
-                creador=request.user if request.user.is_authenticated else None
-            )
-            evento.save()
-            return JsonResponse({'success': True, 'id': evento.id})
-        except KeyError as e:
-            return JsonResponse({'success': False, 'error': f'Campo faltante: {e}'}, status=400)
-        except ValueError as e:
-            return JsonResponse({'success': False, 'error': 'Formato de fecha inválido.'}, status=400)
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+#             evento = Calendario(
+#                 titulo=data['titulo'],
+#                 descripcion=data.get('descripcion'),
+#                 fecha_inicio=tz.localize(datetime.fromisoformat(data['fecha_inicio'])),
+#                 fecha_fin=tz.localize(datetime.fromisoformat(data['fecha_fin'])) if data.get('fecha_fin') else None,
+#                 creador=request.user if request.user.is_authenticated else None
+#             )
+#             evento.save()
+#             return JsonResponse({'success': True, 'id': evento.id})
+#         except KeyError as e:
+#             return JsonResponse({'success': False, 'error': f'Campo faltante: {e}'}, status=400)
+#         except ValueError as e:
+#             return JsonResponse({'success': False, 'error': 'Formato de fecha inválido.'}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
-    return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
+#     return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
 
 
-@csrf_exempt
-def modificar_evento(request, evento_id):
+# @csrf_exempt
+# def modificar_evento(request, evento_id):
     # try:
     #     evento_id = int(evento_id)
     # except ValueError:
@@ -317,81 +317,81 @@ def modificar_evento(request, evento_id):
     
     
     
-    """
-    Modifica un evento existente (AJAX).
-    """
-    try:
-        evento_id = int(evento_id)
-    except ValueError:
-        return JsonResponse({'success': False, 'error': 'ID inválido'}, status=400)
+#     """
+#     Modifica un evento existente (AJAX).
+#     """
+#     try:
+#         evento_id = int(evento_id)
+#     except ValueError:
+#         return JsonResponse({'success': False, 'error': 'ID inválido'}, status=400)
 
-    try:
-        evento = Calendario.objects.get(id=evento_id)
-    except Calendario.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Evento no encontrado'}, status=404)
+#     try:
+#         evento = Calendario.objects.get(id=evento_id)
+#     except Calendario.DoesNotExist:
+#         return JsonResponse({'success': False, 'error': 'Evento no encontrado'}, status=404)
 
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            tz = pytz.UTC
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+#             tz = pytz.UTC
 
-            if 'titulo' not in data:
-                return JsonResponse({'success': False, 'error': 'Título es obligatorio.'}, status=400)
+#             if 'titulo' not in data:
+#                 return JsonResponse({'success': False, 'error': 'Título es obligatorio.'}, status=400)
 
-            evento.titulo = data['titulo']
-            evento.descripcion = data.get('descripcion')
+#             evento.titulo = data['titulo']
+#             evento.descripcion = data.get('descripcion')
 
-            fecha_inicio = data.get('fecha_inicio')
-            if not fecha_inicio:
-                return JsonResponse({'success': False, 'error': 'Fecha de inicio es obligatoria.'}, status=400)
+#             fecha_inicio = data.get('fecha_inicio')
+#             if not fecha_inicio:
+#                 return JsonResponse({'success': False, 'error': 'Fecha de inicio es obligatoria.'}, status=400)
 
-            evento.fecha_inicio = tz.localize(datetime.fromisoformat(fecha_inicio))
-            fecha_fin = data.get('fecha_fin')
+#             evento.fecha_inicio = tz.localize(datetime.fromisoformat(fecha_inicio))
+#             fecha_fin = data.get('fecha_fin')
 
-            if fecha_fin:
-                evento.fecha_fin = tz.localize(datetime.fromisoformat(fecha_fin))
-            else:
-                evento.fecha_fin = None
+#             if fecha_fin:
+#                 evento.fecha_fin = tz.localize(datetime.fromisoformat(fecha_fin))
+#             else:
+#                 evento.fecha_fin = None
 
-            evento.save()
-            return JsonResponse({'success': True})
+#             evento.save()
+#             return JsonResponse({'success': True})
 
-        except KeyError as e:
-            return JsonResponse({'success': False, 'error': f'Campo faltante: {e}'}, status=400)
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+#         except KeyError as e:
+#             return JsonResponse({'success': False, 'error': f'Campo faltante: {e}'}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
-    return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
-
-
-@csrf_exempt
-def eliminar_evento(request, evento_id):
-    """
-    Elimina un evento del calendario (AJAX).
-    """
-    if request.method == 'DELETE':
-        try:
-            evento = Calendario.objects.get(id=evento_id)
-            evento.delete()
-            return JsonResponse({'success': True})
-        except Calendario.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Evento no encontrado.'}, status=404)
-    return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
+#     return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
 
 
-def eventos_json(request):
-    """
-    Devuelve todos los eventos en formato JSON para FullCalendar.
-    """
-    eventos = Calendario.objects.all()
-    data = [
-        {
-            'id': e.id,
-            'title': e.titulo,
-            'start': e.fecha_inicio.isoformat(),
-            'end': e.fecha_fin.isoformat() if e.fecha_fin else None,
-            'description': e.descripcion
-        }
-        for e in eventos
-    ]
-    return JsonResponse(data, safe=False)
+# @csrf_exempt
+# def eliminar_evento(request, evento_id):
+#     """
+#     Elimina un evento del calendario (AJAX).
+#     """
+#     if request.method == 'DELETE':
+#         try:
+#             evento = Calendario.objects.get(id=evento_id)
+#             evento.delete()
+#             return JsonResponse({'success': True})
+#         except Calendario.DoesNotExist:
+#             return JsonResponse({'success': False, 'error': 'Evento no encontrado.'}, status=404)
+#     return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
+
+
+# def eventos_json(request):
+#     """
+#     Devuelve todos los eventos en formato JSON para FullCalendar.
+#     """
+#     eventos = Calendario.objects.all()
+#     data = [
+#         {
+#             'id': e.id,
+#             'title': e.titulo,
+#             'start': e.fecha_inicio.isoformat(),
+#             'end': e.fecha_fin.isoformat() if e.fecha_fin else None,
+#             'description': e.descripcion
+#         }
+#         for e in eventos
+#     ]
+#     return JsonResponse(data, safe=False)

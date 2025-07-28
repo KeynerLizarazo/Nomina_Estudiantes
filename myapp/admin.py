@@ -7,7 +7,7 @@ admin.site.register(Students) #Registro para estudiantes
 admin.site.register(Units) #Registro para unidades
 admin.site.register(Courses) #Registro para cursos
 admin.site.register(Levels) #Registro para niveles
-admin.site.register(Group_Courses) #Registro para grupos de cursos
+admin.site.register(Group_Levels) #Registro para grupos de niveles
 
 @admin.register(Person)
 class PersonAdmin(admin.ModelAdmin):
