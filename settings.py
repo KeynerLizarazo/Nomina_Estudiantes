@@ -1,14 +1,15 @@
 # nomina_estudiantes/settings.py
-import os
+import os, dj_database_url
 from pathlib import Path
+from decouple import config, Csv
 
 # ==============================
 # CONFIGURACIÓN BÁSICA DEL PROYECTO
 # ==============================
 BASE_DIR = Path(__file__).resolve().parent.parent  # Ruta base del proyecto
-SECRET_KEY = 'django-insecure-abc123'  # Clave secreta para cifrado (cámbiala en producción)
-DEBUG = True  # Modo de depuración (cambia a False en producción)
-ALLOWED_HOSTS = []  # Lista de dominios permitidos (agrega aquí tu dominio si es necesario)
+SECRET_KEY = config('SECRET_KEY')  # Clave secreta para cifrado (cámbiala en producción)
+DEBUG = config('DEBUG', default=True, cast=bool)  # Modo de depuración (cambia a False en producción)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())  # Lista de dominios permitidos (agrega aquí tu dominio si es necesario)
 LOGIN_URL = '/login/'
 # ==============================
 # APLICACIONES INSTALADAS
@@ -57,23 +58,26 @@ WSGI_APPLICATION = 'nomina_estudiantes.wsgi.application'  # Configuración WSGI
 # ==============================
 # BASE DE DATOS
 # ==============================
+# Cambia tu configuración para que 'default' apunte a SQLite cuando Railway no esté disponible.
+# Puedes hacerlo manualmente o con una variable de entorno:
+USE_SQLITE = os.getenv('USE_SQLITE', 'False') == 'True'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'railway',  # Nombre de la base de datos PostgreSQL
-        'USER': 'postgres',        # Usuario de PostgreSQL
-        'PASSWORD': 'XwOqzcKviSyqtqFsyEHPnLCfAYifgIhL', # Contraseña del usuario
-        'HOST': 'gondola.proxy.rlwy.net',                  # Host de PostgreSQL
-        'PORT': '25214',                          # Puerto predeterminado de PostgreSQL
-    },
-        # Configuración para la base de datos local (SQLite)
-    'local_db': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / "db.sqlite3",
+if USE_SQLITE:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / "db.sqlite3",
+        }
     }
-}
-
+else:
+    DATABASES = {
+        'default': dj_database_url.parse(config('DATABASE_URL')),  # Puerto predeterminado de PostgreSQL,
+        # Configuración para la base de datos local (SQLite)
+        'local_db': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / "db.sqlite3",
+        }
+    }
 # ==============================
 # VALIDACIÓN DE CONTRASEÑAS (OPCIONAL)
 # ==============================
@@ -107,3 +111,5 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # CLAVE PRIMARIA AUTOMÁTICA
 # ==============================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'  # Tipo de clave primaria predeterminada
+
+# AUTH_USER_MODEL = 'myapp.User' # Modelo de usuario personalizado
