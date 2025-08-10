@@ -1,356 +1,293 @@
 {% load static %}
 <!DOCTYPE html>
-
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Nómina - The Professor</title>
-    <!-- Bootstrap CSS -->
-
-    <link href="{% static 'assets/styles/custom.css' %}" rel="stylesheet" />
-    <link href="{% static 'assets/styles/main-style.css' %}" rel="stylesheet" />
-
-
-    <!-- SweetAlert2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
-    <!-- FullCalendar CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-
-    <style>
-
-    </style>
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Nómina - The Professor</title>
+  <!-- Bootstrap CSS -->
+  <link href="{% static 'assets/styles/custom.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/styles/main-style.css' %}" rel="stylesheet" />
+  <!-- SweetAlert2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
+  <!-- FullCalendar CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 </head>
 
 <body class="m-0 p-0">
-    <div class="bg-my-background-color d-flex text-white ">
-        <!-- Barra lateral izquierda -->
-        <div class="sidebar degradado-sidebar d-flex flex-column text-white min-vh-100 overflow-hidden">
-            <!-- Sidebar -->
-            <a class="mt-3 nav-link " href="{% url 'welcome' %}" id="welcome-btn">
-                <img src="../../static/assets/images/main.png" height="26" width="30">
-                <span class="nav-text">Inicio</span>
-            </a>
-            <hr class="">
-            <a class="mt-2 nav-link" href="{% url 'cedulas' %}" id="control-nomina-btn">
-                <img src="../../static/assets/images/estudiantes.png" width="28" height="28">
-                <span class="nav-text">Estudiantes</span>
-            </a>
-            <a class="nav-link" href="#">
-                <img src="../../static/assets/images/usuarios.png" width="28" height="28">
-                <span class="nav-text">Usuarios</span>
-            </a>
-            <a class="nav-link" href="{% url 'cursos' %}" style="background-color: #922323">
-                <img src="../../static/assets/images/cursos.png" width="28" height="28">
-                <span class="nav-text">Cursos</span>
-            </a>
-            <a class="nav-link" href="#">
-                <img src="../../static/assets/images/mipefil.png" width="28" height="28">
-                <span class="nav-text">Mi Perfil</span>
-            </a>
-            <a class="nav-link" href="{% url 'test_zone' %}" id="test_zone-btn">
-                <span class="nav-text">test_zone</span>
-            </a>
-            <a class="nav-link mt-auto" href="{% url 'logout' %}">
-                <img src="../../static/assets/images/logout1.png" width="28" height="28">
-                <span class="nav-text">Cerrar Sesión</span>
-            </a>
-
-
-        </div>
-
-
-
-        <!-- Contenido principal -->
-
-        <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto">
-            <!-- Encabezado y barra de búsqueda -->
-            <div class="container-fluid ">
-                <div class="d-flex justify-content-between align-items-center ">
-                    <!-- Título "Cursos" a la izquierda -->
-
-                    <!-- Barra de búsqueda -->
-                    <div class="d-flex flex-column flex-grow-1">
-                        <div class="d-flex align-items-center justify-content-start">
-
-                            <img src="../../static/assets/images/flag.png" alt="Bandera" width="70" height="70"
-                                class="rounded-circle me-4 mb-3">
-                            <span class="fs-1 text-white mb-3 fw-bold">English</span>
-                        </div>
-                        <div class="input-group mb-4  search-bar search-lens z-0">
-                            <input type="text" class="w-25  bg-my-background-color text-white border rounded p-2 pe-5"
-                                aria-label="Buscar">
-                            <button class="btn btn-sm rounded-circle mt-1 z-4" type="button">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <!-- Botón "+" y texto "Añadir Curso" a la derecha -->
-                    <div class="d-flex flex-column align-items-center align-items-end">
-                        <button type="button" class="btn rounded-circle">
-                            <img src="../../static/assets/images/agregar.png" alt="Bandera" width="70" height="70"
-                                class="">
-                        </button>
-                        <span class="text-white fw-bold mt-2">Añadir Curso</span>
-                    </div>
-                </div>
-
-
-
-
-
-                <div class="list-group d-flex flex-column gap-4_5 w-100 mt-2">
-                    <!-- Botón 1 -->
-
-                    <div class="btn-group btn-doble-borde niveles_btn_size">
-                        <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-2 "
-                            href="{% url 'cedulas' %}" type="button">
-
-                            <img src="../../static/assets/images/red_globe.png" alt="globe" width="38" height="40"
-                                class="rounded-circle me-4">
-                            <span class="fs-3 text-my-red fw-bold ">Para niños</span>
-                        </a>
-                        <!-- el boton flecha -->
-
-                        <button type="button" class="btn btn-lg btn-light dropdown-toggle " data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            <span class="visually-hidden">Toggle Dropdown</span>
-                            <span class="dropdown-icon">⋮</span>
-                        </button>
-
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#">Editar</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
-                        </ul>
-                    </div>
-
-
-                    <!-- Botón 2 -->
-
-                    <div class="btn-group btn-doble-borde niveles_btn_size">
-                        <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-2"
-                            type="button">
-                            <img src="../../static/assets/images/red_globe.png" alt="globe" width="38" height="40"
-                                class="rounded-circle me-4">
-                            <span class="fs-3 text-my-red fw-bold">Pronunciación</span>
-                        </a>
-                        <!-- el boton flecha -->
-
-                        <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            <span class="visually-hidden">Toggle Dropdown</span>
-                            <span class="dropdown-icon">⋮</span>
-                        </button>
-
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#">Editar</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
-                        </ul>
-                    </div>
-
-                    <!-- Botón 3 -->
-
-                    <div class="btn-group btn-doble-borde niveles_btn_size">
-                        <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1"
-                            type="button">
-                            <img src="../../static/assets/images/red_globe.png" alt="globe" width="38" height="40"
-                                class="rounded-circle me-4">
-                            <span class="fs-3 text-my-red fw-bold">Básico (A1)</span>
-                        </a>
-                        <!-- el boton flecha -->
-
-                        <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            <span class="visually-hidden">Toggle Dropdown</span>
-                            <span class="dropdown-icon">⋮</span>
-                        </button>
-
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#">Editar</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
-                        </ul>
-                    </div>
-
-                    <!-- Botón 4 -->
-
-                    <div class="btn-group btn-doble-borde niveles_btn_size">
-                        <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1"
-                            type="button">
-                            <img src="../../static/assets/images/red_globe.png" alt="globe" width="38" height="40"
-                                class="rounded-circle me-4">
-                            <span class="fs-3 text-my-red fw-bold">Intermedio (A2)</span>
-                        </a>
-                        <!-- el boton flecha -->
-
-                        <button type="button" class="btn btn-lg btn-light dropdown-toggle mb" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            <span class="visually-hidden">Toggle Dropdown</span>
-                            <span class="dropdown-icon ">⋮</span>
-                        </button>
-
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#">Editar</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
-                        </ul>
-                    </div>
-
-
-                    <!-- Botón 5 -->
-
-                    <div class="btn-group btn-doble-borde niveles_btn_size">
-                        <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1"
-                            type="button">
-                            <img src="../../static/assets/images/red_globe.png" alt="globe" width="38" height="40"
-                                class="rounded-circle me-4">
-                            <span class="fs-3 text-my-red fw-bold">Intermedio (A2)</span>
-                        </a>
-                        <!-- el boton flecha -->
-
-                        <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            <span class="visually-hidden">Toggle Dropdown</span>
-                            <span class="dropdown-icon">⋮</span>
-                        </button>
-
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#">Editar</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
-                        </ul>
-                    </div>
-
-
-                    <!-- Botón 6 -->
-
-                    <div class="btn-group btn-doble-borde niveles_btn_size">
-                        <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1"
-                            type="button">
-                            <img src="../../static/assets/images/red_globe.png" alt="globe" width="38" height="40"
-                                class="rounded-circle me-4">
-                            <span class="fs-3 text-my-red fw-bold">Intermedio (A2)</span>
-                        </a>
-                        <!-- el boton flecha -->
-
-                        <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            <span class="visually-hidden">Toggle Dropdown</span>
-                            <span class="dropdown-icon">⋮</span>
-                        </button>
-
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#">Editar</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item text-danger" href="#">Eliminar</a></li>
-                        </ul>
-                    </div>
-
-
-
-                    <div class="pagination-container d-flex justify-content-center align-items-center ">
-                        <button id="prev-page" class="btn pagination-btn">
-                            <img src="../../static/assets/images/flecha_izq.png" alt="Anterior" width="40" height="30">
-                        </button>
-                        <span id="page-info" class="page-info text-white mx-3">1/1</span>
-                        <button id="next-page" class="btn pagination-btn">
-                            <img src="../../static/assets/images/flecha_der.png" alt="Siguiente" width="40" height="30">
-                        </button>
-                    </div>
-
-                    <!--  -->
-                </div>
-            </div>
-        </main>
+  <div class="bg-my-background-color d-flex text-white ">
+    <!-- Barra lateral izquierda -->
+    <div class="sidebar degradado-sidebar d-flex flex-column text-white min-vh-100 overflow-hidden">
+      <!-- Sidebar -->
+      <a class="mt-3 nav-link " href="{% url 'welcome' %}" id="welcome-btn">
+        <img src="{% static 'assets/images/main.png' %}" height="26" width="30">
+        <span class="nav-text">Inicio</span>
+      </a>
+      <hr class="">
+      <a class="mt-2 nav-link" href="{% url 'cedulas' %}" id="control-nomina-btn">
+        <img src="{% static 'assets/images/estudiantes.png' %}" width="28" height="28">
+        <span class="nav-text">Estudiantes</span>
+      </a>
+      <a class="nav-link" href="#">
+        <img src="{% static 'assets/images/usuarios.png' %}" width="28" height="28">
+        <span class="nav-text">Usuarios</span>
+      </a>
+      <a class="nav-link" href="{% url 'cursos' %}" style="background-color: #922323">
+        <img src="{% static 'assets/images/cursos.png' %}" width="28" height="28">
+        <span class="nav-text">Cursos</span>
+      </a>
+      <a class="nav-link" href="#">
+        <img src="{% static 'assets/images/mipefil.png' %}" width="28" height="28">
+        <span class="nav-text">Mi Perfil</span>
+      </a>
+      <a class="nav-link" href="#" id="calendario-btn">
+        <span class="nav-text">Calendario</span>
+      </a>
+      <a class="nav-link mt-auto" href="{% url 'logout' %}">
+        <img src="{% static 'assets/images/logout1.png' %}" width="28" height="28">
+        <span class="nav-text">Cerrar Sesión</span>
+      </a>
     </div>
 
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script> -->
-<script>
-    const itemsPerPage = 4;
-    const items = document.querySelectorAll('.list-group .btn-group');
-    const totalPages = Math.ceil(items.length / itemsPerPage);
-    let currentPage = 1;
+    <!-- Contenido principal -->
+    <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto">
+      <!-- Encabezado y barra de búsqueda -->
+      <div class="container-fluid ">
+        <div class="d-flex justify-content-between align-items-center ">
+          <div class="d-flex flex-column flex-grow-1">
+            <h2 class="fw-bold">Niveles</h2>
+            <div class="input-group mb-4  search-bar search-lens z-0">
+              <input type="text" class="w-25  bg-my-background-color text-white border rounded p-2 pe-5" aria-label="Buscar">
+              <button class="btn btn-sm rounded-circle mt-1 z-4" type="button">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+          </div>
+          <div class="d-flex flex-column align-items-center align-items-end">
+            <button type="button" class="btn rounded-circle" data-bs-toggle="modal" data-bs-target="#addLevelModal">
+              <img src="{% static 'assets/images/agregar.png' %}" alt="agregar" width="70" height="70" class="">
+            </button>
+            <span class="text-white fw-bold mt-2 mb-2">Añadir Nivel</span>
+          </div>
+        </div>
 
-    function showPage(page) {
-        // Validar rango
-        if (page < 1 || page > totalPages) return;
+        {% if messages %}
+        <div class="container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
 
-        // Ocultar todos los elementos
-        items.forEach(item => {
-            item.style.display = 'none';
-        });
+        <div class="list-group d-flex flex-column gap-4 w-100 mt-2 ">
+          {% for level in levels %}
+          <div class="btn-group cursos_btn_size">
+            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" href="#" type="button">
+              <img src="{% static 'assets/images/red_globe.png' %}" alt="globe" width="38" height="40" class="rounded-circle me-4">
+              <span class="fs-1 text-my-text-purple fw-bold">{{ level.level_name }}</span>
+            </a>
+            <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+              <span class="visually-hidden">Toggle Dropdown</span>
+              <span class="dropdown-icon">⋮</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editLevelModal"
+                data-level-id="{{ level.id }}"
+                data-level-name="{{ level.level_name }}"
+                data-level-description="{{ level.description }}"
+                data-level-duration="{{ level.duration }}"
+                data-level-course="{{ level.course.id }}"
+                data-level-action="{% url 'editar_nivel' level.id %}">Editar</button></li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteLevelModal"
+                        data-delete-url="{% url 'eliminar_nivel' level.id %}">
+                  Eliminar
+                </button>
+              </li>
+            </ul>
+          </div>
+          {% empty %}
+          <p class="text-white">No hay niveles registrados.</p>
+          {% endfor %}
+        </div>
+      </div>
 
-        // Mostrar solo los de la página actual
-        const start = (page - 1) * itemsPerPage;
-        const end = start + itemsPerPage;
-        for (let i = start; i < end && i < items.length; i++) {
-            items[i].style.display = 'inline-flex'; // o 'flex', dependiendo del diseño
-        }
+      <!-- Modal para Agregar Nivel -->
+      <div class="modal fade" id="addLevelModal" tabindex="-1" aria-labelledby="addLevelModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title text-center w-100" id="modalTitle">Agregar Nivel</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form id="addLevelForm" method="POST" action="{% url 'niveles' %}">
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        Por favor corrija los siguientes errores:
+                        <ul>
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
 
-        // Actualizar estado
-        currentPage = page;
-        updatePaginationInfo();
-    }
+                <div class="mb-3">
+                  <label for="{{ form.level_name.id_for_label }}" class="form-label">Nombre Del Nivel:</label>
+                  {{ form.level_name }}
+                </div>
+                <div class="mb-3">
+                  <label for="{{ form.description.id_for_label }}" class="form-label">Descripción:</label>
+                  {{ form.description }}
+                </div>
+                <div class="mb-3">
+                  <label for="{{ form.duration.id_for_label }}" class="form-label">Duración (horas):</label>
+                  {{ form.duration }}
+                </div>
+                <div class="mb-3">
+                  <label for="{{ form.course.id_for_label }}" class="form-label">Curso:</label>
+                  {{ form.course }}
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <div class="row w-100">
+                <div class="col">
+                  <button type="submit" form="addLevelForm" class="btn btn-primary w-100">Guardar</button>
+                </div>
+                <div class="col">
+                  <button type="button" class="btn btn-danger w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
-    function updatePaginationInfo() {
-        const prevBtn = document.getElementById('prev-page');
-        const nextBtn = document.getElementById('next-page');
-        const pageInfo = document.getElementById('page-info');
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-        // Actualizar texto de página
-        pageInfo.textContent = `${currentPage}/${totalPages}`;
+  <!-- Modal para Editar Nivel -->
+  <div class="modal fade" id="editLevelModal" tabindex="-1" aria-labelledby="editLevelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title text-center w-100" id="editLevelModalLabel">Editar Nivel</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editLevelForm" method="POST">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="edit_level_name" class="form-label">Nombre Del Nivel:</label>
+              <input type="text" class="form-control" id="edit_level_name" name="level_name">
+            </div>
+            <div class="mb-3">
+              <label for="edit_description" class="form-label">Descripción:</label>
+              <textarea class="form-control" id="edit_description" name="description"></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="edit_duration" class="form-label">Duración (horas):</label>
+              <input type="number" class="form-control" id="edit_duration" name="duration">
+            </div>
+            <div class="mb-3">
+              <label for="edit_course" class="form-label">Curso:</label>
+              <select class="form-control" id="edit_course" name="course">
+                {% for course in courses %}
+                  <option value="{{ course.id }}">{{ course.course_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <div class="row w-100">
+            <div class="col">
+              <button type="submit" form="editLevelForm" class="btn btn-primary w-100">Guardar Cambios</button>
+            </div>
+            <div class="col">
+              <button type="button" class="btn btn-danger w-100" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        // Mostrar u ocultar botones según la página actual
-        if (currentPage === 1) {
-            prevBtn.style.display = 'none';  // Ocultar botón "Anterior"
-        } else {
-            prevBtn.style.display = 'inline-flex';      // Mostrar (restaurar valor por defecto)
-        }
+  <!-- Modal para Eliminar Nivel -->
+  <div class="modal fade" id="deleteLevelModal" tabindex="-1" aria-labelledby="deleteLevelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteLevelModalLabel">Confirmar Eliminación</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          ¿Estás seguro de que deseas eliminar este nivel? Esta acción no se puede deshacer.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <form id="deleteLevelForm" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Eliminar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        if (currentPage === totalPages) {
-            nextBtn.style.display = 'none';  // Ocultar botón "Siguiente"
-        } else {
-            nextBtn.style.display = 'inline-flex';      // Mostrar (restaurar valor por defecto)
-        }
-    }
-    // Eventos para los botones
-    document.getElementById('prev-page').addEventListener('click', () => {
-        if (currentPage > 1) {
-            showPage(currentPage - 1);
-        }
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Script para el modal de edición
+      var editModal = document.getElementById('editLevelModal');
+      editModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var levelId = button.getAttribute('data-level-id');
+        var levelName = button.getAttribute('data-level-name');
+        var levelDescription = button.getAttribute('data-level-description');
+        var levelDuration = button.getAttribute('data-level-duration');
+        var levelCourseId = button.getAttribute('data-level-course');
+        var formAction = button.getAttribute('data-level-action');
+
+        var modalForm = editModal.querySelector('#editLevelForm');
+        modalForm.action = formAction;
+
+        var nameInput = editModal.querySelector('#edit_level_name');
+        var descriptionInput = editModal.querySelector('#edit_description');
+        var durationInput = editModal.querySelector('#edit_duration');
+        var courseSelect = editModal.querySelector('#edit_course');
+
+        nameInput.value = levelName;
+        descriptionInput.value = levelDescription;
+        durationInput.value = levelDuration;
+        courseSelect.value = levelCourseId;
+      });
+
+      // Script para el modal de eliminación
+      var deleteModal = document.getElementById('deleteLevelModal');
+      deleteModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var deleteUrl = button.getAttribute('data-delete-url');
+        var deleteForm = deleteModal.querySelector('#deleteLevelForm');
+        deleteForm.action = deleteUrl;
+      });
     });
-
-    document.getElementById('next-page').addEventListener('click', () => {
-        if (currentPage < totalPages) {
-            showPage(currentPage + 1);
-        }
-    });
-
-    // Inicializar
-    showPage(1);
-</script>
-
+  </script>
 </body>
-
 </html>

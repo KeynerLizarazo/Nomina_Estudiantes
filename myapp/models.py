@@ -1,5 +1,50 @@
 from django.db import models
-from django.contrib.auth.models import User, AbstractUser, Group, Permission  # Importar la clase User de autenticación
+from django.conf import settings
+from django.utils import timezone
+from django.contrib.auth.models import AbstractUser, Group, Permission  # Importar la clase User de autenticación
+
+# --- Lógica para Soft Delete (Eliminación Lógica) ---
+
+class SoftDeleteManager(models.Manager):
+    """
+    Manager personalizado para que por defecto solo se muestren
+    los registros que no están marcados como eliminados.
+    """
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
+class SoftDeleteModel(models.Model):
+    """
+    Modelo base abstracto con campos y métodos para la eliminación lógica.
+    """
+    is_deleted = models.BooleanField(default=False, verbose_name="Eliminado")
+    deleted_at = models.DateTimeField(null=True, blank=True, default=None, verbose_name="Fecha de eliminación")
+
+    # Managers
+    objects = SoftDeleteManager()  # Manager que filtra los eliminados
+    all_objects = models.Manager() # Manager que devuelve todos los objetos
+
+    def delete(self, using=None, keep_parents=False):
+        """
+        Sobrescribe el método delete para marcar el objeto como eliminado.
+        """
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+
+    def restore(self):
+        """
+        Método para restaurar un objeto marcado como eliminado.
+        """
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save()
+
+    class Meta:
+        abstract = True
+
+# --- Fin de la lógica para Soft Delete ---
+
 
 # Constante para tipos de documento
 TIPO_DOCUMENTO_CHOICES = [
@@ -18,6 +63,10 @@ ROLE_LIST_PREDIFINED = [
 COURSE_MODALITY_LIST_PREDIFINED = [
     ("virtual", "Virtual"),
     ("presential", "Presential")
+]
+STAFF_POSITION_LIST_PREDIFINED = [
+    ("tutor", "Tutor"),
+    ("coordinator", "Coordinator"),
 ]
 
 class Cedula(models.Model):
@@ -54,7 +103,7 @@ class Calendario(models.Model):
     descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
     fecha_inicio = models.DateTimeField(verbose_name="Fecha de Inicio")
     fecha_fin = models.DateTimeField(null=True, blank=True, verbose_name="Fecha de Fin")
-    creador = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    creador = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.titulo
@@ -66,13 +115,13 @@ class Calendario(models.Model):
 
 
 # MODELOS DE NUEVA BASE DE DATOS ACADEMIA
-class Person(models.Model):
+class Person(SoftDeleteModel):
     type_document = models.CharField(max_length=2, choices=TIPO_DOCUMENTO_CHOICES, default='V')
     document_number = models.CharField(max_length=20, unique=True)
     name= models.CharField(max_length=50)
     surname= models.CharField(max_length=50)
-    progenitor_name= models.CharField(max_length=50)
-    progenitor_document_number= models.CharField(max_length=20, unique=True)
+    progenitor_name= models.CharField(max_length=50, blank=True, null=True)
+    progenitor_document_number= models.CharField(max_length=20, unique=True, blank=True, null=True)
     telephone_number=models.CharField(max_length=15, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
@@ -93,7 +142,7 @@ class Students(models.Model):
     """
     date_register = models.DateField()
     status = models.CharField(max_length=50)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
 
     class Meta:
@@ -154,13 +203,14 @@ class Units(models.Model):
         return f"{self.name} (Tema {self.topic_order})"
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-class User(AbstractUser):
-    nombre = models.CharField(max_length=50)
-    apellido = models.CharField(max_length=50)
+class User(AbstractUser, SoftDeleteModel):
+    email = models.EmailField(unique=True)
     documento = models.CharField(max_length=20, unique=True)
-    correo = models.EmailField(unique=True)
     role = models.CharField(max_length=50, choices=ROLE_LIST_PREDIFINED, default='student')
     person = models.ForeignKey(Person, on_delete=models.CASCADE, null=True, blank=True)
+
+    REQUIRED_FIELDS = ['first_name','last_name','documento', 'role', 'email']
+
     groups = models.ManyToManyField(
         Group,
         related_name='usuarios_sistema_user_set',
@@ -184,9 +234,9 @@ class User(AbstractUser):
         return f"{self.username} ({self.role})"
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""    
 
-class Tutors(models.Model):
-    staff_position = models.CharField(max_length=50)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+class Tutors(SoftDeleteModel):
+    staff_position = models.CharField(max_length=50, choices=STAFF_POSITION_LIST_PREDIFINED, default='tutor')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
 
     class Meta:
@@ -196,19 +246,21 @@ class Tutors(models.Model):
     
     def __str__(self):
         return f"{self.person.name} ({self.staff_position})"
-class Courses(models.Model):
+class Courses(SoftDeleteModel):
     course_name = models.CharField(max_length=100)
-    period=models.IntegerField(help_text="Período del curso en meses")
-    image_course=models.ImageField(upload_to='courses_images/', blank=True, null=True, help_text="Imagen del curso")
-    tutor = models.ForeignKey(Tutors, on_delete=models.CASCADE)
+    cohort = models.IntegerField(help_text="Cohorte del Curso", blank=True, null=True, unique=True)
+    image_course = models.ImageField(upload_to='courses_images/', blank=True, null=True, help_text="Imagen del curso")
+    tutor = models.ForeignKey(Tutors, on_delete=models.SET_NULL, null=True, blank=True)
     
+    def __str__(self):
+        # Nota: El campo study_modality no existe en el modelo, se debe corregir o añadir.
+        # Usando course_name por ahora.
+        return f"{self.course_name}"
+
     class Meta:
         db_table = 'cursos'
         verbose_name = 'Curso'
         verbose_name_plural = 'Cursos'
-        
-    def __str__(self):
-        return f"{self.course_name} ({self.study_modality})"
 
 class Levels(models.Model):
     level_name = models.CharField(max_length=100)
@@ -242,3 +294,16 @@ class Group_Levels(models.Model):
 
     def __str__(self):
         return f"{self.name_group_levels} ({self.level.level_name})"
+
+class TodoItem(models.Model):
+    task = models.CharField(max_length=200)
+    completed = models.BooleanField(default=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    due_date = models.DateField(null=True, blank=True)
+    class Meta:
+        db_table = 'tareas'
+        verbose_name = 'Tarea'
+        verbose_name_plural = 'Tareas'
+
+    def __str__(self):
+        return self.task

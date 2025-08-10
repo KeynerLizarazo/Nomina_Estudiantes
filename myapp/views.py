@@ -2,10 +2,14 @@ from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
-from .models import Cedula, User, Calendario
-from .forms import CalendarioForm
+from django.contrib.auth import authenticate, login, logout
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from .models import Cedula, User, Calendario, Courses, Tutors, Levels, TodoItem
+from .forms import CourseForm, LevelForm, TodoItemForm
 from django.utils import timezone
 from django.db.models import Q
+from django.urls import reverse_lazy
 from functools import wraps
 import json
 import re
@@ -13,16 +17,12 @@ import pytz
 from datetime import datetime
 
 # ==============================
-# Función home - Redirigir raíz a login o cedulas
+# Función home - Redirigir raíz a login o welcome
 # ==============================
 def home(request):
-    request.session.flush()
-    print("DEBUG - Sesión actual:", request.session.items())  # Ver contenido de sesión
-    if 'usuario_id' in request.session:
+    if request.user.is_authenticated:
         return redirect('welcome')
     else:
-        request.session.flush()
-        #esto es una linea nueva
         return redirect('login')
 
 
@@ -32,8 +32,17 @@ def home(request):
 def login_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        if 'usuario_id' not in request.session:
+        if not request.user.is_authenticated:
             return redirect('login')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+def tutor_admin_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated or (request.user.role not in ['tutor', 'admin']):
+            messages.error(request, 'No tienes permiso para acceder a esta página.')
+            return redirect('welcome')
         return view_func(request, *args, **kwargs)
     return wrapper
 
@@ -47,15 +56,198 @@ def welcome(request):
     
     return render(request, 'welcome.html')
 
-@login_required
-def cursos(request):
+class CourseView(LoginRequiredMixin, View):
+    template_name = 'cursos.html'
+    login_url = 'login'
 
-    return render(request, 'cursos.html')
+    def get(self, request, *args, **kwargs):
+        form = CourseForm()
+        courses = Courses.objects.all()
+        tutors = Tutors.objects.all()
+        context = {
+            'form': form,
+            'courses': courses,
+            'tutors': tutors
+        }
+        return render(request, self.template_name, context)
 
-@login_required
-def niveles(request):
+    def post(self, request, *args, **kwargs):
+        form = CourseForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Curso agregado exitosamente.')
+            return redirect('cursos')
+        else:
+            courses = Courses.objects.all()
+            tutors = Tutors.objects.all()
+            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            context = {
+                'form': form,
+                'courses': courses,
+                'tutors': tutors
+            }
+            return render(request, self.template_name, context)
 
-    return render(request, 'niveles.html')
+class UpdateCourseView(LoginRequiredMixin, View):
+    template_name = 'cursos.html'
+    login_url = 'login'
+
+    def get(self, request, id, *args, **kwargs):
+        course = get_object_or_404(Courses, id=id)
+        form = CourseForm(instance=course)
+        courses = Courses.objects.all()
+        context = {
+            'form': form,
+            'courses': courses,
+            'course_to_edit': course
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, id, *args, **kwargs):
+        course = get_object_or_404(Courses, id=id)
+        form = CourseForm(request.POST, request.FILES, instance=course)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Curso actualizado exitosamente.')
+            return redirect('cursos')
+        else:
+            courses = Courses.objects.all()
+            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            context = {
+                'form': form,
+                'courses': courses,
+                'course_to_edit': course
+            }
+            return render(request, self.template_name, context)
+
+class DeleteCourseView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def post(self, request, id, *args, **kwargs):
+        course = get_object_or_404(Courses, id=id)
+        course.delete()
+        messages.success(request, 'Curso eliminado exitosamente.')
+        return redirect('cursos')
+
+class LevelView(LoginRequiredMixin, View):
+    template_name = 'niveles.html'
+    login_url = 'login'
+
+    def get(self, request, *args, **kwargs):
+        form = LevelForm()
+        levels = Levels.objects.all()
+        courses = Courses.objects.all()
+        context = {
+            'form': form,
+            'levels': levels,
+            'courses': courses
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        form = LevelForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Nivel agregado exitosamente.')
+            return redirect('niveles')
+        else:
+            levels = Levels.objects.all()
+            courses = Courses.objects.all()
+            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            context = {
+                'form': form,
+                'levels': levels,
+                'courses': courses
+            }
+            return render(request, self.template_name, context)
+
+class UpdateLevelView(LoginRequiredMixin, View):
+    template_name = 'niveles.html'
+    login_url = 'login'
+
+    def get(self, request, id, *args, **kwargs):
+        level = get_object_or_404(Levels, id=id)
+        form = LevelForm(instance=level)
+        levels = Levels.objects.all()
+        context = {
+            'form': form,
+            'levels': levels,
+            'level_to_edit': level
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, id, *args, **kwargs):
+        level = get_object_or_404(Levels, id=id)
+        form = LevelForm(request.POST, instance=level)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Nivel actualizado exitosamente.')
+            return redirect('niveles')
+        else:
+            levels = Levels.objects.all()
+            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            context = {
+                'form': form,
+                'levels': levels,
+                'level_to_edit': level
+            }
+            return render(request, self.template_name, context)
+
+class DeleteLevelView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def post(self, request, id, *args, **kwargs):
+        level = get_object_or_404(Levels, id=id)
+        level.delete()
+        messages.success(request, 'Nivel eliminado exitosamente.')
+        return redirect('niveles')
+
+class TodoListView(LoginRequiredMixin, UserPassesTestMixin, View):
+    template_name = 'todolist.html'
+    login_url = 'login'
+
+    def test_func(self):
+        return self.request.user.role in ['tutor', 'admin']
+
+    def get(self, request, *args, **kwargs):
+        form = TodoItemForm()
+        tasks = TodoItem.objects.filter(user=request.user)
+        context = {
+            'form': form,
+            'tasks': tasks
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        form = TodoItemForm(request.POST)
+        if form.is_valid():
+            todo_item = form.save(commit=False)
+            todo_item.user = request.user
+            todo_item.save()
+            messages.success(request, 'Tarea agregada exitosamente.')
+            return redirect('todolist')
+        else:
+            tasks = TodoItem.objects.filter(user=request.user)
+            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            context = {
+                'form': form,
+                'tasks': tasks
+            }
+            return render(request, self.template_name, context)
+
+class UpdateTodoView(LoginRequiredMixin, View):
+    def post(self, request, id, *args, **kwargs):
+        todo_item = get_object_or_404(TodoItem, id=id, user=request.user)
+        todo_item.completed = not todo_item.completed
+        todo_item.save()
+        return redirect('todolist')
+
+class DeleteTodoView(LoginRequiredMixin, View):
+    def post(self, request, id, *args, **kwargs):
+        todo_item = get_object_or_404(TodoItem, id=id, user=request.user)
+        todo_item.delete()
+        messages.success(request, 'Tarea eliminada exitosamente.')
+        return redirect('todolist')
 
 @login_required
 def test_zone(request):
@@ -180,30 +372,26 @@ def eliminar_cedula(request, id):
 # ==============================
 def login_view(request):
     if request.method == 'POST':
-        request.session.flush()  # Limpia cualquier sesión residual
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '').strip()
-
-        try:
-            usuario = User.objects.get(username=username)
-            if usuario.password == password:
-                request.session['usuario_id'] = usuario.id
-                return redirect('welcome')
-            else:
-                messages.error(request, 'Credenciales incorrectas.')
-        except User.DoesNotExist:
-            messages.error(request, 'Usuario no encontrado.')
-
-        return redirect('login')
+        
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            return redirect('welcome')
+        else:
+            messages.error(request, 'Usuario o contraseña incorrectos.')
+            return redirect('login')
 
     return render(request, 'login.html')
 
 
 def logout_view(request):
     """
-    Cierra la sesión del usuario y borra todos los datos de sesión.
+    Cierra la sesión del usuario.
     """
-    request.session.flush()  # Elimina completamente la sesión
+    logout(request)
     return redirect('login')
 
 

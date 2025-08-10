@@ -11,6 +11,7 @@ LOGIN_URL = '/login/'
 
 # Application definition
 INSTALLED_APPS = [
+    'jazzmin',  # Tema de administración (opcional)
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -19,6 +20,57 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "myapp",  # Tu aplicación personalizada
 ]
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Academia The Professor",
+    "site_header": "Academia The Professor",
+    "site_logo": "assets/images/aguila.svg",# Ruta al logo de tu sitio
+    "login_logo": "assets/images/aguila.svg",  # Ruta al logo de inicio de sesión
+    "site_brand": "Academia The Professor",
+    "welcome_sign": "Bienvenido a la Academia The Professor",
+    "copyright": "© 2025 Academia The Professor",
+    "search_model": ["auth.User", "myapp.Person", "myapp.Courses", "myapp.Students", "myapp.Tutors"],
+    "user_avatar": None,  # Puedes agregar un avatar de usuario si lo deseas}
+    "icons": {
+        "auth.User": "fas fa-user",
+        "myapp.Person": "fas fa-user-tie",
+        "myapp.Courses": "fas fa-book",
+        "myapp.Students": "fas fa-graduation-cap",
+        "myapp.Tutors": "fas fa-chalkboard-teacher"},
+    "show_ui_builder": True, 
+    }
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-teal",
+    "accent": "accent-warning",
+    "navbar": "navbar-dark",
+    "no_navbar_border": False,
+    "navbar_fixed": False,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": False,
+    "sidebar": "sidebar-dark-olive",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "yeti",
+    "dark_mode_theme": "solar",
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-outline-info",
+        "warning": "btn-warning",
+        "danger": "btn-outline-danger",
+        "success": "btn-outline-success"
+    }
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -93,6 +145,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]  # Carpeta para archivos estáticos
+
+AUTH_USER_MODEL = 'myapp.User'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

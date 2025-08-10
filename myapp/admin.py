@@ -8,6 +8,10 @@ admin.site.register(Units) #Registro para unidades
 admin.site.register(Courses) #Registro para cursos
 admin.site.register(Levels) #Registro para niveles
 admin.site.register(Group_Levels) #Registro para grupos de niveles
+admin.site.register(Grade_Students) #Registro para calificaciones de estudiantes
+admin.site.register(Testing) #Registro para evaluaciones
+admin.site.register(Tutors) #Registro para tutores
+
 
 @admin.register(Person)
 class PersonAdmin(admin.ModelAdmin):
@@ -18,4 +22,10 @@ class PersonAdmin(admin.ModelAdmin):
     search_fields= ('name', 'surname', 'document_number', 'email')
     list_editable=('email', 'telephone_number', 'date_of_birth',)
     list_per_page= 20
-    exclude = ('id','document_number', 'progenitor_document_number', 'progenitor_name',)
+    exclude = ('id',)
+    
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display= ('id', 'username', 'email', 'role')
+    list_editable=('username', 'email', 'role',)
+    list_per_page= 15
