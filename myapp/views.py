@@ -56,6 +56,11 @@ def welcome(request):
     
     return render(request, 'welcome.html')
 
+@login_required
+def usuarios(request):
+
+    return render(request, 'usuarios.html')
+
 class CourseView(LoginRequiredMixin, View):
     template_name = 'cursos.html'
     login_url = 'login'

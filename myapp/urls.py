@@ -9,6 +9,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('welcome/', views.welcome, name='welcome'),
     path('cedulas/', views.cedulas, name='cedulas'),
+    path('usuarios/', views.usuarios, name='usuarios'),
     path('todolist/', views.TodoListView.as_view(), name='todolist'),
     path('todolist/update/<int:id>/', views.UpdateTodoView.as_view(), name='update_todo'),
     path('todolist/delete/<int:id>/', views.DeleteTodoView.as_view(), name='delete_todo'),

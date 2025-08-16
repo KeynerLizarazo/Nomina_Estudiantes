@@ -17,6 +17,7 @@
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
   <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
   <style>
 
@@ -31,41 +32,42 @@
     <!-- Barra lateral izquierda -->
     <div class="sidebar degradado-sidebar d-flex flex-column text-white min-vh-100 overflow-hidden">
       <!-- Sidebar -->
-      <a class="mt-3 nav-link" href="{% url 'welcome' %}" id="welcome-btn">
-        <img src="../../static/assets/images/main.png" height="26" width="30">
+      <a class="mt-3 nav-link " href="{% url 'welcome' %}" id="welcome-btn">
+        <img src="{% static 'assets/images/main.png' %}" height="26" width="30">
         <span class="nav-text">Inicio</span>
       </a>
       <hr class="">
-      <a class="mt-2 nav-link" href="{% url 'cedulas' %}" id="control-nomina-btn" style="background-color: #922323"> <!-- talvez deberia agregarse a la paleta de boostrap? -->
-        <img src="../../static/assets/images/estudiantes.png" width="28" height="28">
+      <a class="mt-2 nav-link" href="{% url 'cedulas' %}" >
+        <img src="{% static 'assets/images/estudiantes.png' %}" width="28" height="28">
         <span class="nav-text">Estudiantes</span>
       </a>
-      <a class="nav-link" href="{% url 'usuarios' %}" id="usuarios-btn">
-        <img src="../../static/assets/images/usuarios.png" width="28" height="28">
+      <a class="nav-link" href="{% url 'usuarios' %}" id="usuarios-btn" style="background-color: #922323">
+        <img src="{% static 'assets/images/usuarios.png' %}" width="28" height="28">
         <span class="nav-text">Usuarios</span>
       </a>
-      <a class="nav-link" href="{% url 'cursos' %}">
-        <img src="../../static/assets/images/cursos.png" width="28" height="28">
+      <a class="nav-link" href="{% url 'cursos' %}" >
+        <img src="{% static 'assets/images/cursos.png' %}" width="28" height="28">
         <span class="nav-text">Cursos</span>
       </a>
       <a class="nav-link" href="#">
-        <img src="../../static/assets/images/mipefil.png" width="28" height="28">
+        <img src="{% static 'assets/images/mipefil.png' %}" width="28" height="28">
         <span class="nav-text">Mi Perfil</span>
       </a>
-      <a class="nav-link" href="{% url 'test_zone' %}" id="test_zone-btn">
-        <span class="nav-text">test_zone</span>
+      <a class="nav-link" href="{% url 'todolist' %}">
+        <span class="nav-text">To-Do List</span>
       </a>
       <a class="nav-link mt-auto" href="{% url 'logout' %}">
-        <img src="../../static/assets/images/logout1.png" width="28" height="28">
+        <img src="{% static 'assets/images/logout1.png' %}" width="28" height="28">
         <span class="nav-text">Cerrar Sesión</span>
       </a>
-
-
     </div>
+
+
 
     <!-- Contenido principal -->
 
-    <div class="flex-grow-1 " style="padding: 2rem;">
+    <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto pt-4">
+      
       <div class="card shadow">
         <div class="card-header">Lista de Usuarios</div>
         <div class="card-body ">
@@ -78,25 +80,24 @@
                 </div>
                 <select name="campo" class="form-select w-25 me-2">
                   <option value="todos" {% if campo == "todos" %}selected{% endif %}>Todos los campos</option>
-                  <option value="nombre" {% if campo == "nombre" %}selected{% endif %}>Nombre</option>
-                  <option value="apellido" {% if campo == "apellido" %}selected{% endif %}>Apellido</option>
-                  <option value="numero_documento" {% if campo == "numero_documento" %}selected{% endif %}>Nro de
-                    documento
-                  </option>
+                  <option value="nombre" {% if campo == "nombre" %}selected{% endif %}>Nombre de Usuario</option>
+                  <option value="apellido" {% if campo == "apellido" %}selected{% endif %}>Contraseña</option>
+                  
                 </select>
 
                 <!-- Filtro por Tipo de Documento -->
                 <select name="tipo_documento" class="form-select w-25 me-2">
-                  <option value="todos" {% if tipo_documento == "todos" or not tipo_documento %}selected{% endif %}>Todos
+                  <option value="todos" {% if tipo_documento == "todos" or not tipo_documento %}selected{% endif %}>Todos los Roles
                   </option>
-                  <option value="V" {% if tipo_documento == "V" %}selected{% endif %}>Venezolano</option>
-                  <option value="CC" {% if tipo_documento == "CC" %}selected{% endif %}>Extranjero</option>
+                  <option value="V" {% if tipo_documento == "V" %}selected{% endif %}>Administrador</option>
+                  <option value="CC" {% if tipo_documento == "CC" %}selected{% endif %}>Tutor</option>
+                  <option>Estudiante</option>
                 </select>
 
                 <button class="btn btn-secondary" type="submit">Buscar</button>
                 <a href="{% url 'cedulas' %}" class="btn btn-secondary ms-2 me-2">Refrescar</a>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                  data-bs-target="#controlNominaModal">
+                  data-bs-target="#controlUsuariosModal">
                   Añadir
                 </button>
               </form>
@@ -106,11 +107,11 @@
             <table class="table table-bordered">
               <thead>
                 <tr>
-                  <th>Tipo de Documento</th>
-                  <th>Número de Documento</th>
-                  <th>Nombre</th>
-                  <th>Apellido</th>
-                  <th>Acciones</th>
+                  <th>Nombre de Usuario</th>
+                  <th>Contraseña</th>
+                  <th>Correo</th>
+                  <th>Rol</th>
+
                 </tr>
               </thead>
               <tbody id="tabla-resultados">
@@ -123,7 +124,7 @@
                   <td>{{ cedula.apellido }}</td>
                   <td>
                     <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal"
-                      data-bs-target="#controlNominaModal" data-cedula-id="{{ cedula.id }}">Editar</a>
+                      data-bs-target="#controlUsuariosModal" data-cedula-id="{{ cedula.id }}">Editar</a>
                     <form action="{% url 'eliminar_cedula' cedula.id %}" method="post" style="display:inline;">
                       {% csrf_token %}
                       <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
@@ -142,52 +143,52 @@
         </div>
       </div>
       <!-- Ventana Modal -->
-      <div class="modal fade" id="controlNominaModal" tabindex="-1" aria-labelledby="controlNominaModalLabel"
+      <div class="modal fade" id="controlUsuariosModal" tabindex="-1" aria-labelledby="controlUsuariosLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
           <div class="modal-content ">
             <!-- Encabezado del Modal -->
             <div class="modal-header bg-primary text-white">
-              <h5 class="modal-title text-center w-100" id="modalTitle">Control de Nómina</h5>
+              <h5 class="modal-title text-center w-100" id="modalTitle">Control de Usuarios</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
             <!-- Cuerpo del Modal -->
             <div class="modal-body">
               <!-- Formulario -->
-              <form id="nominaForm" method="POST" action="{% url 'guardar_cedula' %}">
+              <!--  --><form id="usuariosForm" method="POST" action="{% url 'guardar_cedula' %}"> <!-- cambiar url a una para usuarios -->
                 {% csrf_token %}
                 <input type="hidden" name="id" id="cedulaIdInput" value="">
 
-                <!-- Tipo de Documento -->
-                <div class="mb-3">
-                  <label for="tipo_documento" class="form-label">Tipo de Documento:</label>
-                  <select class="form-select" id="tipo_documento" name="tipo_documento" required>
-                    <option value="" disabled selected>Seleccione un tipo de documento</option>
-                    <option value="V">Cédula Venezolana (V)</option>
-                    <option value="CC">Extranjero (CC)</option>
-                  </select>
-                </div>
-
-                <!-- Número de Documento -->
-                <div class="mb-3">
-                  <label for="numero_documento" class="form-label">Número de Documento:</label>
-                  <input type="text" class="form-control" id="numero_documento" name="numero_documento" required
-                    maxlength="10" oninput="validarCedula(this)">
-                </div>
-
                 <!-- Nombre -->
                 <div class="mb-3">
-                  <label for="nombre" class="form-label">Nombre:</label>
-                  <input type="text" class="form-control" id="nombre" name="nombre" required maxlength="50"
+                  <label for="username" class="form-label">Nombre de Usuario:</label>
+                  <input type="text" class="form-control" id="username" name="username" required maxlength="50"
                     oninput="capitalizarYValidar(this)">
                 </div>
 
-                <!-- Apellido -->
+                <!-- Contraseña -->
                 <div class="mb-3">
-                  <label for="apellido" class="form-label">Apellido:</label>
-                  <input type="text" class="form-control" id="apellido" name="apellido" required maxlength="50"
+                  <label for="contraseña" class="form-label">Contraseña:</label>
+                  <input type="text" class="form-control" id="contraseña" name="contraseña" required maxlength="50"
                     oninput="capitalizarYValidar(this)">
+                </div>
+
+                <!-- Correo -->
+                <div class="mb-3">
+                  <label for="correo" class="form-label">Correo:</label>
+                  <input type="text" class="form-control" id="correo" name="correo" required maxlength="50">
+                </div>
+
+                <!-- rol -->
+                <div class="mb-3">
+                  <label for="rol" class="form-label">Rol:</label>
+                  <select class="form-select" id="rol" name="rol" required>
+                    <option value="" disabled selected>Seleccione un rol</option>
+                    <option value="admin">Administrador</option>
+                    <option value="teacher">Tutor</option>
+                    <option value="user">Estudiante</option>
+                  </select>
                 </div>
               </form>
             </div>
@@ -196,7 +197,7 @@
             <div class="modal-footer">
               <div class="row w-100">
                 <div class="col">
-                  <button type="submit" form="nominaForm" class="btn btn-primary w-100">Guardar</button>
+                  <button type="submit" form="usuariosForm" class="btn btn-primary w-100">Guardar</button>
                 </div>
                 <div class="col">
                   <button type="button" class="btn btn-danger w-100" data-bs-dismiss="modal">Cancelar</button>
@@ -209,7 +210,7 @@
       <!-- Bootstrap JS Bundle -->
       <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
-    </div>
+    
     <!-- organizar el maldito JS -->
   </div>
 
@@ -218,9 +219,10 @@
 
   <script>
     // Capturar el evento de apertura del modal
-    const modal = document.getElementById('controlNominaModal');
+    const modal = document.getElementById('controlUsuariosModal');
     const modalTitle = document.getElementById('modalTitle');
-    const cedulaIdInput = document.getElementById('cedulaIdInput');
+    
+    const cedulaIdInput = document.getElementById('cedulaIdInput'); /* cambiar por el id de los usuarios */
 
     // Escuchar el evento 'show.bs.modal' para detectar cuándo se abre el modal
     modal.addEventListener('show.bs.modal', function (event) {
@@ -235,18 +237,7 @@
         modalTitle.textContent = 'Editar Datos';
         cedulaIdInput.value = cedulaId;
 
-        // Aquí puedes hacer una solicitud AJAX para cargar los datos del objeto
-        // Por ejemplo:
-        /*
-        fetch(`/api/cedulas/${cedulaId}/`)
-          .then(response => response.json())
-          .then(data => {
-            document.getElementById('tipo_documento').value = data.tipo_documento;
-            document.getElementById('numero_documento').value = data.numero_documento;
-            document.getElementById('nombre').value = data.nombre;
-            document.getElementById('apellido').value = data.apellido;
-          });
-        */
+        
       } else {
         modalTitle.textContent = 'Ingresar Datos';
         cedulaIdInput.value = '';
@@ -259,7 +250,7 @@
       cedulaIdInput.value = '';
 
       // Limpiar el formulario
-      document.getElementById('nominaForm').reset();
+      document.getElementById('usuariosForm').reset();
     });
   </script>
 
@@ -324,7 +315,7 @@
       {% endif %}
     });
   </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 
 </html>
