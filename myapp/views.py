@@ -5,8 +5,8 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from .models import Cedula, User, Calendario, Courses, Tutors, Levels, TodoItem
-from .forms import CourseForm, LevelForm, TodoItemForm
+from .models import Cedula, User, Calendario, Courses, Tutors, Levels, TodoItem, Person
+from .forms import CourseForm, LevelForm, TodoItemForm, UserForm
 from django.utils import timezone
 from django.db.models import Q
 from django.urls import reverse_lazy
@@ -56,10 +56,86 @@ def welcome(request):
     
     return render(request, 'welcome.html')
 
-@login_required
-def usuarios(request):
+class UserView(LoginRequiredMixin, View):
+    template_name = 'usuarios.html'
+    login_url = 'login'
 
-    return render(request, 'usuarios.html')
+    def get(self, request, *args, **kwargs):
+        form = UserForm()
+        users = User.objects.all()
+        persons = Person.objects.all()
+        
+        query = request.GET.get('q')
+        role = request.GET.get('role')
+
+        if query:
+            users = users.filter(Q(username__icontains=query) | Q(email__icontains=query))
+        
+        if role:
+            users = users.filter(role=role)
+
+        context = {
+            'form': form,
+            'users': users,
+            'persons': persons,
+            'query': query,
+            'role': role
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        form = UserForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.save()
+            messages.success(request, 'Usuario agregado exitosamente.')
+            return redirect('usuarios')
+        else:
+            users = User.objects.all()
+            persons = Person.objects.all()
+            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            context = {
+                'form': form,
+                'users': users,
+                'persons': persons
+            }
+            return render(request, self.template_name, context)
+
+class UpdateUserView(LoginRequiredMixin, View):
+    template_name = 'usuarios.html'
+    login_url = 'login'
+
+    def post(self, request, id, *args, **kwargs):
+        user = get_object_or_404(User, id=id)
+        form = UserForm(request.POST, instance=user)
+        if form.is_valid():
+            user = form.save(commit=False)
+            if 'password' in form.changed_data:
+                user.set_password(form.cleaned_data['password'])
+            user.save()
+            messages.success(request, 'Usuario actualizado exitosamente.')
+            return redirect('usuarios')
+        else:
+            users = User.objects.all()
+            persons = Person.objects.all()
+            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            context = {
+                'form': form,
+                'users': users,
+                'persons': persons,
+                'user_to_edit': user
+            }
+            return render(request, self.template_name, context)
+
+class DeleteUserView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def post(self, request, id, *args, **kwargs):
+        user = get_object_or_404(User, id=id)
+        user.delete()
+        messages.success(request, 'Usuario eliminado exitosamente.')
+        return redirect('usuarios')
 
 class CourseView(LoginRequiredMixin, View):
     template_name = 'cursos.html'
@@ -69,10 +145,16 @@ class CourseView(LoginRequiredMixin, View):
         form = CourseForm()
         courses = Courses.objects.all()
         tutors = Tutors.objects.all()
+        
+        query = request.GET.get('q')
+        if query:
+            courses = courses.filter(course_name__icontains=query)
+
         context = {
             'form': form,
             'courses': courses,
-            'tutors': tutors
+            'tutors': tutors,
+            'query': query
         }
         return render(request, self.template_name, context)
 
@@ -138,31 +220,39 @@ class LevelView(LoginRequiredMixin, View):
     template_name = 'niveles.html'
     login_url = 'login'
 
-    def get(self, request, *args, **kwargs):
-        form = LevelForm()
-        levels = Levels.objects.all()
-        courses = Courses.objects.all()
+    def get(self, request, course_id, *args, **kwargs):
+        course = get_object_or_404(Courses, id=course_id)
+        form = LevelForm(initial={'course': course})
+        levels = Levels.objects.filter(course=course)
+        
+        query = request.GET.get('q')
+        if query:
+            levels = levels.filter(level_name__icontains=query)
+
         context = {
             'form': form,
             'levels': levels,
-            'courses': courses
+            'course': course,
+            'query': query
         }
         return render(request, self.template_name, context)
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, course_id, *args, **kwargs):
+        course = get_object_or_404(Courses, id=course_id)
         form = LevelForm(request.POST)
         if form.is_valid():
-            form.save()
+            level = form.save(commit=False)
+            level.course = course
+            level.save()
             messages.success(request, 'Nivel agregado exitosamente.')
-            return redirect('niveles')
+            return redirect('niveles', course_id=course_id)
         else:
-            levels = Levels.objects.all()
-            courses = Courses.objects.all()
+            levels = Levels.objects.filter(course=course)
             messages.error(request, 'Por favor corrija los errores en el formulario.')
             context = {
                 'form': form,
                 'levels': levels,
-                'courses': courses
+                'course': course
             }
             return render(request, self.template_name, context)
 
@@ -172,29 +262,33 @@ class UpdateLevelView(LoginRequiredMixin, View):
 
     def get(self, request, id, *args, **kwargs):
         level = get_object_or_404(Levels, id=id)
+        course = level.course
         form = LevelForm(instance=level)
-        levels = Levels.objects.all()
+        levels = Levels.objects.filter(course=course)
         context = {
             'form': form,
             'levels': levels,
-            'level_to_edit': level
+            'level_to_edit': level,
+            'course': course
         }
         return render(request, self.template_name, context)
 
     def post(self, request, id, *args, **kwargs):
         level = get_object_or_404(Levels, id=id)
+        course = level.course
         form = LevelForm(request.POST, instance=level)
         if form.is_valid():
             form.save()
             messages.success(request, 'Nivel actualizado exitosamente.')
-            return redirect('niveles')
+            return redirect('niveles', course_id=course.id)
         else:
-            levels = Levels.objects.all()
+            levels = Levels.objects.filter(course=course)
             messages.error(request, 'Por favor corrija los errores en el formulario.')
             context = {
                 'form': form,
                 'levels': levels,
-                'level_to_edit': level
+                'level_to_edit': level,
+                'course': course
             }
             return render(request, self.template_name, context)
 
@@ -203,9 +297,10 @@ class DeleteLevelView(LoginRequiredMixin, View):
 
     def post(self, request, id, *args, **kwargs):
         level = get_object_or_404(Levels, id=id)
+        course_id = level.course.id
         level.delete()
         messages.success(request, 'Nivel eliminado exitosamente.')
-        return redirect('niveles')
+        return redirect('niveles', course_id=course_id)
 
 class TodoListView(LoginRequiredMixin, UserPassesTestMixin, View):
     template_name = 'todolist.html'

@@ -61,12 +61,14 @@
         <div class="d-flex justify-content-between align-items-center ">
           <div class="d-flex flex-column flex-grow-1">
             <h2 class="fw-bold">Niveles</h2>
-            <div class="input-group mb-4  search-bar search-lens z-0">
-              <input type="text" class="w-25  bg-my-background-color text-white border rounded p-2 pe-5" aria-label="Buscar">
-              <button class="btn btn-sm rounded-circle mt-1 z-4" type="button">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
+            <form method="get" action="{% url 'niveles' course.id %}">
+              <div class="input-group mb-4 search-bar search-lens z-0">
+                <input type="text" name="q" class="w-25 bg-my-background-color text-white border rounded p-2 pe-5" aria-label="Buscar" value="{{ query|default_if_none:'' }}">
+                <button class="btn btn-sm rounded-circle mt-1 z-4" type="submit">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+            </form>
           </div>
           <div class="d-flex flex-column align-items-center align-items-end">
             <button type="button" class="btn rounded-circle" data-bs-toggle="modal" data-bs-target="#addLevelModal">
@@ -130,7 +132,7 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <form id="addLevelForm" method="POST" action="{% url 'niveles' %}">
+              <form id="addLevelForm" method="POST" action="{% url 'niveles' course.id %}">
                 {% csrf_token %}
                 
                 {% if form.errors %}
@@ -157,10 +159,6 @@
                 <div class="mb-3">
                   <label for="{{ form.duration.id_for_label }}" class="form-label">Duración (horas):</label>
                   {{ form.duration }}
-                </div>
-                <div class="mb-3">
-                  <label for="{{ form.course.id_for_label }}" class="form-label">Curso:</label>
-                  {{ form.course }}
                 </div>
               </form>
             </div>
