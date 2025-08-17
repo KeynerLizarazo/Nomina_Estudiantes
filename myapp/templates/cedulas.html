@@ -65,9 +65,9 @@
 
     <!-- Contenido principal -->
 
-    <div class="flex-grow-1 " style="padding: 2rem;">
+    <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto pt-4">
       <div class="card shadow">
-        <div class="card-header">Lista de Usuarios</div>
+        <div class="card-header">Lista de Estudiantes</div>
         <div class="card-body ">
           <div class="card-body">
             <div class="mb-3">
@@ -78,11 +78,19 @@
                 </div>
                 <select name="campo" class="form-select w-25 me-2">
                   <option value="todos" {% if campo == "todos" %}selected{% endif %}>Todos los campos</option>
-                  <option value="nombre" {% if campo == "nombre" %}selected{% endif %}>Nombre</option>
-                  <option value="apellido" {% if campo == "apellido" %}selected{% endif %}>Apellido</option>
                   <option value="numero_documento" {% if campo == "numero_documento" %}selected{% endif %}>Nro de
                     documento
                   </option>
+                  <option value="nombre" {% if campo == "nombre" %}selected{% endif %}>Nombre</option>
+                  <option value="apellido" {% if campo == "apellido" %}selected{% endif %}>Apellido</option>
+                  <option value="telefono" {% if campo == "telefono" %}selected{% endif %}>Teléfono</option>
+                  <option value="direccion" {% if campo == "direccion" %}selected{% endif %}>Dirección</option>
+                  <option value="fecha_nacimiento" {% if campo == "fecha_nacimiento" %}selected{% endif %}>Fecha de Nacimiento</option>
+                  
+                  <option value="nacionalidad" {% if campo == "nacionalidad" %}selected{% endif %}>Nacionalidad</option>
+                  <option value="cedula_representante" {% if campo == "cedula_representante" %}selected{% endif %}>C.Represe</option>
+                  <option value="representante" {% if campo == "representante" %}selected{% endif %}>Representante</option>
+
                 </select>
 
                 <!-- Filtro por Tipo de Documento -->
@@ -105,12 +113,19 @@
             <!-- Tabla de Resultados -->
             <table class="table table-bordered">
               <thead>
-                <tr>
+                <tr class="align-top">
                   <th>Tipo de Documento</th>
                   <th>Número de Documento</th>
-                  <th>Nombre</th>
-                  <th>Apellido</th>
-                  <th>Acciones</th>
+                  <th>Nombres</th>
+                  <th>Apellidos</th>
+                  <th>Teléfono</th>
+                  <th>Dirección</th>
+                  <th>Fecha Nac.</th>
+                  <th>Sexo</th>
+                  <th>Nacionalidad</th>
+                  <th>C.Represe</th>
+                  <th>Representante</th>
+                  <th>Estado</th>
                 </tr>
               </thead>
               <tbody id="tabla-resultados">
@@ -133,7 +148,7 @@
                 {% endfor %}
                 {% else %}
                 <tr>
-                  <td colspan="5" class="text-center text-muted">No se encontraron registros.</td>
+                  <td colspan="12" class="text-center text-muted">No se encontraron registros.</td>
                 </tr>
                 {% endif %}
               </tbody>
@@ -176,21 +191,76 @@
                     maxlength="10" oninput="validarCedula(this)">
                 </div>
 
-                <!-- Nombre -->
+                <!-- Nombres -->
                 <div class="mb-3">
-                  <label for="nombre" class="form-label">Nombre:</label>
-                  <input type="text" class="form-control" id="nombre" name="nombre" required maxlength="50"
+                  <label for="nombre" class="form-label">Nombres:</label>
+                  <input type="text" class="form-control" id="nombre" name="nombre" required maxlength="60"
                     oninput="capitalizarYValidar(this)">
                 </div>
 
-                <!-- Apellido -->
+                <!-- Apellidos -->
                 <div class="mb-3">
-                  <label for="apellido" class="form-label">Apellido:</label>
-                  <input type="text" class="form-control" id="apellido" name="apellido" required maxlength="50"
+                  <label for="apellido" class="form-label">Apellidos:</label>
+                  <input type="text" class="form-control" id="apellido" name="apellido" required maxlength="60"
                     oninput="capitalizarYValidar(this)">
                 </div>
+
+                <!-- Teléfono -->
+                <div class="mb-3">
+                  <label for="numero_telefono" class="form-label">Número de Teléfono:</label>
+                  <input type="text" class="form-control" id="numero_telefono" name="numero_telefono" required
+                    maxlength="16">
+                </div>
+
+                  <!-- Dirección -->
+                <div class="mb-3">
+                  <label for="direccion" class="form-label">Dirección:</label>
+                  <input type="text" class="form-control" id="direccion" name="direccion" required maxlength="100"
+                    oninput="capitalizarYValidar(this)">
+                </div>
+
+                <!-- Fecha Nac. -->
+                <div class="mb-3">
+                  <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento:</label>
+                  <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" required>
+                </div>
+
+                <!-- Sexo -->
+                <div class="mb-3">
+                  <label for="sexo" class="form-label">Sexo:</label>
+                  <select class="form-select" id="sexo" name="sexo" required>
+                    <option value="" disabled selected>Seleccione...</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Femenino</option>
+                  </select>
+                </div>
+
+                <!-- Nacionalidad -->
+                <div class="mb-3">
+                  <label for="nacionalidad" class="form-label">Nacionalidad:</label>
+                  <input type="text" class="form-control" id="nacionalidad" name="nacionalidad" required maxlength="50"
+                    oninput="capitalizarYValidar(this)">
+                </div>
+
+                <!-- C.Represe -->
+                <div class="mb-3">
+                  <label for="cedula_representante" class="form-label">Numero de Documento del Representante:</label>
+                  <input type="text" class="form-control" id="cedula_representante" name="cedula_representante" 
+                  required maxlength="10" oninput="validarCedula(this)">
+                </div>
+
+                <!-- Representante -->
+                <div class="mb-3">
+                  <label for="representante" class="form-label">Nombre del Representante:</label>
+                  <input type="text" class="form-control" id="representante" name="representante" required maxlength="60"
+                    oninput="capitalizarYValidar(this)">
+                </div>
+
+
+
               </form>
             </div>
+
 
             <!-- Pie del Modal -->
             <div class="modal-footer">
@@ -209,7 +279,7 @@
       <!-- Bootstrap JS Bundle -->
       <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
-    </div>
+    </main>
     <!-- organizar el maldito JS -->
   </div>
 
