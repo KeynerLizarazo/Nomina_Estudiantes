@@ -4,10 +4,9 @@ from .models import Courses, Levels, TodoItem, User
 class CourseForm(forms.ModelForm):
     class Meta:
         model = Courses
-        fields = ['course_name', 'cohort', 'image_course', 'tutor']
+        fields = ['course_name', 'image_course', 'tutor']
         widgets = {
             'course_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre Del Curso'}),
-            'cohort': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Cohorte del Curso', 'min': '1'}),
             'image_course': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
             'tutor': forms.Select(attrs={'class': 'form-control'}),
         }
@@ -42,4 +41,15 @@ class UserForm(forms.ModelForm):
             'documento': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Documento'}),
             'role': forms.Select(attrs={'class': 'form-control'}),
             'person': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+class UserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'documento', 'role']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de Usuario'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo Electrónico'}),
+            'documento': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Documento'}),
+            'role': forms.Select(attrs={'class': 'form-control'}),
         }

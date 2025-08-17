@@ -108,7 +108,6 @@
               <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editCourseModal"
                 data-course-id="{{ course.id }}"
                 data-course-name="{{ course.course_name }}"
-                data-course-cohort="{{ course.cohort }}"
                 data-course-tutor="{{ course.tutor.id }}"
                 data-course-action="{% url 'editar_curso' course.id %}">Editar</button></li>
               <li><hr class="dropdown-divider"></li>
@@ -156,10 +155,6 @@
                   {{ form.course_name }}
                 </div>
                 <div class="mb-3">
-                  <label for="{{ form.cohort.id_for_label }}" class="form-label">Cohorte:</label>
-                  {{ form.cohort }}
-                </div>
-                <div class="mb-3">
                   <label for="{{ form.tutor.id_for_label }}" class="form-label">Tutor:</label>
                   {{ form.tutor }}
                 </div>
@@ -203,10 +198,6 @@
             <div class="mb-3">
               <label for="edit_course_name" class="form-label">Nombre Del Curso:</label>
               <input type="text" class="form-control" id="edit_course_name" name="course_name">
-            </div>
-            <div class="mb-3">
-              <label for="edit_cohort" class="form-label">Cohorte:</label>
-              <input type="text" class="form-control" id="edit_cohort" name="cohort">
             </div>
             <div class="mb-3">
               <label for="edit_tutor" class="form-label">Tutor:</label>
@@ -267,7 +258,6 @@
         var button = event.relatedTarget;
         var courseId = button.getAttribute('data-course-id');
         var courseName = button.getAttribute('data-course-name');
-        var courseCohort = button.getAttribute('data-course-cohort');
         var courseTutorId = button.getAttribute('data-course-tutor');
         var formAction = button.getAttribute('data-course-action');
 
@@ -275,11 +265,9 @@
         modalForm.action = formAction;
 
         var nameInput = editModal.querySelector('#edit_course_name');
-        var cohortInput = editModal.querySelector('#edit_cohort');
         var tutorSelect = editModal.querySelector('#edit_tutor');
 
         nameInput.value = courseName;
-        cohortInput.value = courseCohort;
         tutorSelect.value = courseTutorId;
       });
 

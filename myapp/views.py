@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Cedula, User, Calendario, Courses, Tutors, Levels, TodoItem, Person
-from .forms import CourseForm, LevelForm, TodoItemForm, UserForm
+from .forms import CourseForm, LevelForm, TodoItemForm, UserForm, UserUpdateForm
 from django.utils import timezone
 from django.db.models import Q
 from django.urls import reverse_lazy
@@ -108,11 +108,12 @@ class UpdateUserView(LoginRequiredMixin, View):
 
     def post(self, request, id, *args, **kwargs):
         user = get_object_or_404(User, id=id)
-        form = UserForm(request.POST, instance=user)
+        form = UserUpdateForm(request.POST, instance=user)
         if form.is_valid():
             user = form.save(commit=False)
-            if 'password' in form.changed_data:
-                user.set_password(form.cleaned_data['password'])
+            password = request.POST.get('password')
+            if password:
+                user.set_password(password)
             user.save()
             messages.success(request, 'Usuario actualizado exitosamente.')
             return redirect('usuarios')
