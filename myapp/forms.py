@@ -1,5 +1,5 @@
 from django import forms
-from .models import Courses, Levels, TodoItem, User
+from .models import Courses, Levels, Person, TodoItem, User
 
 class CourseForm(forms.ModelForm):
     class Meta:
@@ -52,4 +52,35 @@ class UserUpdateForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo Electrónico'}),
             'documento': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Documento'}),
             'role': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+
+class PersonForm(forms.ModelForm):
+    class Meta:
+        model = Person
+        fields = [
+            'type_document',
+            'document_number',
+            'name',
+            'surname',
+            'progenitor_name',
+            'progenitor_document_number',
+            'telephone_number',
+            'email',
+            'date_of_birth',
+            'gender',
+            'nationality'
+        ]
+        widgets = {
+            'type_document': forms.Select(attrs={'class': 'form-control'}),
+            'document_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número de Documento'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombres'}),
+            'surname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apellidos'}),
+            'progenitor_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del Representante'}),
+            'progenitor_document_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número de Documento del Representante'}),
+            'telephone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número de Teléfono'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo Electrónico'}),
+            'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'gender': forms.Select(attrs={'class': 'form-control'}),
+            'nationality': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nacionalidad'}),
         }

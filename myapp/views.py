@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Cedula, User, Calendario, Courses, Tutors, Levels, TodoItem, Person
-from .forms import CourseForm, LevelForm, TodoItemForm, UserForm, UserUpdateForm
+from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm
 from django.utils import timezone
 from django.db.models import Q
 from django.urls import reverse_lazy
@@ -137,6 +137,85 @@ class DeleteUserView(LoginRequiredMixin, View):
         user.delete()
         messages.success(request, 'Usuario eliminado exitosamente.')
         return redirect('usuarios')
+
+
+class PersonView(LoginRequiredMixin, View):
+    template_name = 'cedulas.html'
+    login_url = 'login'
+
+    def get(self, request, *args, **kwargs):
+        form = PersonForm()
+        persons = Person.objects.all()
+        
+        query = request.GET.get('q')
+        campo = request.GET.get('campo')
+
+        if query:
+            if campo and campo != "todos":
+                filter_kwargs = {f"{campo}__icontains": query}
+                persons = persons.filter(**filter_kwargs)
+            else:
+                persons = persons.filter(
+                    Q(name__icontains=query) |
+                    Q(surname__icontains=query) |
+                    Q(document_number__icontains=query) |
+                    Q(email__icontains=query)
+                )
+
+        context = {
+            'form': form,
+            'persons': persons,
+            'query': query,
+            'campo': campo
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        form = PersonForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Persona agregada exitosamente.')
+            return redirect('cedulas')
+        else:
+            persons = Person.objects.all()
+            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            context = {
+                'form': form,
+                'persons': persons
+            }
+            return render(request, self.template_name, context)
+
+
+class UpdatePersonView(LoginRequiredMixin, View):
+    template_name = 'cedulas.html'
+    login_url = 'login'
+
+    def post(self, request, id, *args, **kwargs):
+        person = get_object_or_404(Person, id=id)
+        form = PersonForm(request.POST, instance=person)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Persona actualizada exitosamente.')
+            return redirect('cedulas')
+        else:
+            persons = Person.objects.all()
+            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            context = {
+                'form': form,
+                'persons': persons,
+                'person_to_edit': person
+            }
+            return render(request, self.template_name, context)
+
+
+class DeletePersonView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def post(self, request, id, *args, **kwargs):
+        person = get_object_or_404(Person, id=id)
+        person.delete()
+        messages.success(request, 'Persona eliminada exitosamente.')
+        return redirect('cedulas')
 
 class CourseView(LoginRequiredMixin, View):
     template_name = 'cursos.html'
@@ -355,117 +434,6 @@ def test_zone(request):
 
     return render(request, 'test_zone.html')
 
-@login_required
-def cedulas(request):
-    """
-    Vista principal para mostrar y filtrar registros de cédulas.
-    Incluye búsqueda y filtro opcional por tipo_documento.
-    """
-    query = request.GET.get('q', '').strip()
-    campo = request.GET.get('campo', '').strip()
-    tipo_documento = request.GET.get('tipo_documento', 'todos')  # Nuevo parámetro
-    cedula_obj = None
-
-    if request.GET.get('editar'):
-        cedula_id = request.GET.get('editar')
-        cedula_obj = get_object_or_404(Cedula, id=cedula_id)
-
-    # Iniciar queryset base
-    cedulas_list = Cedula.objects.all()
-
-    # Filtrar por tipo_documento
-    if tipo_documento != 'todos':
-        cedulas_list = cedulas_list.filter(tipo_documento=tipo_documento)
-
-    # Aplicar búsqueda si hay término
-    if query:
-        if campo and campo != "todos":
-            kwargs = {f"{campo}__icontains": query}
-            cedulas_list = cedulas_list.filter(**kwargs)
-        else:
-            cedulas_list = cedulas_list.filter(
-                Q(nombre__icontains=query) |
-                Q(apellido__icontains=query) |
-                Q(numero_documento__icontains=query) |
-                Q(tipo_documento__icontains=query)
-            )
-
-    response = render(request, 'cedulas.html', {
-        'cedulas': cedulas_list,
-        'cedula_obj': cedula_obj,
-        'query': query,
-        'campo': campo,
-        'tipo_documento': tipo_documento,
-    })
-
-    # Prevenir almacenamiento en caché del navegador
-    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response['Pragma'] = 'no-cache'
-    response['Expires'] = '0'
-
-    return response
-
-
-def guardar_cedula(request):
-    """
-    Guarda o actualiza un registro de cédula desde el formulario.
-    """
-    if request.method == 'POST':
-        cedula_id = request.POST.get('id')
-        tipo_documento = request.POST.get('tipo_documento')
-        numero_documento = request.POST.get('numero_documento', '').strip()
-        nombre = request.POST.get('nombre', '').strip()
-        apellido = request.POST.get('apellido', '').strip()
-
-        # Validaciones básicas
-        if not tipo_documento or tipo_documento not in ['V', 'CC']:
-            messages.error(request, 'Tipo de documento inválido.')
-            return redirect('cedulas')
-        if not numero_documento.isdigit() or len(numero_documento) > 10:
-            messages.error(request, 'Número de documento inválido.')
-            return redirect('cedulas')
-        if len(nombre) > 50 or len(apellido) > 50:
-            messages.error(request, 'El nombre o apellido excede los 50 caracteres.')
-            return redirect('cedulas')
-
-        try:
-            if cedula_id:  # Editando
-                cedula = get_object_or_404(Cedula, id=cedula_id)
-                cedula.tipo_documento = tipo_documento
-                cedula.numero_documento = numero_documento
-                cedula.nombre = nombre
-                cedula.apellido = apellido
-                cedula.save()
-                messages.success(request, 'Registro actualizado correctamente.')
-            else:  # Creando
-                if Cedula.objects.filter(numero_documento=numero_documento).exists():
-                    messages.error(request, 'El número de documento ya está registrado.')
-                    return redirect('cedulas')
-                Cedula.objects.create(
-                    tipo_documento=tipo_documento,
-                    numero_documento=numero_documento,
-                    nombre=nombre,
-                    apellido=apellido
-                )
-                messages.success(request, 'Registro guardado correctamente.')
-        except Exception as e:
-            messages.error(request, f'Ocurrió un error al guardar: {str(e)}')
-
-    return redirect('cedulas')
-
-
-def eliminar_cedula(request, id):
-    """
-    Elimina un registro de cédula.
-    """
-    if request.method == 'POST':
-        try:
-            cedula = get_object_or_404(Cedula, id=id)
-            cedula.delete()
-            messages.success(request, "Registro eliminado correctamente.")
-        except Exception as e:
-            messages.error(request, f"Ocurrió un error al eliminar: {str(e)}")
-    return redirect('cedulas')
 
 
 # ==============================
