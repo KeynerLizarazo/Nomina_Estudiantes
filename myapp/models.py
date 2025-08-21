@@ -248,7 +248,6 @@ class Tutors(SoftDeleteModel):
         return f"{self.person.name} ({self.staff_position})"
 class Courses(SoftDeleteModel):
     course_name = models.CharField(max_length=100)
-    cohort = models.IntegerField(help_text="Cohorte del Curso", blank=True, null=True, unique=True)
     image_course = models.ImageField(upload_to='courses_images/', blank=True, null=True, help_text="Imagen del curso")
     tutor = models.ForeignKey(Tutors, on_delete=models.SET_NULL, null=True, blank=True)
     
@@ -286,6 +285,7 @@ class Group_Levels(models.Model):
     study_modality = models.CharField(max_length=50, choices=COURSE_MODALITY_LIST_PREDIFINED, default='presential')
     level = models.ForeignKey('Levels', on_delete=models.CASCADE)
     students = models.ManyToManyField('Students', related_name='group_levels', blank=True)
+    cohort = models.IntegerField(help_text="Cohorte del Grupo", blank=True, null=True)
 
     class Meta:
         db_table = 'grupos_niveles'

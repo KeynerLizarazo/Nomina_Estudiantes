@@ -106,7 +106,6 @@
                 data-level-name="{{ level.level_name }}"
                 data-level-description="{{ level.description }}"
                 data-level-duration="{{ level.duration }}"
-                data-level-course="{{ level.course.id }}"
                 data-level-action="{% url 'editar_nivel' level.id %}">Editar</button></li>
               <li><hr class="dropdown-divider"></li>
               <li>
@@ -204,14 +203,6 @@
               <label for="edit_duration" class="form-label">Duración (horas):</label>
               <input type="number" class="form-control" id="edit_duration" name="duration">
             </div>
-            <div class="mb-3">
-              <label for="edit_course" class="form-label">Curso:</label>
-              <select class="form-control" id="edit_course" name="course">
-                {% for course in courses %}
-                  <option value="{{ course.id }}">{{ course.course_name }}</option>
-                {% endfor %}
-              </select>
-            </div>
           </form>
         </div>
         <div class="modal-footer">
@@ -260,7 +251,6 @@
         var levelName = button.getAttribute('data-level-name');
         var levelDescription = button.getAttribute('data-level-description');
         var levelDuration = button.getAttribute('data-level-duration');
-        var levelCourseId = button.getAttribute('data-level-course');
         var formAction = button.getAttribute('data-level-action');
 
         var modalForm = editModal.querySelector('#editLevelForm');
@@ -269,12 +259,10 @@
         var nameInput = editModal.querySelector('#edit_level_name');
         var descriptionInput = editModal.querySelector('#edit_description');
         var durationInput = editModal.querySelector('#edit_duration');
-        var courseSelect = editModal.querySelector('#edit_course');
 
         nameInput.value = levelName;
         descriptionInput.value = levelDescription;
         durationInput.value = levelDuration;
-        courseSelect.value = levelCourseId;
       });
 
       // Script para el modal de eliminación

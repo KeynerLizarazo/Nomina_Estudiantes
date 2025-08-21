@@ -8,7 +8,9 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('welcome/', views.welcome, name='welcome'),
-    path('cedulas/', views.cedulas, name='cedulas'),
+    path('cedulas/', views.PersonView.as_view(), name='cedulas'),
+    path('cedulas/editar/<int:id>/', views.UpdatePersonView.as_view(), name='editar_persona'),
+    path('cedulas/eliminar/<int:id>/', views.DeletePersonView.as_view(), name='eliminar_persona'),
     path('usuarios/', views.UserView.as_view(), name='usuarios'),
     path('usuarios/editar/<int:id>/', views.UpdateUserView.as_view(), name='editar_usuario'),
     path('usuarios/eliminar/<int:id>/', views.DeleteUserView.as_view(), name='eliminar_usuario'),
@@ -21,8 +23,6 @@ urlpatterns = [
     path('cursos/<int:course_id>/niveles/', views.LevelView.as_view(), name='niveles'),
     path('niveles/editar/<int:id>/', views.UpdateLevelView.as_view(), name='editar_nivel'),
     path('niveles/eliminar/<int:id>/', views.DeleteLevelView.as_view(), name='eliminar_nivel'),
-    path('guardar/', views.guardar_cedula, name='guardar_cedula'),
-    path('eliminar/<int:id>/', views.eliminar_cedula, name='eliminar_cedula'),
 
     path('test-zone/', views.test_zone, name='test_zone'),
 
