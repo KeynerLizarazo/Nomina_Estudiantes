@@ -18,7 +18,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "myapp",  # Tu aplicación personalizada
+    #aplicaciones personalizadas
+    "myapp",
+    'import_export', 
 ]
 
 JAZZMIN_SETTINGS = {
@@ -82,6 +84,14 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+SESSION_SAVE_EVERY_REQUEST = True 
+# This tells Django to update the session's expiration time with every request the user makes, effectively resetting the inactivity timer.
+SESSION_COOKIE_AGE = 300 
+# This sets the session to expire after 300 seconds (5 minutes) of inactivity.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False 
+#This ensures the session persists even if the browser is closed, allowing the inactivity timer to be the primary method of session expiration.
+
+
 ROOT_URLCONF = 'nomina.urls'
 
 TEMPLATES = [
@@ -143,6 +153,7 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
+STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]  # Carpeta para archivos estáticos
 

@@ -71,16 +71,29 @@ class PersonForm(forms.ModelForm):
             'gender',
             'nationality'
         ]
+        labels = {
+            'type_document': 'Tipo de Documento',
+            'document_number': 'Numero de Documento',
+            'name': 'Nombres',
+            'surname': 'Apellidos',
+            'progenitor_name': 'Representante',
+            'progenitor_document_number': 'Documento Representante',
+            'telephone_number': 'Teléfono',
+            'email': 'Email',
+            'date_of_birth': 'Fecha de Nacimiento',
+            'gender': 'Sexo',
+            'nationality': 'Nacionalidad',
+        }
         widgets = {
             'type_document': forms.Select(attrs={'class': 'form-control'}),
-            'document_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número de Documento'}),
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombres'}),
-            'surname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apellidos'}),
-            'progenitor_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del Representante'}),
-            'progenitor_document_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número de Documento del Representante'}),
-            'telephone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número de Teléfono'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo Electrónico'}),
+            'document_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba su número de documento'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus nombres'}),
+            'surname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus apellidos'}),
+            'progenitor_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba el nombre del representante'}),
+            'progenitor_document_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba el número de documento del representante'}),
+            'telephone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba el número de teléfono'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Escriba su Correo Electrónico'}),
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
-            'nationality': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nacionalidad'}),
+            'nationality': forms.Select(attrs={'class': 'form-control'}),
         }

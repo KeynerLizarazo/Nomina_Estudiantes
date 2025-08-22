@@ -12,9 +12,11 @@
   <link href="{% static 'assets/styles/custom.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/styles/main-style.css' %}" rel="stylesheet" />
 
-
   <!-- SweetAlert2 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
+  <!-- Alerta cierre de sesión -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
 
@@ -82,7 +84,8 @@
     </main>
   </div>
   <!-- Bootstrap JS Bundle -->
-  <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script> 
+  <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{% static 'assets/js/inactivity-timer.js' %}"></script>
 </body>
 
 </html>

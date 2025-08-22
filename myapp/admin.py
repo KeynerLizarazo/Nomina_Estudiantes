@@ -1,3 +1,5 @@
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import *
@@ -12,9 +14,16 @@ admin.site.register(Grade_Students) #Registro para calificaciones de estudiantes
 admin.site.register(Testing) #Registro para evaluaciones
 admin.site.register(Tutors) #Registro para tutores
 
+class PersonResource(resources.ModelResource):
+    fields = ('id', 'name', 'surname', 'type_document', 'document_number', 'telephone_number',
+              'progenitor_name', 'progenitor_document_number', 'email', 'date_of_birth',
+              'gender', 'nationality')
 
+    class Meta:
+        model = Person
 @admin.register(Person)
-class PersonAdmin(admin.ModelAdmin):
+class PersonAdmin(ImportExportModelAdmin):
+    resource_class = PersonResource
     list_display= ('id', 'name', 'surname','type_document', 
                    'document_number','telephone_number','progenitor_name',
                    'progenitor_document_number','email', 'date_of_birth', 
@@ -23,7 +32,7 @@ class PersonAdmin(admin.ModelAdmin):
     list_editable=('email', 'telephone_number', 'date_of_birth',)
     list_per_page= 20
     exclude = ('id',)
-    
+
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display= ('id', 'username', 'email', 'role')

@@ -8,6 +8,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Cedula, User, Calendario, Courses, Tutors, Levels, TodoItem, Person
 from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm
 from django.utils import timezone
+from django.db import transaction
 from django.db.models import Q
 from django.urls import reverse_lazy
 from functools import wraps
@@ -173,9 +174,34 @@ class PersonView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         form = PersonForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Persona agregada exitosamente.')
-            return redirect('cedulas')
+            try:
+                with transaction.atomic():
+                    # Guardar la persona
+                    person = form.save()
+
+                    # Crear el usuario asociado
+                    user = User.objects.create_user(
+                        username=person.document_number,
+                        password=person.document_number,
+                        email=person.email,
+                        documento=person.document_number,
+                        role='student',
+                        person=person
+                    )
+                    user.first_name = person.name
+                    user.last_name = person.surname
+                    user.save()
+
+                    messages.success(request, 'Estudiante agregado exitosamente.')
+                    return redirect('cedulas')
+            except Exception as e:
+                messages.error(request, f'Ocurrió un error al crear el usuario: {e}')
+                persons = Person.objects.all()
+                context = {
+                    'form': form,
+                    'persons': persons
+                }
+                return render(request, self.template_name, context)
         else:
             persons = Person.objects.all()
             messages.error(request, 'Por favor corrija los errores en el formulario.')

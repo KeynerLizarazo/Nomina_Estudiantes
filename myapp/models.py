@@ -69,6 +69,32 @@ STAFF_POSITION_LIST_PREDIFINED = [
     ("coordinator", "Coordinator"),
 ]
 
+NATIONALITY_CHOICES = [
+    ('Venezolana', 'Venezolana'),
+    ('Colombiana', 'Colombiana'),
+    ('Argentina', 'Argentina'),
+    ('Boliviana', 'Boliviana'),
+    ('Brasileña', 'Brasileña'),
+    ('Chilena', 'Chilena'),
+    ('Costarricense', 'Costarricense'),
+    ('Cubana', 'Cubana'),
+    ('Dominicana', 'Dominicana'),
+    ('Ecuatoriana', 'Ecuatoriana'),
+    ('Salvadoreña', 'Salvadoreña'),
+    ('Española', 'Española'),
+    ('Estadounidense', 'Estadounidense'),
+    ('Guatemalteca', 'Guatemalteca'),
+    ('Hondureña', 'Hondureña'),
+    ('Mexicana', 'Mexicana'),
+    ('Nicaragüense', 'Nicaragüense'),
+    ('Panameña', 'Panameña'),
+    ('Paraguaya', 'Paraguaya'),
+    ('Peruana', 'Peruana'),
+    ('Puertorriqueña', 'Puertorriqueña'),
+    ('Uruguaya', 'Uruguaya'),
+    ('Otra', 'Otra'),
+]
+
 class Cedula(models.Model):
     class Meta:
         db_table = 'cedulas'
@@ -126,7 +152,7 @@ class Person(SoftDeleteModel):
     email = models.EmailField(blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     gender = models.CharField(max_length=10, choices=GENDER_LIST_PREDIFINED, default='H')
-    nationality = models.CharField(max_length=50, blank=True, null=True)
+    nationality = models.CharField(max_length=50, choices=NATIONALITY_CHOICES, blank=True, null=True)
     class Meta:
         db_table = 'personas'
         verbose_name = 'Persona'

@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.auth',          # Autenticación de usuarios
     'django.contrib.staticfiles',   # Archivos estáticos (CSS, JS, imágenes)
     'estudiantes',                  # Tu aplicación personalizada
+    'import_export',
 ]
 
 JAZZMIN_SETTINGS = {
