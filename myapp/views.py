@@ -57,6 +57,12 @@ def welcome(request):
     
     return render(request, 'welcome.html')
 
+
+@login_required
+def docentes(request):
+
+    return render(request, 'docentes.html')
+
 class UserView(LoginRequiredMixin, View):
     template_name = 'usuarios.html'
     login_url = 'login'
@@ -461,6 +467,120 @@ def test_zone(request):
     return render(request, 'test_zone.html')
 
 
+# INTENTO DE BACKEND DE GABO !!!!
+
+class DocenteView(LoginRequiredMixin, View):
+    template_name = 'docentes.html'
+    login_url = 'login'
+
+    def get(self, request, *args, **kwargs):
+        form = PersonForm()
+        # Filtrar solo docentes: puedes ajustar el valor del campo `position`
+        persons = Person.objects.filter(position__icontains='docente')  # Cambia si usas un valor específico
+
+        # O si prefieres mostrar todos pero destacar los docentes, quita el filtro arriba
+
+        query = request.GET.get('q')
+        campo = request.GET.get('campo')
+
+        if query:
+            if campo and campo != "todos":
+                filter_kwargs = {f"{campo}__icontains": query}
+                persons = persons.filter(**filter_kwargs)
+            else:
+                persons = persons.filter(
+                    Q(name__icontains=query) |
+                    Q(surname__icontains=query) |
+                    Q(document_number__icontains=query) |
+                    Q(email__icontains=query) |
+                    Q(position__icontains=query)
+                )
+
+        context = {
+            'form': form,
+            'persons': persons,
+            'query': query,
+            'campo': campo
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        form = PersonForm(request.POST)
+        if form.is_valid():
+            person = form.save(commit=False)
+            # Aseguramos que el cargo sea "Docente" si es necesario
+            # person.position = "Docente"  # descomenta si quieres forzarlo
+            person.save()
+            messages.success(request, 'Docente agregado exitosamente.')
+            return redirect('docentes')
+        else:
+            # Mantener el filtro en caso de error
+            persons = Person.objects.filter(position__icontains='docente')
+            query = request.GET.get('q')
+            campo = request.GET.get('campo')
+            if query:
+                if campo and campo != "todos":
+                    filter_kwargs = {f"{campo}__icontains": query}
+                    persons = persons.filter(**filter_kwargs)
+                else:
+                    persons = persons.filter(
+                        Q(name__icontains=query) |
+                        Q(surname__icontains=query) |
+                        Q(document_number__icontains=query) |
+                        Q(email__icontains=query)
+                    )
+            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            context = {
+                'form': form,
+                'persons': persons,
+                'query': query,
+                'campo': campo
+            }
+            return render(request, self.template_name, context)
+class UpdateDocenteView(LoginRequiredMixin, View):
+    template_name = 'docentes.html'
+    login_url = 'login'
+
+    def post(self, request, id, *args, **kwargs):
+        person = get_object_or_404(Person, id=id)
+        form = PersonForm(request.POST, instance=person)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Docente actualizado exitosamente.')
+            return redirect('docentes')
+        else:
+            persons = Person.objects.filter(position__icontains='docente')
+            query = request.GET.get('q')
+            campo = request.GET.get('campo')
+            if query:
+                if campo and campo != "todos":
+                    filter_kwargs = {f"{campo}__icontains": query}
+                    persons = persons.filter(**filter_kwargs)
+                else:
+                    persons = persons.filter(
+                        Q(name__icontains=query) |
+                        Q(surname__icontains=query) |
+                        Q(document_number__icontains=query) |
+                        Q(email__icontains=query)
+                    )
+            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            context = {
+                'form': form,
+                'persons': persons,
+                'person_to_edit': person,
+                'query': query,
+                'campo': campo
+            }
+            return render(request, self.template_name, context)
+        
+class DeleteDocenteView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def post(self, request, id, *args, **kwargs):
+        person = get_object_or_404(Person, id=id)
+        person.delete()
+        messages.success(request, 'Docente eliminado exitosamente.')
+        return redirect('docentes')
 
 # ==============================
 # Funciones de Autenticación

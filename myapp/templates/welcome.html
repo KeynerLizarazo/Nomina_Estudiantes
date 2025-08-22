@@ -30,40 +30,8 @@
 
 <body class="m-0 p-0">
   <div class="bg-my-background-color d-flex text-white ">
-    <!-- Barra lateral izquierda -->
-    <div class="sidebar degradado-sidebar d-flex flex-column text-white min-vh-100 overflow-hidden">
-      <!-- Sidebar -->
-      <a class="mt-3 nav-link " href="{% url 'welcome' %}" id="welcome-btn">
-        <img src="../../static/assets/images/main.png" height="26" width="30">
-        <span class="nav-text">Inicio</span>
-      </a>
-      <hr class="">
-      <a class="mt-2 nav-link" href="{% url 'cedulas' %}" id="control-nomina-btn">
-        <img src="../../static/assets/images/estudiantes.png" width="28" height="28">
-        <span class="nav-text">Estudiantes</span>
-      </a>
-      <a class="nav-link" href="{% url 'usuarios' %}" id="usuarios-btn">
-        <img src="../../static/assets/images/usuarios.png" width="28" height="28">
-        <span class="nav-text">Usuarios</span>
-      </a>
-      <a class="nav-link" href="{% url 'cursos' %}" id="cursos-btn" >
-        <img src="../../static/assets/images/cursos.png" width="28" height="28">
-        <span class="nav-text">Cursos</span>
-      </a>
-      <a class="nav-link" href="#">
-        <img src="../../static/assets/images/mipefil.png" width="28" height="28">
-        <span class="nav-text">Mi Perfil</span>
-      </a>
-      <a class="nav-link" href="{% url 'test_zone' %}" id="test_zone-btn">
-        <span class="nav-text">test_zone</span>
-      </a>
-      <a class="nav-link mt-auto" href="{% url 'logout' %}">
-        <img src="../../static/assets/images/logout1.png" width="28" height="28">
-        <span class="nav-text">Cerrar Sesión</span>
-      </a>
 
-
-    </div>
+    {% include 'partials/sidebar.html' %}
 
     <!-- Contenido principal -->
     <main class="main-content vh-100 d-flex flex-grow-1 p-3 align-items-center justify-content-center">
