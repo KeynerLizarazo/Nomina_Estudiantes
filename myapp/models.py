@@ -5,6 +5,57 @@ from django.contrib.auth.models import AbstractUser, Group, Permission  # Import
 
 # --- Lógica para Soft Delete (Eliminación Lógica) ---
 
+# Constante para tipos de documento
+TIPO_DOCUMENTO_CHOICES = [
+    ('V', 'Cédula Venezolana (V)'),
+    ('CC', 'Cédula Colombiana (CC)'),
+]
+GENDER_LIST_PREDIFINED = [
+    ('M', 'Masculino'),
+    ('F', 'Femenino'),
+]
+ROLE_LIST_PREDIFINED = [
+    ("estudiante", "Estudiante"), 
+    ("profesor", "Profesor"),
+    ("tutor", "Tutor"), 
+    ("admin", "Administrador")
+]
+COURSE_MODALITY_LIST_PREDIFINED = [
+    ("virtual", "Virtual"),
+    ("presencial", "Presencial")
+]
+STAFF_POSITION_LIST_PREDIFINED = [
+    ("profesor", "Profesor"),
+    ("tutor", "Tutor"),
+    ("administrador", "Administrador"),
+]
+
+NATIONALITY_CHOICES = [
+    ('Venezolana', 'Venezolana'),
+    ('Colombiana', 'Colombiana'),
+    ('Argentina', 'Argentina'),
+    ('Boliviana', 'Boliviana'),
+    ('Brasileña', 'Brasileña'),
+    ('Chilena', 'Chilena'),
+    ('Costarricense', 'Costarricense'),
+    ('Cubana', 'Cubana'),
+    ('Dominicana', 'Dominicana'),
+    ('Ecuatoriana', 'Ecuatoriana'),
+    ('Salvadoreña', 'Salvadoreña'),
+    ('Española', 'Española'),
+    ('Estadounidense', 'Estadounidense'),
+    ('Guatemalteca', 'Guatemalteca'),
+    ('Hondureña', 'Hondureña'),
+    ('Mexicana', 'Mexicana'),
+    ('Nicaragüense', 'Nicaragüense'),
+    ('Panameña', 'Panameña'),
+    ('Paraguaya', 'Paraguaya'),
+    ('Peruana', 'Peruana'),
+    ('Puertorriqueña', 'Puertorriqueña'),
+    ('Uruguaya', 'Uruguaya'),
+    ('Otra', 'Otra'),
+]
+
 class SoftDeleteManager(models.Manager):
     """
     Manager personalizado para que por defecto solo se muestren
@@ -44,56 +95,6 @@ class SoftDeleteModel(models.Model):
         abstract = True
 
 # --- Fin de la lógica para Soft Delete ---
-
-
-# Constante para tipos de documento
-TIPO_DOCUMENTO_CHOICES = [
-    ('V', 'Cédula Venezolana (V)'),
-    ('CC', 'Cédula Colombiana (CC)'),
-]
-GENDER_LIST_PREDIFINED = [
-    ('M', 'Man'),
-    ('W', 'Woman'),
-]
-ROLE_LIST_PREDIFINED = [
-    ("student", "Student"), 
-    ("tutor", "Tutor"), 
-    ("admin", "Admin")
-]
-COURSE_MODALITY_LIST_PREDIFINED = [
-    ("virtual", "Virtual"),
-    ("presential", "Presential")
-]
-STAFF_POSITION_LIST_PREDIFINED = [
-    ("tutor", "Tutor"),
-    ("coordinator", "Coordinator"),
-]
-
-NATIONALITY_CHOICES = [
-    ('Venezolana', 'Venezolana'),
-    ('Colombiana', 'Colombiana'),
-    ('Argentina', 'Argentina'),
-    ('Boliviana', 'Boliviana'),
-    ('Brasileña', 'Brasileña'),
-    ('Chilena', 'Chilena'),
-    ('Costarricense', 'Costarricense'),
-    ('Cubana', 'Cubana'),
-    ('Dominicana', 'Dominicana'),
-    ('Ecuatoriana', 'Ecuatoriana'),
-    ('Salvadoreña', 'Salvadoreña'),
-    ('Española', 'Española'),
-    ('Estadounidense', 'Estadounidense'),
-    ('Guatemalteca', 'Guatemalteca'),
-    ('Hondureña', 'Hondureña'),
-    ('Mexicana', 'Mexicana'),
-    ('Nicaragüense', 'Nicaragüense'),
-    ('Panameña', 'Panameña'),
-    ('Paraguaya', 'Paraguaya'),
-    ('Peruana', 'Peruana'),
-    ('Puertorriqueña', 'Puertorriqueña'),
-    ('Uruguaya', 'Uruguaya'),
-    ('Otra', 'Otra'),
-]
 
 class Cedula(models.Model):
     class Meta:
@@ -161,7 +162,7 @@ class Person(SoftDeleteModel):
     def __str__(self):
         return f"{self.name} ({self.document_number})"
 
-class Students(models.Model):
+class Students(SoftDeleteModel):
     """
     Modelo que representa a un estudiante de la academia.
     Relaciona a la persona, usuario y los grupos a los que pertenece.
@@ -232,7 +233,7 @@ class Units(models.Model):
 class User(AbstractUser, SoftDeleteModel):
     email = models.EmailField(unique=True)
     documento = models.CharField(max_length=20, unique=True)
-    role = models.CharField(max_length=50, choices=ROLE_LIST_PREDIFINED, default='student')
+    role = models.CharField(max_length=50, choices=ROLE_LIST_PREDIFINED, default='estudiante')
     person = models.ForeignKey(Person, on_delete=models.CASCADE, null=True, blank=True)
 
     REQUIRED_FIELDS = ['first_name','last_name','documento', 'role', 'email']

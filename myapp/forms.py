@@ -1,7 +1,58 @@
 from django import forms
-from .models import Courses, Levels, Person, TodoItem, User
+import datetime
+import re
+from .models import Courses, Levels, Person, TodoItem, User, Tutors, STAFF_POSITION_LIST_PREDIFINED
+
+class DocenteForm(forms.ModelForm):
+    staff_position = forms.ChoiceField(label='Cargo', choices=STAFF_POSITION_LIST_PREDIFINED)
+    document_number = forms.CharField(label='Número de Documento', max_length=20)
+    name = forms.CharField(label='Nombre', max_length=50)
+    surname = forms.CharField(label='Apellido', max_length=50)
+    telephone = forms.CharField(label='Teléfono', max_length=15)
+    email = forms.EmailField(label='Email')
+    date_of_birth = forms.DateField(label='Fecha de Nacimiento')
+    class Meta:
+        model = Person
+        fields = [
+            'type_document',
+            'document_number',
+            'name',
+            'surname',
+            'telephone_number',
+            'email',
+            'date_of_birth',
+            'gender',
+            'nationality',
+            'staff_position'
+        ]
+        labels = {
+            'type_document': 'Tipo de Documento',
+            'document_number': 'Numero de Documento',
+            'name': 'Nombres',
+            'surname': 'Apellidos',
+            'telephone_number': 'Teléfono',
+            'email': 'Email',
+            'date_of_birth': 'Fecha de Nacimiento',
+            'gender': 'Sexo',
+            'nationality': 'Nacionalidad',
+            'staff_position': 'Cargo'
+        }
+        widgets = {
+            'type_document': forms.Select(attrs={'class': 'form-control'}),
+            'document_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba su número de documento'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus nombres'}),
+            'surname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus apellidos'}),
+            'telephone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba el número de teléfono'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Escriba su Correo Electrónico'}),
+            'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'gender': forms.Select(attrs={'class': 'form-control'}),
+            'nationality': forms.Select(attrs={'class': 'form-control'}),
+        }
 
 class CourseForm(forms.ModelForm):
+    course = forms.CharField(label='Curso', max_length=100)
+    image_course = forms.ImageField(label='Imagen del Curso', required=False)
+    tutor = forms.ModelChoiceField(queryset=Tutors.objects.all(), label='Tutor')
     class Meta:
         model = Courses
         fields = ['course_name', 'image_course', 'tutor']
@@ -12,6 +63,9 @@ class CourseForm(forms.ModelForm):
         }
 
 class LevelForm(forms.ModelForm):
+    level_name = forms.CharField(label='Nombre del Nivel', max_length=100)
+    description = forms.CharField(label='Descripción', max_length=500)
+    duration = forms.IntegerField(label='Duración', min_value=1, max_value=100)
     class Meta:
         model = Levels
         fields = ['level_name', 'description', 'duration']
@@ -22,6 +76,8 @@ class LevelForm(forms.ModelForm):
         }
 
 class TodoItemForm(forms.ModelForm):
+    task = forms.CharField(label='Tarea', max_length=200)
+    due_date = forms.DateField(label='Fecha de Vencimiento')
     class Meta:
         model = TodoItem
         fields = ['task', 'due_date']
@@ -31,6 +87,11 @@ class TodoItemForm(forms.ModelForm):
         }
 
 class UserForm(forms.ModelForm):
+    username = forms.CharField(label='Nombre de Usuario', max_length=150)
+    password = forms.CharField(label='Contraseña', widget=forms.PasswordInput)
+    email = forms.EmailField(label='Correo Electrónico')
+    documento = forms.CharField(label='Documento', max_length=100)
+    person = forms.ModelChoiceField(queryset=Person.objects.all(), label='Persona')
     class Meta:
         model = User
         fields = ['username', 'password', 'email', 'documento', 'role', 'person']
@@ -44,9 +105,14 @@ class UserForm(forms.ModelForm):
         }
 
 class UserUpdateForm(forms.ModelForm):
+    username = forms.CharField(label='Nombre de Usuario', max_length=150)
+    email = forms.EmailField(label='Email')
+    documento = forms.CharField(label='Documento', max_length=100)
+    person = forms.ModelChoiceField(queryset=Person.objects.all(), label='Persona')
+
     class Meta:
         model = User
-        fields = ['username', 'email', 'documento', 'role']
+        fields = ['username', 'email', 'documento', 'role', 'person']
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de Usuario'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo Electrónico'}),
@@ -56,6 +122,14 @@ class UserUpdateForm(forms.ModelForm):
 
 
 class PersonForm(forms.ModelForm):
+    document_number = forms.CharField(label='Número de Documento', max_length=20)
+    name = forms.CharField(label='Nombre', max_length=50)
+    surname = forms.CharField(label='Apellido', max_length=50)
+    telephone = forms.CharField(label='Teléfono', max_length=15)
+    email = forms.EmailField(label='Email')
+    date_of_birth = forms.DateField(label='Fecha de Nacimiento')
+    progenitor_document_number = forms.CharField(label='Número de Documento del Progenitor', max_length=20)
+    progenitor_name = forms.CharField(label='Nombre del Progenitor', max_length=50)
     class Meta:
         model = Person
         fields = [
@@ -97,3 +171,15 @@ class PersonForm(forms.ModelForm):
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'nationality': forms.Select(attrs={'class': 'form-control'}),
         }
+
+    def clean_date_of_birth(self):
+        date_of_birth = self.cleaned_data.get('date_of_birth')
+        if date_of_birth and date_of_birth > datetime.date.today():
+            raise forms.ValidationError("La fecha de nacimiento no puede ser mayor al día de hoy.")
+        return date_of_birth
+
+    def clean_document_number(self):
+        document_number = self.cleaned_data.get('document_number')
+        if document_number and not re.match(r'^[0-9.]+$', document_number):
+            raise forms.ValidationError("El número de documento solo puede contener números y puntos.")
+        return document_number

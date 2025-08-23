@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Cedula, User, Calendario, Courses, Tutors, Levels, TodoItem, Person
-from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm
+from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm, DocenteForm
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q
@@ -97,6 +97,7 @@ class UserView(LoginRequiredMixin, View):
             user.set_password(form.cleaned_data['password'])
             user.save()
             messages.success(request, 'Usuario agregado exitosamente.')
+
             return redirect('usuarios')
         else:
             users = User.objects.all()
@@ -191,7 +192,7 @@ class PersonView(LoginRequiredMixin, View):
                         password=person.document_number,
                         email=person.email,
                         documento=person.document_number,
-                        role='student',
+                        role='estudiante',
                         person=person
                     )
                     user.first_name = person.name
@@ -216,8 +217,7 @@ class PersonView(LoginRequiredMixin, View):
                 'persons': persons
             }
             return render(request, self.template_name, context)
-
-
+        
 class UpdatePersonView(LoginRequiredMixin, View):
     template_name = 'cedulas.html'
     login_url = 'login'
@@ -474,67 +474,86 @@ class DocenteView(LoginRequiredMixin, View):
     login_url = 'login'
 
     def get(self, request, *args, **kwargs):
-        form = PersonForm()
-        # Filtrar solo docentes: puedes ajustar el valor del campo `position`
-        persons = Person.objects.filter(position__icontains='docente')  # Cambia si usas un valor específico
-
-        # O si prefieres mostrar todos pero destacar los docentes, quita el filtro arriba
-
+        form = DocenteForm()
+        tutors = Tutors.objects.all()
+        
         query = request.GET.get('q')
         campo = request.GET.get('campo')
 
         if query:
             if campo and campo != "todos":
-                filter_kwargs = {f"{campo}__icontains": query}
-                persons = persons.filter(**filter_kwargs)
+                filter_kwargs = {f"person__{campo}__icontains": query}
+                tutors = tutors.filter(**filter_kwargs)
             else:
-                persons = persons.filter(
-                    Q(name__icontains=query) |
-                    Q(surname__icontains=query) |
-                    Q(document_number__icontains=query) |
-                    Q(email__icontains=query) |
-                    Q(position__icontains=query)
+                tutors = tutors.filter(
+                    Q(person__name__icontains=query) |
+                    Q(person__surname__icontains=query) |
+                    Q(person__document_number__icontains=query) |
+                    Q(person__email__icontains=query)
                 )
 
         context = {
             'form': form,
-            'persons': persons,
+            'tutors': tutors,
             'query': query,
             'campo': campo
         }
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
-        form = PersonForm(request.POST)
+        form = DocenteForm(request.POST)
         if form.is_valid():
-            person = form.save(commit=False)
-            # Aseguramos que el cargo sea "Docente" si es necesario
-            # person.position = "Docente"  # descomenta si quieres forzarlo
-            person.save()
-            messages.success(request, 'Docente agregado exitosamente.')
-            return redirect('docentes')
-        else:
-            # Mantener el filtro en caso de error
-            persons = Person.objects.filter(position__icontains='docente')
-            query = request.GET.get('q')
-            campo = request.GET.get('campo')
-            if query:
-                if campo and campo != "todos":
-                    filter_kwargs = {f"{campo}__icontains": query}
-                    persons = persons.filter(**filter_kwargs)
-                else:
-                    persons = persons.filter(
-                        Q(name__icontains=query) |
-                        Q(surname__icontains=query) |
-                        Q(document_number__icontains=query) |
-                        Q(email__icontains=query)
+            try:
+                with transaction.atomic():
+                    # Crear la persona
+                    person = Person.objects.create(
+                        type_document=form.cleaned_data['type_document'],
+                        document_number=form.cleaned_data['document_number'],
+                        name=form.cleaned_data['name'],
+                        surname=form.cleaned_data['surname'],
+                        telephone_number=form.cleaned_data['telephone_number'],
+                        email=form.cleaned_data['email'],
+                        date_of_birth=form.cleaned_data['date_of_birth'],
+                        gender=form.cleaned_data['gender'],
+                        nationality=form.cleaned_data['nationality']
                     )
+
+                    # Crear el usuario asociado
+                    user = User.objects.create_user(
+                        username=person.document_number,
+                        password=person.document_number,
+                        email=person.email,
+                        documento=person.document_number,
+                        role='tutor',
+                        person=person
+                    )
+                    user.first_name = person.name
+                    user.last_name = person.surname
+                    user.save()
+
+                    # Crear el tutor
+                    Tutors.objects.create(
+                        person=person,
+                        user=user,
+                        staff_position=form.cleaned_data['staff_position']
+                    )
+
+                    messages.success(request, 'Docente agregado exitosamente.')
+                    return redirect('docentes')
+            except Exception as e:
+                messages.error(request, f'Ocurrió un error al crear el docente: {e}')
+                tutors = Tutors.objects.all()
+                context = {
+                    'form': form,
+                    'tutors': tutors
+                }
+                return render(request, self.template_name, context)
+        else:
+            tutors = Tutors.objects.all()
             messages.error(request, 'Por favor corrija los errores en el formulario.')
             context = {
                 'form': form,
-                'persons': persons,
-                'query': query,
-                'campo': campo
+                'tutors': tutors
             }
             return render(request, self.template_name, context)
 class UpdateDocenteView(LoginRequiredMixin, View):
@@ -542,34 +561,22 @@ class UpdateDocenteView(LoginRequiredMixin, View):
     login_url = 'login'
 
     def post(self, request, id, *args, **kwargs):
-        person = get_object_or_404(Person, id=id)
-        form = PersonForm(request.POST, instance=person)
+        tutor = get_object_or_404(Tutors, id=id)
+        person = tutor.person
+        form = DocenteForm(request.POST, instance=person)
         if form.is_valid():
-            form.save()
+            person = form.save()
+            tutor.staff_position = request.POST.get('staff_position')
+            tutor.save()
             messages.success(request, 'Docente actualizado exitosamente.')
             return redirect('docentes')
         else:
-            persons = Person.objects.filter(position__icontains='docente')
-            query = request.GET.get('q')
-            campo = request.GET.get('campo')
-            if query:
-                if campo and campo != "todos":
-                    filter_kwargs = {f"{campo}__icontains": query}
-                    persons = persons.filter(**filter_kwargs)
-                else:
-                    persons = persons.filter(
-                        Q(name__icontains=query) |
-                        Q(surname__icontains=query) |
-                        Q(document_number__icontains=query) |
-                        Q(email__icontains=query)
-                    )
+            tutors = Tutors.objects.all()
             messages.error(request, 'Por favor corrija los errores en el formulario.')
             context = {
                 'form': form,
-                'persons': persons,
-                'person_to_edit': person,
-                'query': query,
-                'campo': campo
+                'tutors': tutors,
+                'tutor_to_edit': tutor
             }
             return render(request, self.template_name, context)
         
@@ -577,8 +584,8 @@ class DeleteDocenteView(LoginRequiredMixin, View):
     login_url = 'login'
 
     def post(self, request, id, *args, **kwargs):
-        person = get_object_or_404(Person, id=id)
-        person.delete()
+        tutor = get_object_or_404(Tutors, id=id)
+        tutor.delete()
         messages.success(request, 'Docente eliminado exitosamente.')
         return redirect('docentes')
 
@@ -608,193 +615,3 @@ def logout_view(request):
     """
     logout(request)
     return redirect('login')
-
-
-# ==============================
-# Vistas del Calendario
-# ==============================
-# @login_required
-# def calendario_view(request):
-#     """
-#     Muestra el calendario con eventos registrados.
-#     """
-#     if request.method == 'POST':
-#         form = CalendarioForm(request.POST)
-#         if form.is_valid():
-#             calendario = form.save(commit=False)
-#             calendario.creador = request.user if request.user.is_authenticated else None
-#             calendario.save()
-#             return redirect('calendario')
-#     else:
-#         form = CalendarioForm()
-
-#     eventos = Calendario.objects.all()
-#     context = {
-#         'form': form,
-#         'eventos': eventos
-#     }
-#     return render(request, 'calendario.html', context)
-
-# def agregar_evento(request):
-#     if request.method == 'POST':
-#         form = CalendarioForm(request.POST)
-#         if form.is_valid():
-#             evento = form.save(commit=False)
-#             evento.creador = request.user
-#             evento.save()
-#             return redirect('calendario')
-#     else:
-#         form = CalendarioForm()
-
-#     return render(request, 'calendario.html', {'form': form})
-
-
-# @csrf_exempt
-# def guardar_evento(request):
-#     """
-#     Guarda un evento nuevo en el calendario (AJAX).
-#     """
-#     if request.method == 'POST':
-#         try:
-#             data = json.loads(request.body)
-#             tz = pytz.UTC  # Puedes cambiar a otra zona horaria si es necesario
-
-#             evento = Calendario(
-#                 titulo=data['titulo'],
-#                 descripcion=data.get('descripcion'),
-#                 fecha_inicio=tz.localize(datetime.fromisoformat(data['fecha_inicio'])),
-#                 fecha_fin=tz.localize(datetime.fromisoformat(data['fecha_fin'])) if data.get('fecha_fin') else None,
-#                 creador=request.user if request.user.is_authenticated else None
-#             )
-#             evento.save()
-#             return JsonResponse({'success': True, 'id': evento.id})
-#         except KeyError as e:
-#             return JsonResponse({'success': False, 'error': f'Campo faltante: {e}'}, status=400)
-#         except ValueError as e:
-#             return JsonResponse({'success': False, 'error': 'Formato de fecha inválido.'}, status=400)
-#         except Exception as e:
-#             return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
-#     return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
-
-
-# @csrf_exempt
-# def modificar_evento(request, evento_id):
-    # try:
-    #     evento_id = int(evento_id)
-    # except ValueError:
-    #     return JsonResponse({'success': False, 'error': 'ID inválido'}, status=400)
-
-    # if request.method == 'POST':
-    #     try:
-    #         data = json.loads(request.body)
-    #         evento = Calendario.objects.get(id=evento_id)
-
-    #         # Validar y parsear fechas con zona horaria
-    #         tz = pytz.UTC  # Puedes cambiarlo si usas una zona horaria específica
-
-    #         fecha_inicio = data.get('fecha_inicio')
-    #         if not fecha_inicio:
-    #             return JsonResponse({'success': False, 'error': 'Fecha de inicio requerida'}, status=400)
-
-    #         # Convertir fecha_inicio a datetime aware
-    #         evento.fecha_inicio = tz.localize(datetime.fromisoformat(fecha_inicio))
-
-    #         fecha_fin = data.get('fecha_fin')
-    #         if fecha_fin:
-    #             evento.fecha_fin = tz.localize(datetime.fromisoformat(fecha_fin))
-    #         else:
-    #             evento.fecha_fin = None
-
-    #         # Guardar otros campos
-    #         evento.titulo = data.get('titulo', evento.titulo)
-    #         evento.descripcion = data.get('descripcion', evento.descripcion)
-    #         evento.save()
-
-    #         return JsonResponse({'success': True})
-    #     except Calendario.DoesNotExist:
-    #         return JsonResponse({'success': False, 'error': 'Evento no encontrado'}, status=404)
-    #     except Exception as e:
-    #         return JsonResponse({'success': False, 'error': str(e)}, status=500)
-    # return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
-    
-    
-    
-#     """
-#     Modifica un evento existente (AJAX).
-#     """
-#     try:
-#         evento_id = int(evento_id)
-#     except ValueError:
-#         return JsonResponse({'success': False, 'error': 'ID inválido'}, status=400)
-
-#     try:
-#         evento = Calendario.objects.get(id=evento_id)
-#     except Calendario.DoesNotExist:
-#         return JsonResponse({'success': False, 'error': 'Evento no encontrado'}, status=404)
-
-#     if request.method == 'POST':
-#         try:
-#             data = json.loads(request.body)
-#             tz = pytz.UTC
-
-#             if 'titulo' not in data:
-#                 return JsonResponse({'success': False, 'error': 'Título es obligatorio.'}, status=400)
-
-#             evento.titulo = data['titulo']
-#             evento.descripcion = data.get('descripcion')
-
-#             fecha_inicio = data.get('fecha_inicio')
-#             if not fecha_inicio:
-#                 return JsonResponse({'success': False, 'error': 'Fecha de inicio es obligatoria.'}, status=400)
-
-#             evento.fecha_inicio = tz.localize(datetime.fromisoformat(fecha_inicio))
-#             fecha_fin = data.get('fecha_fin')
-
-#             if fecha_fin:
-#                 evento.fecha_fin = tz.localize(datetime.fromisoformat(fecha_fin))
-#             else:
-#                 evento.fecha_fin = None
-
-#             evento.save()
-#             return JsonResponse({'success': True})
-
-#         except KeyError as e:
-#             return JsonResponse({'success': False, 'error': f'Campo faltante: {e}'}, status=400)
-#         except Exception as e:
-#             return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
-#     return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
-
-
-# @csrf_exempt
-# def eliminar_evento(request, evento_id):
-#     """
-#     Elimina un evento del calendario (AJAX).
-#     """
-#     if request.method == 'DELETE':
-#         try:
-#             evento = Calendario.objects.get(id=evento_id)
-#             evento.delete()
-#             return JsonResponse({'success': True})
-#         except Calendario.DoesNotExist:
-#             return JsonResponse({'success': False, 'error': 'Evento no encontrado.'}, status=404)
-#     return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
-
-
-# def eventos_json(request):
-#     """
-#     Devuelve todos los eventos en formato JSON para FullCalendar.
-#     """
-#     eventos = Calendario.objects.all()
-#     data = [
-#         {
-#             'id': e.id,
-#             'title': e.titulo,
-#             'start': e.fecha_inicio.isoformat(),
-#             'end': e.fecha_fin.isoformat() if e.fecha_fin else None,
-#             'description': e.descripcion
-#         }
-#         for e in eventos
-#     ]
-#     return JsonResponse(data, safe=False)

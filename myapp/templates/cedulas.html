@@ -99,9 +99,9 @@
                   <td>{{ person.email }}</td>
                   <td>{{ person.date_of_birth }}</td>
                   <td>{{ person.get_gender_display }}</td>
-                  <td>{{ person.nationality }}</td>
-                  <td>{{ person.progenitor_document_number }}</td>
-                  <td>{{ person.progenitor_name }}</td>
+                  <td>{{ person.nationality|default_if_none:"" }}</td>
+                  <td>{{ person.progenitor_document_number|default_if_none:"" }}</td>
+                  <td>{{ person.progenitor_name|default_if_none:"" }}</td>
                   <td>
                     <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
                       data-bs-target="#controlNominaModal" data-person-id="{{ person.id }}">Editar</button>
@@ -216,21 +216,13 @@
 
 
   <script>
-    window.onpageshow = function (event) {
-      if (event.persisted || performance.navigation.type === PerformanceNavigation.TYPE_BACK_FORWARD) {
-        // Si viene del historial → redirigir al login
-        window.location.href = "{% url 'login' %}";
-      }
-    };
-  </script>
-  <script>
     // Verifica si el usuario está autenticado (usando una variable de contexto)
     const isAuthenticated = "{{ request.user.is_authenticated|yesno:'true,false' }}";
 
     window.onpageshow = function (event) {
-      if (event.persisted || performance.navigation.type === PerformanceNavigation.TYPE_BACK_FORWARD) {
+      if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
         // Si viene del historial y no está autenticado → redirigir
-        if (!isAuthenticated) {
+        if (isAuthenticated === 'false') {
           window.location.href = "{% url 'login' %}";
         }
       }

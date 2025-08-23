@@ -9,8 +9,6 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('welcome/', views.welcome, name='welcome'),
 
-    path('docentes/', views.docentes, name='docentes'),
-
     path('cedulas/', views.PersonView.as_view(), name='cedulas'),
     path('cedulas/editar/<int:id>/', views.UpdatePersonView.as_view(), name='editar_persona'),
     path('cedulas/eliminar/<int:id>/', views.DeletePersonView.as_view(), name='eliminar_persona'),
