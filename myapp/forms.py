@@ -4,13 +4,14 @@ import re
 from .models import Courses, Levels, Person, TodoItem, User, Tutors, STAFF_POSITION_LIST_PREDIFINED
 
 class DocenteForm(forms.ModelForm):
-    staff_position = forms.ChoiceField(label='Cargo', choices=STAFF_POSITION_LIST_PREDIFINED)
-    document_number = forms.CharField(label='Número de Documento', max_length=20)
-    name = forms.CharField(label='Nombre', max_length=50)
-    surname = forms.CharField(label='Apellido', max_length=50)
-    telephone = forms.CharField(label='Teléfono', max_length=15)
-    email = forms.EmailField(label='Email')
-    date_of_birth = forms.DateField(label='Fecha de Nacimiento')
+    staff_position = forms.ChoiceField(label='Cargo', choices=STAFF_POSITION_LIST_PREDIFINED, widget=forms.Select(attrs={'class': 'form-control'}))
+    document_number = forms.CharField(label='Número de Documento', max_length=20, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba su número de documento'}))
+    name = forms.CharField(label='Nombre', max_length=50, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus nombres'}))
+    surname = forms.CharField(label='Apellido', max_length=50, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus apellidos'}))
+    telephone_number = forms.CharField(label='Teléfono', max_length=15, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba el número de teléfono'}))
+    email = forms.EmailField(label='Email', widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Escriba su Correo Electrónico'}))
+    date_of_birth = forms.DateField(label='Fecha de Nacimiento', widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
+
     class Meta:
         model = Person
         fields = [
@@ -23,7 +24,6 @@ class DocenteForm(forms.ModelForm):
             'date_of_birth',
             'gender',
             'nationality',
-            'staff_position'
         ]
         labels = {
             'type_document': 'Tipo de Documento',
@@ -35,16 +35,9 @@ class DocenteForm(forms.ModelForm):
             'date_of_birth': 'Fecha de Nacimiento',
             'gender': 'Sexo',
             'nationality': 'Nacionalidad',
-            'staff_position': 'Cargo'
         }
         widgets = {
             'type_document': forms.Select(attrs={'class': 'form-control'}),
-            'document_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba su número de documento'}),
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus nombres'}),
-            'surname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus apellidos'}),
-            'telephone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba el número de teléfono'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Escriba su Correo Electrónico'}),
-            'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'nationality': forms.Select(attrs={'class': 'form-control'}),
         }
@@ -122,14 +115,15 @@ class UserUpdateForm(forms.ModelForm):
 
 
 class PersonForm(forms.ModelForm):
-    document_number = forms.CharField(label='Número de Documento', max_length=20)
-    name = forms.CharField(label='Nombre', max_length=50)
-    surname = forms.CharField(label='Apellido', max_length=50)
-    telephone = forms.CharField(label='Teléfono', max_length=15)
-    email = forms.EmailField(label='Email')
-    date_of_birth = forms.DateField(label='Fecha de Nacimiento')
-    progenitor_document_number = forms.CharField(label='Número de Documento del Progenitor', max_length=20)
-    progenitor_name = forms.CharField(label='Nombre del Progenitor', max_length=50)
+    document_number = forms.CharField(label='Número de Documento', max_length=20, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba su número de documento'}))
+    name = forms.CharField(label='Nombre', max_length=50, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus nombres'}))
+    surname = forms.CharField(label='Apellido', max_length=50, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus apellidos'}))
+    telephone_number = forms.CharField(label='Teléfono', max_length=15, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba el número de teléfono'}))
+    email = forms.EmailField(label='Email', required=False, widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Escriba su Correo Electrónico'}))
+    date_of_birth = forms.DateField(label='Fecha de Nacimiento', required=False, widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
+    progenitor_document_number = forms.CharField(label='Número de Documento del Representante', max_length=20, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba el número de documento del representante'}))
+    progenitor_name = forms.CharField(label='Nombre del Representante', max_length=50, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba el nombre del representante'}))
+
     class Meta:
         model = Person
         fields = [
@@ -160,14 +154,6 @@ class PersonForm(forms.ModelForm):
         }
         widgets = {
             'type_document': forms.Select(attrs={'class': 'form-control'}),
-            'document_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba su número de documento'}),
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus nombres'}),
-            'surname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus apellidos'}),
-            'progenitor_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba el nombre del representante'}),
-            'progenitor_document_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba el número de documento del representante'}),
-            'telephone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba el número de teléfono'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Escriba su Correo Electrónico'}),
-            'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'nationality': forms.Select(attrs={'class': 'form-control'}),
         }
