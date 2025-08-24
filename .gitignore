@@ -8,6 +8,7 @@ __pycache__/
 
 #CHANGELOG MD
 CHANGELOG.md
+views_refactor.py
 
 # Distribution / packaging
 .Python

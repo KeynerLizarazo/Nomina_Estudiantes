@@ -131,10 +131,14 @@
             <!-- Cuerpo del Modal -->
             <div class="modal-body">
               <!-- Formulario -->
-              <form id="nominaForm" method="POST" action="{% url 'docentes' %}">
+              <form id="nominaForm" method="POST" action="{% if tutor_to_edit %}{% url 'editar_docente' tutor_to_edit.id %}{% else %}{% url 'docentes' %}{% endif %}">
                 {% csrf_token %}
-                <input type="hidden" name="id" id="tutorIdInput" value="">
-                {{ form.as_p }}
+                {% if tutor_to_edit %}
+                    <input type="hidden" name="id" value="{{ tutor_to_edit.id }}">
+                    {{ form.as_p }}
+                {% else %}
+                    {{ form.as_p }}
+                {% endif %}
               </form>
             </div>
 
@@ -170,26 +174,31 @@
     const tutorIdInput = document.getElementById('tutorIdInput');
     const nominaForm = document.getElementById('nominaForm');
 
+
     // Escuchar el evento 'show.bs.modal' para detectar cuándo se abre el modal
     modal.addEventListener('show.bs.modal', function (event) {
-      // Obtener el botón que activó el modal
       const button = event.relatedTarget;
-
-      // Obtener el ID del objeto desde el atributo 'data-tutor-id'
       const tutorId = button.getAttribute('data-tutor-id');
 
-      // Si hay un ID, significa que estamos editando
       if (tutorId) {
         modalTitle.textContent = 'Editar Datos';
-        tutorIdInput.value = tutorId;
         nominaForm.action = `/docentes/editar/${tutorId}/`;
 
-        // Aquí puedes hacer una solicitud AJAX para cargar los datos del objeto
-        // y llenar el formulario.
+        // AJAX para obtener los datos del tutor y llenar el formulario
+        fetch(`/docentes/api/${tutorId}/`)
+          .then(response => response.json())
+          .then(data => {
+            for (const [key, value] of Object.entries(data)) {
+              const input = nominaForm.querySelector(`[name="${key}"]`);
+              if (input) {
+                input.value = value !== null ? value : '';
+              }
+            }
+          });
       } else {
         modalTitle.textContent = 'Ingresar Datos';
-        tutorIdInput.value = '';
         nominaForm.action = "{% url 'docentes' %}";
+        nominaForm.reset();
       }
     });
 

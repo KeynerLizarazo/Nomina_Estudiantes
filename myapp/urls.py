@@ -2,6 +2,7 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
+from .views import PersonApiView, DocenteApiView
 
 urlpatterns = [
     path('', views.home, name='home'),  # Esto debe estar definido en views.py
@@ -14,6 +15,8 @@ urlpatterns = [
     path('cedulas/eliminar/<int:id>/', views.DeletePersonView.as_view(), name='eliminar_persona'),
     path('docentes/', views.DocenteView.as_view(), name='docentes'),
     path('docentes/editar/<int:id>/', views.UpdateDocenteView.as_view(), name='editar_docente'),
+    path('cedulas/api/<int:id>/', PersonApiView.as_view(), name='person_api'),
+    path('docentes/api/<int:id>/', DocenteApiView.as_view(), name='docente_api'),
     path('docentes/eliminar/<int:id>/', views.DeleteDocenteView.as_view(), name='eliminar_docente'),
     path('usuarios/', views.UserView.as_view(), name='usuarios'),
     path('usuarios/editar/<int:id>/', views.UpdateUserView.as_view(), name='editar_usuario'),

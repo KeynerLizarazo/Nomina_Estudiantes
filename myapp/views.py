@@ -1,3 +1,10 @@
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+# Endpoint para obtener datos de una persona en JSON para el modal AJAX
+# Vista basada en clase para API de persona (AJAX)
+from django.views import View
+from django.http import JsonResponse
+###################################
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
@@ -7,6 +14,7 @@ from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Cedula, User, Calendario, Courses, Tutors, Levels, TodoItem, Person
 from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm, DocenteForm
+from .models import User
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q
@@ -114,6 +122,19 @@ class UpdateUserView(LoginRequiredMixin, View):
     template_name = 'usuarios.html'
     login_url = 'login'
 
+    def get(self, request, id, *args, **kwargs):
+        user = get_object_or_404(User, id=id)
+        form = UserUpdateForm(instance=user)
+        users = User.objects.all()
+        persons = Person.objects.all()
+        context = {
+            'form': form,
+            'users': users,
+            'persons': persons,
+            'user_to_edit': user
+        }
+        return render(request, self.template_name, context)
+
     def post(self, request, id, *args, **kwargs):
         user = get_object_or_404(User, id=id)
         form = UserUpdateForm(request.POST, instance=user)
@@ -146,7 +167,23 @@ class DeleteUserView(LoginRequiredMixin, View):
         messages.success(request, 'Usuario eliminado exitosamente.')
         return redirect('usuarios')
 
-
+class PersonApiView(View):
+    def get(self, request, id, *args, **kwargs):
+        person = get_object_or_404(Person, id=id)
+        data = {
+            'type_document': person.type_document,
+            'document_number': person.document_number,
+            'name': person.name,
+            'surname': person.surname,
+            'telephone_number': person.telephone_number,
+            'email': person.email,
+            'date_of_birth': person.date_of_birth.strftime('%Y-%m-%d') if person.date_of_birth else '',
+            'gender': person.gender,
+            'nationality': person.nationality,
+            'progenitor_document_number': person.progenitor_document_number,
+            'progenitor_name': person.progenitor_name,
+        }
+        return JsonResponse(data)
 class PersonView(LoginRequiredMixin, View):
     template_name = 'cedulas.html'
     login_url = 'login'
@@ -222,11 +259,32 @@ class UpdatePersonView(LoginRequiredMixin, View):
     template_name = 'cedulas.html'
     login_url = 'login'
 
+    def get(self, request, id, *args, **kwargs):
+        person = get_object_or_404(Person, id=id)
+        form = PersonForm(instance=person)
+        persons = Person.objects.all()
+        context = {
+            'form': form,
+            'persons': persons,
+            'person_to_edit': person
+        }
+        return render(request, self.template_name, context)
+
     def post(self, request, id, *args, **kwargs):
         person = get_object_or_404(Person, id=id)
         form = PersonForm(request.POST, instance=person)
         if form.is_valid():
-            form.save()
+            person = form.save()
+            # Sincronizar datos con el usuario relacionado (si existe)
+            from .models import User
+            try:
+                user = User.objects.get(person=person)
+                user.email = person.email or ''
+                user.first_name = person.name or ''
+                user.last_name = person.surname or ''
+                user.save()
+            except User.DoesNotExist:
+                pass
             messages.success(request, 'Persona actualizada exitosamente.')
             return redirect('cedulas')
         else:
@@ -468,6 +526,24 @@ def test_zone(request):
 
 
 # INTENTO DE BACKEND DE GABO !!!!
+class DocenteApiView(View):
+    def get(self, request, id, *args, **kwargs):
+        from .models import Tutors
+        tutor = get_object_or_404(Tutors, id=id)
+        person = tutor.person
+        data = {
+            'type_document': person.type_document,
+            'document_number': person.document_number,
+            'name': person.name,
+            'surname': person.surname,
+            'telephone_number': person.telephone_number,
+            'email': person.email,
+            'date_of_birth': person.date_of_birth.strftime('%Y-%m-%d') if person.date_of_birth else '',
+            'gender': person.gender,
+            'nationality': person.nationality,
+            'staff_position': tutor.staff_position,
+        }
+        return JsonResponse(data)
 
 class DocenteView(LoginRequiredMixin, View):
     template_name = 'docentes.html'
@@ -560,6 +636,18 @@ class UpdateDocenteView(LoginRequiredMixin, View):
     template_name = 'docentes.html'
     login_url = 'login'
 
+    def get(self, request, id, *args, **kwargs):
+        tutor = get_object_or_404(Tutors, id=id)
+        person = tutor.person
+        form = DocenteForm(instance=person, initial={'staff_position': tutor.staff_position})
+        tutors = Tutors.objects.all()
+        context = {
+            'form': form,
+            'tutors': tutors,
+            'tutor_to_edit': tutor
+        }
+        return render(request, self.template_name, context)
+
     def post(self, request, id, *args, **kwargs):
         tutor = get_object_or_404(Tutors, id=id)
         person = tutor.person
@@ -568,6 +656,15 @@ class UpdateDocenteView(LoginRequiredMixin, View):
             person = form.save()
             tutor.staff_position = request.POST.get('staff_position')
             tutor.save()
+            # Sincronizar datos con el usuario relacionado (si existe)
+            try:
+                user = User.objects.get(person=person)
+                user.email = person.email or ''
+                user.first_name = person.name or ''
+                user.last_name = person.surname or ''
+                user.save()
+            except User.DoesNotExist:
+                pass
             messages.success(request, 'Docente actualizado exitosamente.')
             return redirect('docentes')
         else:

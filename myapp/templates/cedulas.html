@@ -137,10 +137,14 @@
             <!-- Cuerpo del Modal -->
             <div class="modal-body">
               <!-- Formulario -->
-              <form id="nominaForm" method="POST" action="{% url 'cedulas' %}">
+              <form id="nominaForm" method="POST" action="{% if person_to_edit %}{% url 'editar_persona' person_to_edit.id %}{% else %}{% url 'cedulas' %}{% endif %}">
                 {% csrf_token %}
-                <input type="hidden" name="id" id="personIdInput" value="">
-                {{ form.as_p }}
+                {% if person_to_edit %}
+                    <input type="hidden" name="id" value="{{ person_to_edit.id }}">
+                    {{ form.as_p }}
+                {% else %}
+                    {{ form.as_p }}
+                {% endif %}
               </form>
             </div>
 
@@ -176,26 +180,32 @@
     const personIdInput = document.getElementById('personIdInput');
     const nominaForm = document.getElementById('nominaForm');
 
+
     // Escuchar el evento 'show.bs.modal' para detectar cuándo se abre el modal
     modal.addEventListener('show.bs.modal', function (event) {
-      // Obtener el botón que activó el modal
       const button = event.relatedTarget;
-
-      // Obtener el ID del objeto desde el atributo 'data-person-id'
       const personId = button.getAttribute('data-person-id');
 
-      // Si hay un ID, significa que estamos editando
       if (personId) {
         modalTitle.textContent = 'Editar Datos';
-        personIdInput.value = personId;
         nominaForm.action = `/cedulas/editar/${personId}/`;
 
-        // Aquí puedes hacer una solicitud AJAX para cargar los datos del objeto
-        // y llenar el formulario.
+        // AJAX para obtener los datos de la persona y llenar el formulario
+        fetch(`/cedulas/api/${personId}/`)
+          .then(response => response.json())
+          .then(data => {
+            // Llenar los campos del formulario por nombre
+            for (const [key, value] of Object.entries(data)) {
+              const input = nominaForm.querySelector(`[name="${key}"]`);
+              if (input) {
+                input.value = value !== null ? value : '';
+              }
+            }
+          });
       } else {
         modalTitle.textContent = 'Ingresar Datos';
-        personIdInput.value = '';
         nominaForm.action = "{% url 'cedulas' %}";
+        nominaForm.reset();
       }
     });
 
