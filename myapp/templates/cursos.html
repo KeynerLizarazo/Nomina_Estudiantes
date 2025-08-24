@@ -31,7 +31,16 @@
       <div class="container-fluid ">
         <div class="d-flex justify-content-between align-items-center ">
           <div class="d-flex flex-column flex-grow-1">
-            <h2 class="fw-bold">Cursos</h2>
+            <!-- Breadcrumb de navegación -->
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb p-2 mb-2" style="background: rgba(255,255,255,0.92); border-radius: 0.5rem;">
+                <li class="breadcrumb-item">
+                  <a href="{% url 'home' %}" class="fw-bold text-dark text-decoration-none">Inicio</a>
+                </li>
+                <li class="breadcrumb-item active fw-bold text-primary" aria-current="page">Cursos</li>
+              </ol>
+            </nav>
+            <h2 class="fw-bold mb-0">Cursos</h2>
             <form method="get" action="{% url 'cursos' %}">
               <div class="input-group mb-4 search-bar search-lens z-0">
                 <input type="text" name="q" class="w-25 bg-my-background-color text-white border rounded p-2 pe-5" aria-label="Buscar" value="{{ query|default_if_none:'' }}">

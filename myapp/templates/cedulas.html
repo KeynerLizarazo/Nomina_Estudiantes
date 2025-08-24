@@ -68,6 +68,16 @@
               </form>
             </div>
 
+            <!-- Botón de exportar -->
+            <form class="d-flex mb-2" method="get" action="{% url 'export_persons' %}">
+              <select name="format" class="form-select w-auto me-2">
+                <option value="xlsx">Excel (.xlsx)</option>
+                <option value="xls">Excel 97-2003 (.xls)</option>
+                <option value="csv">CSV</option>
+              </select>
+              <button type="submit" class="btn btn-success">Descargar Reporte</button>
+            </form>
+
             <!-- Tabla de Resultados -->
             <div class="table-responsive">
             <table class="table table-bordered">
@@ -244,15 +254,13 @@
   document.addEventListener('DOMContentLoaded', function () {
     const prevButton = document.getElementById('prev-page');
     const nextButton = document.getElementById('next-page');
-    const currentPage = {{ persons.number }};
-    const totalPages = {{ persons.paginator.num_pages|default:1 }};
+    const currentPage = JSON.parse('{{ persons.number|default:1 }}');
+    const totalPages = JSON.parse('{{ persons.paginator.num_pages|default:1 }}');
     const query = "{{ query|default:'' }}";
     const campo = "{{ campo|default:'' }}";
 
     function buildURL(page) {
       const url = new URL(window.location.href.split('?')[0], window.location.origin);
-      
-      // Solo añade parámetros si tienen valor
       if (page > 1) {
         url.searchParams.append('page', page);
       }
@@ -262,7 +270,6 @@
       if (campo && campo !== 'None' && campo !== 'todos' && campo.trim() !== '') {
         url.searchParams.append('campo', campo);
       }
-      
       return url.toString();
     }
 

@@ -2,6 +2,7 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
+from . import views_export
 from .views import PersonApiView, DocenteApiView
 
 urlpatterns = [
@@ -32,6 +33,10 @@ urlpatterns = [
     path('niveles/eliminar/<int:id>/', views.DeleteLevelView.as_view(), name='eliminar_nivel'),
 
     path('test-zone/', views.test_zone, name='test_zone'),
+
+    # Exportar datos
+    path('cedulas/export/', views_export.export_persons, name='export_persons'),
+    path('docentes/export/', views_export.export_tutors, name='export_tutors'),
 
     # Calendario
     # path('calendario/', views.calendario_view, name='calendario'),

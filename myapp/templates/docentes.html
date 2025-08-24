@@ -18,9 +18,6 @@
   <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
 
-  <style>
-
-  </style>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -63,6 +60,16 @@
                 </button>
               </form>
             </div>
+
+            <!-- Botón de exportar -->
+            <form class="d-flex mb-2" method="get" action="{% url 'export_tutors' %}">
+              <select name="format" class="form-select w-auto me-2">
+                <option value="xlsx">Excel (.xlsx)</option>
+                <option value="xls">Excel 97-2003 (.xls)</option>
+                <option value="csv">CSV</option>
+              </select>
+              <button type="submit" class="btn btn-success">Descargar Reporte</button>
+            </form>
 
             <!-- Tabla de Resultados -->
             <div class="table-responsive">
@@ -301,14 +308,11 @@
     const nextButton = document.getElementById('next-page');
     const currentPage = {{ tutors.number }};
     const totalPages = {{ tutors.paginator.num_pages }};
-    // Usa variables de contexto limpias
     const query = "{{ query|default:'' }}";
     const campo = "{{ campo|default:'' }}";
 
     function buildURL(page) {
       const url = new URL(window.location.href.split('?')[0], window.location.origin);
-      
-      // Solo añade parámetros si tienen valor
       if (page > 1) {
         url.searchParams.append('page', page);
       }
@@ -318,7 +322,6 @@
       if (campo && campo !== 'None' && campo !== 'todos' && campo.trim() !== '') {
         url.searchParams.append('campo', campo);
       }
-      
       return url.toString();
     }
 

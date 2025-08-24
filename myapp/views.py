@@ -78,21 +78,28 @@ class UserView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         form = UserForm()
-        users = User.objects.all()
-        persons = Person.objects.all()
-        
+        # Mostrar solo usuarios eliminados lógicamente
+        users = User.all_objects.filter(is_deleted=True).only('id', 'username', 'email', 'documento', 'role')
+        persons = Person.objects.all().only('id', 'name', 'surname', 'document_number')
+
         query = request.GET.get('q')
         role = request.GET.get('role')
 
         if query:
-            users = users.filter(Q(username__icontains=query) | Q(email__icontains=query))
-        
+            # Mejor usar startswith o exact si es posible para mayor velocidad
+            users = users.filter(Q(username__startswith=query) | Q(email__startswith=query))
+
         if role:
             users = users.filter(role=role)
 
+        # Paginación tradicional (1 registro por página para demo)
+        paginator = Paginator(users.order_by('id'), 2)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
         context = {
             'form': form,
-            'users': users,
+            'users': page_obj,
             'persons': persons,
             'query': query,
             'role': role
@@ -191,31 +198,31 @@ class PersonView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         form = PersonForm()
-        persons = Person.objects.all()
-        
+        persons = Person.objects.filter(is_deleted=False).only('id', 'name', 'surname', 'document_number', 'email')
+
         query = request.GET.get('q')
         campo = request.GET.get('campo')
 
         if query:
             if campo and campo != "todos":
-                filter_kwargs = {f"{campo}__icontains": query}
+                filter_kwargs = {f"{campo}__startswith": query}
                 persons = persons.filter(**filter_kwargs)
             else:
                 persons = persons.filter(
-                    Q(name__icontains=query) |
-                    Q(surname__icontains=query) |
-                    Q(document_number__icontains=query) |
-                    Q(email__icontains=query)
+                    Q(name__startswith=query) |
+                    Q(surname__startswith=query) |
+                    Q(document_number__startswith=query) |
+                    Q(email__startswith=query)
                 )
 
-        # Paginación
-        paginator = Paginator(persons, 2)
+        # Paginación tradicional
+        paginator = Paginator(persons.order_by('id'), 2)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
         context = {
             'form': form,
-            'persons': page_obj,   # ← Objeto paginado
+            'persons': page_obj,
             'query': query,
             'campo': campo
         }
@@ -291,7 +298,7 @@ class UpdatePersonView(LoginRequiredMixin, View):
                 user.save()
             except User.DoesNotExist:
                 pass
-            messages.success(request, 'Persona actualizada exitosamente.')
+            messages.success(request, 'Estudiante actualizado exitosamente.')
             return redirect('cedulas')
         else:
             persons = Person.objects.all()
@@ -310,7 +317,7 @@ class DeletePersonView(LoginRequiredMixin, View):
     def post(self, request, id, *args, **kwargs):
         person = get_object_or_404(Person, id=id)
         person.delete()
-        messages.success(request, 'Persona eliminada exitosamente.')
+        messages.success(request, 'Estudiante eliminada exitosamente.')
         return redirect('cedulas')
 
 class CourseView(LoginRequiredMixin, View):
@@ -319,12 +326,19 @@ class CourseView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         form = CourseForm()
-        courses = Courses.objects.all()
-        tutors = Tutors.objects.all()
-        
+        courses = Courses.objects.filter(is_deleted=False).only('id', 'course_name', 'tutor', 'deleted_at')
+        tutors = Tutors.objects.filter(is_deleted=False).only('id', 'person', 'staff_position')
+
         query = request.GET.get('q')
         if query:
-            courses = courses.filter(course_name__icontains=query)
+            courses = courses.filter(course_name__startswith=query)
+
+        # Paginación por id
+        last_id = request.GET.get('last_id')
+        page_size = 20
+        if last_id:
+            courses = courses.filter(id__gt=last_id)
+        courses = courses.order_by('id')[:page_size]
 
         context = {
             'form': form,
@@ -399,11 +413,18 @@ class LevelView(LoginRequiredMixin, View):
     def get(self, request, course_id, *args, **kwargs):
         course = get_object_or_404(Courses, id=course_id)
         form = LevelForm(initial={'course': course})
-        levels = Levels.objects.filter(course=course)
-        
+        levels = Levels.objects.filter(course=course).only('id', 'level_name', 'course')
+
         query = request.GET.get('q')
         if query:
-            levels = levels.filter(level_name__icontains=query)
+            levels = levels.filter(level_name__startswith=query)
+
+        # Paginación por id
+        last_id = request.GET.get('last_id')
+        page_size = 20
+        if last_id:
+            levels = levels.filter(id__gt=last_id)
+        levels = levels.order_by('id')[:page_size]
 
         context = {
             'form': form,
@@ -487,7 +508,15 @@ class TodoListView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def get(self, request, *args, **kwargs):
         form = TodoItemForm()
-        tasks = TodoItem.objects.filter(user=request.user)
+        tasks = TodoItem.objects.filter(user=request.user).only('id', 'task', 'completed', 'due_date')
+
+        # Paginación por id
+        last_id = request.GET.get('last_id')
+        page_size = 20
+        if last_id:
+            tasks = tasks.filter(id__gt=last_id)
+        tasks = tasks.order_by('id')[:page_size]
+
         context = {
             'form': form,
             'tasks': tasks
@@ -557,31 +586,31 @@ class DocenteView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         form = DocenteForm()
-        tutors = Tutors.objects.all()
-        
+        tutors = Tutors.objects.filter(is_deleted=False).only('id', 'person', 'staff_position')
+
         query = request.GET.get('q')
         campo = request.GET.get('campo')
 
         if query:
             if campo and campo != "todos":
-                filter_kwargs = {f"person__{campo}__icontains": query}
+                filter_kwargs = {f"person__{campo}__startswith": query}
                 tutors = tutors.filter(**filter_kwargs)
             else:
                 tutors = tutors.filter(
-                    Q(person__name__icontains=query) |
-                    Q(person__surname__icontains=query) |
-                    Q(person__document_number__icontains=query) |
-                    Q(person__email__icontains=query)
+                    Q(person__name__startswith=query) |
+                    Q(person__surname__startswith=query) |
+                    Q(person__document_number__startswith=query) |
+                    Q(person__email__startswith=query)
                 )
 
-        # === Paginación ===
-        paginator = Paginator(tutors, 1)  # 3 docentes por página
+        # Paginación tradicional
+        paginator = Paginator(tutors.order_by('id'), 2)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
         context = {
             'form': form,
-            'tutors': page_obj,        # ← Ahora es un objeto paginado
+            'tutors': page_obj,
             'query': query,
             'campo': campo
         }
