@@ -43,75 +43,55 @@ class DocenteForm(forms.ModelForm):
         }
 
 class CourseForm(forms.ModelForm):
-    course = forms.CharField(label='Curso', max_length=100)
-    image_course = forms.ImageField(label='Imagen del Curso', required=False)
-    tutor = forms.ModelChoiceField(queryset=Tutors.objects.all(), label='Tutor')
+    course_name = forms.CharField(label='Curso', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre Del Curso'}))
+    image_course = forms.ImageField(label='Imagen del Curso', required=False, widget=forms.ClearableFileInput(attrs={'class': 'form-control-file'}))
+    tutor = forms.ModelChoiceField(queryset=Tutors.objects.all(), label='Tutor', widget=forms.Select(attrs={'class': 'form-control'}))
     class Meta:
         model = Courses
         fields = ['course_name', 'image_course', 'tutor']
-        widgets = {
-            'course_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre Del Curso'}),
-            'image_course': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
-            'tutor': forms.Select(attrs={'class': 'form-control'}),
-        }
 
 class LevelForm(forms.ModelForm):
-    level_name = forms.CharField(label='Nombre del Nivel', max_length=100)
-    description = forms.CharField(label='Descripción', max_length=500)
-    duration = forms.IntegerField(label='Duración', min_value=1, max_value=100)
+    level_name = forms.CharField(label='Nombre del Nivel', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del Nivel'}))
+    description = forms.CharField(label='Descripción', max_length=500, widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Descripción del Nivel'}))
+    duration = forms.IntegerField(label='Duración', min_value=1, max_value=100, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Duración en horas', 'min': '1'}))
     class Meta:
         model = Levels
         fields = ['level_name', 'description', 'duration']
-        widgets = {
-            'level_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del Nivel'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Descripción del Nivel'}),
-            'duration': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Duración en horas', 'min': '1'}),
-        }
 
 class TodoItemForm(forms.ModelForm):
-    task = forms.CharField(label='Tarea', max_length=200)
-    due_date = forms.DateField(label='Fecha de Vencimiento')
+    task = forms.CharField(label='Tarea', max_length=200, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nueva tarea'}))
+    due_date = forms.DateField(label='Fecha de Vencimiento', widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
     class Meta:
         model = TodoItem
         fields = ['task', 'due_date']
-        widgets = {
-            'task': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nueva tarea'}),
-            'due_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-        }
+
 
 class UserForm(forms.ModelForm):
-    username = forms.CharField(label='Nombre de Usuario', max_length=150)
-    password = forms.CharField(label='Contraseña', widget=forms.PasswordInput)
-    email = forms.EmailField(label='Correo Electrónico')
-    documento = forms.CharField(label='Documento', max_length=100)
-    person = forms.ModelChoiceField(queryset=Person.objects.all(), label='Persona')
+    username = forms.CharField(label='Nombre de Usuario', max_length=150, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de Usuario'}))
+    password = forms.CharField(label='Contraseña', widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña'}))
+    email = forms.EmailField(label='Correo Electrónico', widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo Electrónico'}))
+    documento = forms.CharField(label='Documento', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Documento'}))
+    person = forms.ModelChoiceField(queryset=Person.objects.all(), label='Persona', widget=forms.Select(attrs={'class': 'form-control'}))
     class Meta:
         model = User
         fields = ['username', 'password', 'email', 'documento', 'role', 'person']
-        widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de Usuario'}),
-            'password': forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo Electrónico'}),
-            'documento': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Documento'}),
-            'role': forms.Select(attrs={'class': 'form-control'}),
-            'person': forms.Select(attrs={'class': 'form-control'}),
+        
+        labels = {
+            'role': 'Rol'
         }
 
+        widgets = {
+            'role': forms.Select(attrs={'class': 'form-control'})
+        }
 class UserUpdateForm(forms.ModelForm):
     username = forms.CharField(label='Nombre de Usuario', max_length=150)
-    email = forms.EmailField(label='Email')
-    documento = forms.CharField(label='Documento', max_length=100)
-    person = forms.ModelChoiceField(queryset=Person.objects.all(), label='Persona')
+    email = forms.EmailField(label='Email', widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}))
+    documento = forms.CharField(label='Documento', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Documento'}))
+    person = forms.ModelChoiceField(queryset=Person.objects.all(), label='Persona', widget=forms.Select(attrs={'class': 'form-control'}))
 
     class Meta:
         model = User
         fields = ['username', 'email', 'documento', 'role', 'person']
-        widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de Usuario'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo Electrónico'}),
-            'documento': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Documento'}),
-            'role': forms.Select(attrs={'class': 'form-control'}),
-        }
 
 
 class PersonForm(forms.ModelForm):

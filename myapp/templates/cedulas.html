@@ -68,6 +68,16 @@
               </form>
             </div>
 
+            <!-- Botón de exportar -->
+            <form class="d-flex mb-2" method="get" action="{% url 'export_persons' %}">
+              <select name="format" class="form-select w-auto me-2">
+                <option value="xlsx">Excel (.xlsx)</option>
+                <option value="xls">Excel 97-2003 (.xls)</option>
+                <option value="csv">CSV</option>
+              </select>
+              <button type="submit" class="btn btn-success">Descargar Reporte</button>
+            </form>
+
             <!-- Tabla de Resultados -->
             <div class="table-responsive">
             <table class="table table-bordered">
@@ -161,10 +171,14 @@
             <!-- Cuerpo del Modal -->
             <div class="modal-body">
               <!-- Formulario -->
-              <form id="nominaForm" method="POST" action="{% url 'cedulas' %}">
+              <form id="nominaForm" method="POST" action="{% if person_to_edit %}{% url 'editar_persona' person_to_edit.id %}{% else %}{% url 'cedulas' %}{% endif %}">
                 {% csrf_token %}
-                <input type="hidden" name="id" id="personIdInput" value="">
-                {{ form.as_p }}
+                {% if person_to_edit %}
+                    <input type="hidden" name="id" value="{{ person_to_edit.id }}">
+                    {{ form.as_p }}
+                {% else %}
+                    {{ form.as_p }}
+                {% endif %}
               </form>
             </div>
 
@@ -200,26 +214,32 @@
     const personIdInput = document.getElementById('personIdInput');
     const nominaForm = document.getElementById('nominaForm');
 
+
     // Escuchar el evento 'show.bs.modal' para detectar cuándo se abre el modal
     modal.addEventListener('show.bs.modal', function (event) {
-      // Obtener el botón que activó el modal
       const button = event.relatedTarget;
-
-      // Obtener el ID del objeto desde el atributo 'data-person-id'
       const personId = button.getAttribute('data-person-id');
 
-      // Si hay un ID, significa que estamos editando
       if (personId) {
         modalTitle.textContent = 'Editar Datos';
-        personIdInput.value = personId;
         nominaForm.action = `/cedulas/editar/${personId}/`;
 
-        // Aquí puedes hacer una solicitud AJAX para cargar los datos del objeto
-        // y llenar el formulario.
+        // AJAX para obtener los datos de la persona y llenar el formulario
+        fetch(`/cedulas/api/${personId}/`)
+          .then(response => response.json())
+          .then(data => {
+            // Llenar los campos del formulario por nombre
+            for (const [key, value] of Object.entries(data)) {
+              const input = nominaForm.querySelector(`[name="${key}"]`);
+              if (input) {
+                input.value = value !== null ? value : '';
+              }
+            }
+          });
       } else {
         modalTitle.textContent = 'Ingresar Datos';
-        personIdInput.value = '';
         nominaForm.action = "{% url 'cedulas' %}";
+        nominaForm.reset();
       }
     });
 
@@ -236,15 +256,13 @@
   document.addEventListener('DOMContentLoaded', function () {
     const prevButton = document.getElementById('prev-page');
     const nextButton = document.getElementById('next-page');
-    const currentPage = {{ persons.number }};
-    const totalPages = {{ persons.paginator.num_pages|default:1 }};
+    const currentPage = JSON.parse('{{ persons.number|default:1 }}');
+    const totalPages = JSON.parse('{{ persons.paginator.num_pages|default:1 }}');
     const query = "{{ query|default:'' }}";
     const campo = "{{ campo|default:'' }}";
 
     function buildURL(page) {
       const url = new URL(window.location.href.split('?')[0], window.location.origin);
-      
-      // Solo añade parámetros si tienen valor
       if (page > 1) {
         url.searchParams.append('page', page);
       }
@@ -254,7 +272,6 @@
       if (campo && campo !== 'None' && campo !== 'todos' && campo.trim() !== '') {
         url.searchParams.append('campo', campo);
       }
-      
       return url.toString();
     }
 

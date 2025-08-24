@@ -148,7 +148,7 @@ class Person(SoftDeleteModel):
     name= models.CharField(max_length=50)
     surname= models.CharField(max_length=50)
     progenitor_name= models.CharField(max_length=50, blank=True, null=True)
-    progenitor_document_number= models.CharField(max_length=20, unique=True, blank=True, null=True)
+    progenitor_document_number= models.CharField(max_length=20, blank=True, null=True)
     telephone_number=models.CharField(max_length=15, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)

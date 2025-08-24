@@ -12,6 +12,11 @@
   <!-- SweetAlert2 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
 </head>
 
 <body class="m-0 p-0">
@@ -85,7 +90,26 @@
           </table>
         </div>
       </div>
-
+          <!-- Paginación visual -->
+          <div class="pagination-container d-flex justify-content-center align-items-center my-4">
+            <button 
+              id="prev-page" 
+              class="btn pagination-btn" 
+              {% if not users.has_previous %}disabled{% endif %}
+            >
+              <img src="{% static 'assets/images/flecha_izq.png' %}" alt="Anterior" width="40" height="30">
+            </button>
+            <span id="page-info" class="page-info text-white mx-3">
+              {{ users.number }} / {{ users.paginator.num_pages }}
+            </span>
+            <button 
+              id="next-page" 
+              class="btn pagination-btn" 
+              {% if not users.has_next %}disabled{% endif %}
+            >
+              <img src="{% static 'assets/images/flecha_der.png' %}" alt="Siguiente" width="40" height="30">
+            </button>
+          </div>
       <!-- Modal para Agregar Usuario -->
       <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -189,6 +213,48 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const prevButton = document.getElementById('prev-page');
+      const nextButton = document.getElementById('next-page');
+      const currentPage = {{ users.number }};
+      const totalPages = {{ users.paginator.num_pages }};
+      const query = "{{ query|default:'' }}";
+      const role = "{{ role|default:'' }}";
+
+      function buildURL(page) {
+        const url = new URL(window.location.href.split('?')[0], window.location.origin);
+        if (page > 1) {
+          url.searchParams.append('page', page);
+        }
+        if (query && query !== 'None' && query.trim() !== '') {
+          url.searchParams.append('q', query);
+        }
+        if (role && role !== 'None' && role.trim() !== '') {
+          url.searchParams.append('role', role);
+        }
+        return url.toString();
+      }
+
+      // Botón Anterior
+      if (prevButton && !prevButton.disabled) {
+        prevButton.addEventListener('click', function () {
+          if (currentPage > 1) {
+            window.location.href = buildURL(currentPage - 1);
+          }
+        });
+      }
+
+      // Botón Siguiente
+      if (nextButton && !nextButton.disabled) {
+        nextButton.addEventListener('click', function () {
+          if (currentPage < totalPages) {
+            window.location.href = buildURL(currentPage + 1);
+          }
+        });
+      }
+    });
+  </script>
   <script>
     function filterPeople(searchInputId, selectElementId) {
       const searchInput = document.getElementById(searchInputId);
