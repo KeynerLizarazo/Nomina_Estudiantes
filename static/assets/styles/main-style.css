@@ -123,6 +123,14 @@ body {
   opacity: 0.8;
 }
 
+/* Quitar borde blanco de botones deshabilitados */
+.pagination-btn[disabled],
+.pagination-btn:disabled {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* Información de la página */
 .page-info {
   font-size: 1.2rem;

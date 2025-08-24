@@ -1,4 +1,5 @@
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
@@ -170,9 +171,14 @@ class PersonView(LoginRequiredMixin, View):
                     Q(email__icontains=query)
                 )
 
+        # Paginación
+        paginator = Paginator(persons, 2)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
         context = {
             'form': form,
-            'persons': persons,
+            'persons': page_obj,   # ← Objeto paginado
             'query': query,
             'campo': campo
         }
@@ -467,7 +473,7 @@ def test_zone(request):
     return render(request, 'test_zone.html')
 
 
-# INTENTO DE BACKEND DE GABO !!!!
+
 
 class DocenteView(LoginRequiredMixin, View):
     template_name = 'docentes.html'
@@ -492,9 +498,14 @@ class DocenteView(LoginRequiredMixin, View):
                     Q(person__email__icontains=query)
                 )
 
+        # === Paginación ===
+        paginator = Paginator(tutors, 1)  # 3 docentes por página
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
         context = {
             'form': form,
-            'tutors': tutors,
+            'tutors': page_obj,        # ← Ahora es un objeto paginado
             'query': query,
             'campo': campo
         }

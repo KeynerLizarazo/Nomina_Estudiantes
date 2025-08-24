@@ -121,7 +121,29 @@
             </table>
             </div>
           </div>
+          
         </div>
+        
+      </div>
+      <!-- Paginación -->
+      <div class="pagination-container d-flex justify-content-center align-items-center my-4">
+        <button 
+          id="prev-page" 
+          class="btn pagination-btn" 
+          {% if not persons.has_previous %}disabled{% endif %}
+        >
+          <img src="{% static 'assets/images/flecha_izq.png' %}" alt="Anterior" width="40" height="30">
+        </button>
+        <span id="page-info" class="page-info text-white mx-3">
+          {{ persons.number }} / {{ persons.paginator.num_pages|default:1 }}
+        </span>
+        <button 
+          id="next-page" 
+          class="btn pagination-btn" 
+          {% if not persons.has_next %}disabled{% endif %}
+        >
+          <img src="{% static 'assets/images/flecha_der.png' %}" alt="Siguiente" width="40" height="30">
+        </button>
       </div>
       <!-- Ventana Modal -->
       <div class="modal fade" id="controlNominaModal" tabindex="-1" aria-labelledby="controlNominaModalLabel"
@@ -163,7 +185,7 @@
       <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
     </main>
-    <!-- organizar el maldito JS -->
+
   </div>
 
   <!-- Scripts -->
@@ -208,7 +230,51 @@
     });
   </script>
 
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const prevButton = document.getElementById('prev-page');
+    const nextButton = document.getElementById('next-page');
+    const currentPage = {{ persons.number }};
+    const totalPages = {{ persons.paginator.num_pages|default:1 }};
+    const query = "{{ query|default:'' }}";
+    const campo = "{{ campo|default:'' }}";
 
+    function buildURL(page) {
+      const url = new URL(window.location.href.split('?')[0], window.location.origin);
+      
+      // Solo añade parámetros si tienen valor
+      if (page > 1) {
+        url.searchParams.append('page', page);
+      }
+      if (query && query !== 'None' && query.trim() !== '') {
+        url.searchParams.append('q', query);
+      }
+      if (campo && campo !== 'None' && campo !== 'todos' && campo.trim() !== '') {
+        url.searchParams.append('campo', campo);
+      }
+      
+      return url.toString();
+    }
+
+    // Botón Anterior
+    if (prevButton && !prevButton.disabled) {
+      prevButton.addEventListener('click', function () {
+        if (currentPage > 1) {
+          window.location.href = buildURL(currentPage - 1);
+        }
+      });
+    }
+
+    // Botón Siguiente
+    if (nextButton && !nextButton.disabled) {
+      nextButton.addEventListener('click', function () {
+        if (currentPage < totalPages) {
+          window.location.href = buildURL(currentPage + 1);
+        }
+      });
+    }
+  });
+  </script>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
