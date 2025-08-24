@@ -29,6 +29,7 @@
     <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto">
       <!-- Encabezado y barra de búsqueda -->
       <div class="container-fluid ">
+        <div class="sticky-top bg-my-background-color">
         <div class="d-flex justify-content-between align-items-center ">
           <div class="d-flex flex-column flex-grow-1">
             <h2 class="fw-bold">Niveles</h2>
@@ -48,6 +49,7 @@
             <span class="text-white fw-bold mt-2 mb-2">Añadir Nivel</span>
           </div>
         </div>
+        </div>
 
         {% if messages %}
         <div class="container">
@@ -60,7 +62,14 @@
         </div>
         {% endif %}
 
-        <div class="list-group d-flex flex-column gap-4 w-100 mt-2 ">
+                <div class="list-group d-flex flex-column gap-4 w-100 mt-2 ">
+                  <div class="btn-group cursos_btn_size">
+            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button" href="{% url 'cursos' %}">
+              <img src="{% static 'assets/images/logout2.png' %}" alt="globe" width="38" height="40" class="rounded-circle me-4" style="filter: brightness(0);">
+              <span class="fs-1 text-my-text-purple fw-bold">Salir</span>
+            </a>
+
+          </div>
           {% for level in levels %}
           <div class="btn-group cursos_btn_size">
             <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" href="#" type="button">
@@ -88,7 +97,13 @@
             </ul>
           </div>
           {% empty %}
-          <p class="text-white">No hay niveles registrados.</p>
+          <p class="text-white text-center fs-3">No hay niveles registrados. Agrege uno:</p>
+          <div class="d-flex flex-column align-items-center align-items-end">
+            <button type="button" class="btn rounded-circle" data-bs-toggle="modal" data-bs-target="#addLevelModal">
+              <img src="{% static 'assets/images/agregar.png' %}" alt="agregar" width="70" height="70" class="">
+            </button>
+            <span class="text-white fw-bold mt-2 mb-2">Añadir Nivel</span>
+          </div>
           {% endfor %}
         </div>
       </div>
