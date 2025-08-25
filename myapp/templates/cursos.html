@@ -29,11 +29,12 @@
     <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto">
       <!-- Encabezado y barra de búsqueda -->
       <div class="container-fluid ">
+        <div class="sticky-top bg-my-background-color">
         <div class="d-flex justify-content-between align-items-center ">
           <div class="d-flex flex-column flex-grow-1">
             <!-- Breadcrumb de navegación -->
             <nav aria-label="breadcrumb">
-              <ol class="breadcrumb p-2 mb-2" style="background: rgba(255,255,255,0.92); border-radius: 0.5rem;">
+              <ol class="breadcrumb p-2 mb-2 bg-light rounded">
                 <li class="breadcrumb-item">
                   <a href="{% url 'home' %}" class="fw-bold text-dark text-decoration-none">Inicio</a>
                 </li>
@@ -55,6 +56,7 @@
               <img src="{% static 'assets/images/agregar.png' %}" alt="agregar" width="70" height="70" class="">
             </button>
             <span class="text-white fw-bold mt-2 mb-2">Añadir Curso</span>
+          </div>
           </div>
         </div>
 
@@ -100,7 +102,13 @@
             </ul>
           </div>
           {% empty %}
-          <p class="text-white">No hay cursos registrados.</p>
+          <p class="text-white text-center fs-3">No hay cursos registrados. Agrege uno:</p>
+          <div class="d-flex flex-column align-items-center align-items-end">
+            <button type="button" class="btn rounded-circle" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+              <img src="{% static 'assets/images/agregar.png' %}" alt="agregar" width="70" height="70" class="">
+            </button>
+            <span class="text-white fw-bold mt-2 mb-2">Añadir Curso</span>
+          </div>
           {% endfor %}
         </div>
       </div>

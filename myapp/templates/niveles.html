@@ -29,11 +29,12 @@
     <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto">
       <!-- Encabezado y barra de búsqueda -->
       <div class="container-fluid ">
+        <div class="sticky-top bg-my-background-color">
         <div class="d-flex justify-content-between align-items-center ">
           <div class="d-flex flex-column flex-grow-1">
             <!-- Breadcrumb de navegación -->
             <nav aria-label="breadcrumb">
-              <ol class="breadcrumb p-2 mb-2" style="background: rgba(255,255,255,0.92); border-radius: 0.5rem;">
+              <ol class="breadcrumb p-2 mb-2 bg-light rounded" >
                 <li class="breadcrumb-item">
                   <a href="{% url 'home' %}" class="fw-bold text-dark text-decoration-none">Inicio</a>
                 </li>
@@ -43,15 +44,19 @@
                 <li class="breadcrumb-item active fw-bold text-primary" aria-current="page">{{ course.course_name }}</li>
               </ol>
             </nav>
-            <h2 class="fw-bold mb-0">Niveles</h2>
-            <form method="get" action="{% url 'niveles' course.id %}">
-              <div class="input-group mb-4 search-bar search-lens z-0">
-                <input type="text" name="q" class="w-25 bg-my-background-color text-white border rounded p-2 pe-5" aria-label="Buscar" value="{{ query|default_if_none:'' }}">
-                <button class="btn btn-sm rounded-circle mt-1 z-4" type="submit">
-                  <i class="bi bi-search"></i>
-                </button>
-              </div>
-            </form>
+            <div class="row flex">
+              <h2 class="fw-bold mb-0 col-3">Niveles</h2>
+              <h1 class="fw-bold mb-0 col-9 text-center">{{ course.course_name }}</h1>
+            
+              <form method="get" action="{% url 'niveles' course.id %}">
+                <div class="input-group mb-4 search-bar search-lens z-0">
+                  <input type="text" name="q" class="col-3 bg-my-background-color text-white border rounded p-2 pe-5" aria-label="Buscar" value="{{ query|default_if_none:'' }}">
+                  <button class="btn btn-sm rounded-circle mt-1 z-4" type="submit">
+                    <i class="bi bi-search"></i>
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
           <div class="d-flex flex-column align-items-center align-items-end">
             <button type="button" class="btn rounded-circle" data-bs-toggle="modal" data-bs-target="#addLevelModal">
@@ -59,6 +64,7 @@
             </button>
             <span class="text-white fw-bold mt-2 mb-2">Añadir Nivel</span>
           </div>
+        </div>
         </div>
 
         {% if messages %}
@@ -72,7 +78,14 @@
         </div>
         {% endif %}
 
-        <div class="list-group d-flex flex-column gap-4 w-100 mt-2 ">
+                <div class="list-group d-flex flex-column gap-4 w-100 mt-2 ">
+                  <div class="btn-group cursos_btn_size">
+            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button" href="{% url 'cursos' %}">
+              <img src="{% static 'assets/images/logout2.png' %}" alt="globe" width="38" height="40" class="rounded-circle me-4" style="filter: brightness(0);">
+              <span class="fs-1 text-my-text-purple fw-bold">Salir</span>
+            </a>
+
+          </div>
           {% for level in levels %}
           <div class="btn-group cursos_btn_size">
             <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" href="#" type="button">
@@ -136,7 +149,13 @@
     </script>
           </div>
           {% empty %}
-          <p class="text-white">No hay niveles registrados.</p>
+          <p class="text-white text-center fs-3">No hay niveles registrados. Agrege uno:</p>
+          <div class="d-flex flex-column align-items-center align-items-end">
+            <button type="button" class="btn rounded-circle" data-bs-toggle="modal" data-bs-target="#addLevelModal">
+              <img src="{% static 'assets/images/agregar.png' %}" alt="agregar" width="70" height="70" class="">
+            </button>
+            <span class="text-white fw-bold mt-2 mb-2">Añadir Nivel</span>
+          </div>
           {% endfor %}
         </div>
       </div>
