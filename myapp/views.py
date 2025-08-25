@@ -1,30 +1,31 @@
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-# Endpoint para obtener datos de una persona en JSON para el modal AJAX
-# Vista basada en clase para API de persona (AJAX)
+from django.db.models import CharField
+from django.db.models.functions import Cast
 from django.views import View
-from django.http import JsonResponse
-###################################
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Cedula, User, Calendario, Courses, Tutors, Levels, TodoItem, Person
 from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm, DocenteForm
 from .models import Person, Students, User
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, CharField
+from django.db.models.functions import Cast
 from django.urls import reverse_lazy
 from functools import wraps
 import json
 import re
 import pytz
 from datetime import datetime
+""""""
+from django.contrib.postgres.search import TrigramSimilarity 
+# Extensión de PostgreSQL que permite filtrar datos de búsqueda de forma sensible
+""""""
 
 # ==============================
 # Función home - Redirigir raíz a login o welcome
@@ -86,14 +87,42 @@ class UserView(LoginRequiredMixin, View):
         role = request.GET.get('role')
 
         if query:
-            # Mejor usar startswith o exact si es posible para mayor velocidad
-            users = users.filter(Q(username__startswith=query) | Q(email__startswith=query))
+            # Mapeo de roles legibles a valores internos
+            role_map = {
+                'administrador': 'admin',
+                'admin': 'admin',
+                'profesor': 'profesor',
+                'tutor': 'tutor',
+                'estudiante': 'estudiante',
+            }
+            q_role = Q(role__icontains=query)
+            if query.lower() in role_map:
+                q_role = Q(role=role_map[query.lower()])
+            if len(query) < 4:
+                users = users.filter(
+                    Q(username__icontains=query) |
+                    Q(email__icontains=query) |
+                    Q(documento__icontains=query) |
+                    q_role
+                )
+            else:
+                users = users.annotate(
+                    sim_username=TrigramSimilarity('username', query),
+                    sim_email=TrigramSimilarity('email', query),
+                    sim_documento=TrigramSimilarity('documento', query),
+                    sim_role=TrigramSimilarity('role', query),
+                ).filter(
+                    Q(sim_username__gt=0.3) |
+                    Q(sim_email__gt=0.3) |
+                    Q(sim_documento__gt=0.3) |
+                    Q(sim_role__gt=0.3)
+                ).order_by('-sim_username', '-sim_email', '-sim_documento', '-sim_role')
 
         if role:
             users = users.filter(role=role)
 
-        # Paginación tradicional (1 registro por página para demo)
-        paginator = Paginator(users.order_by('id'), 3)
+        # Paginación tradicional (10 registros por página)
+        paginator = Paginator(users.order_by('id'), 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
@@ -225,15 +254,61 @@ class PersonView(LoginRequiredMixin, View):
 
         if query:
             if campo and campo != "todos":
-                filter_kwargs = {f"{campo}__startswith": query}
+                filter_kwargs = {f"{campo}__icontains": query}
                 persons = persons.filter(**filter_kwargs)
             else:
-                persons = persons.filter(
-                    Q(name__startswith=query) |
-                    Q(surname__startswith=query) |
-                    Q(document_number__startswith=query) |
-                    Q(email__startswith=query)
-                )
+                # Si la búsqueda es corta o es 'masculino'/'femenino', usar también icontains y mapear sexo
+                if len(query) < 4 or query.lower() in ['masculino', 'femenino']:
+                    gender_map = {
+                        'masculino': 'M',
+                        'femenino': 'F',
+                        'm': 'M',
+                        'f': 'F',
+                    }
+                    q_gender = Q(gender__icontains=query)
+                    if query.lower() in gender_map:
+                        q_gender = Q(gender=gender_map[query.lower()])
+                    persons = persons.filter(
+                        Q(name__icontains=query) |
+                        Q(surname__icontains=query) |
+                        Q(document_number__icontains=query) |
+                        Q(email__icontains=query) |
+                        Q(type_document__icontains=query) |
+                        Q(telephone_number__icontains=query) |
+                        q_gender |
+                        Q(date_of_birth__icontains=query) |
+                        Q(pais_origen__icontains=query) |
+                        Q(progenitor_document_number__icontains=query) |
+                        Q(progenitor_name__icontains=query)
+                    )
+                else:
+                    persons = persons.annotate(
+                        sim_name=TrigramSimilarity('name', query),
+                        sim_surname=TrigramSimilarity('surname', query),
+                        sim_document=TrigramSimilarity('document_number', query),
+                        sim_email=TrigramSimilarity('email', query),
+                        sim_type_document=TrigramSimilarity('type_document', query),
+                        sim_telephone=TrigramSimilarity('telephone_number', query),
+                        sim_gender=TrigramSimilarity('gender', query),
+                        sim_birth=TrigramSimilarity(Cast('date_of_birth', CharField()), query),
+                        sim_pais=TrigramSimilarity('pais_origen', query),
+                        sim_progenitor_document=TrigramSimilarity('progenitor_document_number', query),
+                        sim_progenitor_name=TrigramSimilarity('progenitor_name', query),
+                    ).filter(
+                        Q(sim_name__gt=0.3) |
+                        Q(sim_surname__gt=0.3) |
+                        Q(sim_document__gt=0.3) |
+                        Q(sim_email__gt=0.3) |
+                        Q(sim_type_document__gt=0.3) |
+                        Q(sim_telephone__gt=0.3) |
+                        Q(sim_gender__gt=0.3) |
+                        Q(sim_birth__gt=0.3) |
+                        Q(sim_pais__gt=0.3) |
+                        Q(sim_progenitor_document__gt=0.3) |
+                        Q(sim_progenitor_name__gt=0.3)
+                    ).order_by(
+                        '-sim_name', '-sim_surname', '-sim_document', '-sim_email', '-sim_type_document', '-sim_telephone', '-sim_gender', '-sim_birth', '-sim_pais', '-sim_progenitor_document', '-sim_progenitor_name'
+                    )
 
         paginator = Paginator(persons.order_by('id'), 3)
         page_number = request.GET.get('page')
@@ -627,17 +702,61 @@ class DocenteView(LoginRequiredMixin, View):
 
         if query:
             if campo and campo != "todos":
-                filter_kwargs = {f"person__{campo}__startswith": query}
+                filter_kwargs = {f"person__{campo}__icontains": query}
                 tutors = tutors.filter(**filter_kwargs)
             else:
-                tutors = tutors.filter(
-                    Q(person__name__startswith=query) |
-                    Q(person__surname__startswith=query) |
-                    Q(person__document_number__startswith=query) |
-                    Q(person__email__startswith=query)
-                )
+                # Si la búsqueda es corta, usar también icontains
+                if len(query) < 4 or query.lower() in ['masculino', 'femenino']:
+                    gender_map = {
+                        'masculino': 'M',
+                        'femenino': 'F',
+                        'm': 'M',
+                        'f': 'F',
+                    }
+                    q_gender = Q(person__gender__icontains=query)
+                    # Si el usuario escribe 'masculino' o 'femenino', buscar por 'M' o 'F' en la base de datos
+                    if query.lower() in gender_map:
+                        q_gender = Q(person__gender=gender_map[query.lower()])
+                    tutors = tutors.filter(
+                        Q(person__name__icontains=query) |
+                        Q(person__surname__icontains=query) |
+                        Q(person__document_number__icontains=query) |
+                        Q(person__email__icontains=query) |
+                        Q(person__type_document__icontains=query) |
+                        Q(person__telephone_number__icontains=query) |
+                        q_gender |
+                        Q(person__date_of_birth__icontains=query) |
+                        Q(person__pais_origen__icontains=query) |
+                        Q(staff_position__icontains=query)
+                    )
+                else:
+                    tutors = tutors.annotate(
+                        sim_name=TrigramSimilarity('person__name', query),
+                        sim_surname=TrigramSimilarity('person__surname', query),
+                        sim_document=TrigramSimilarity('person__document_number', query),
+                        sim_email=TrigramSimilarity('person__email', query),
+                        sim_type_document=TrigramSimilarity('person__type_document', query),
+                        sim_telephone=TrigramSimilarity('person__telephone_number', query),
+                        sim_gender=TrigramSimilarity('person__gender', query),
+                        sim_birth=TrigramSimilarity(Cast('person__date_of_birth', CharField()), query),
+                        sim_pais=TrigramSimilarity('person__pais_origen', query),
+                        sim_staff_position=TrigramSimilarity('staff_position', query),
+                    ).filter(
+                        Q(sim_name__gt=0.3) |
+                        Q(sim_surname__gt=0.3) |
+                        Q(sim_document__gt=0.3) |
+                        Q(sim_email__gt=0.3) |
+                        Q(sim_type_document__gt=0.3) |
+                        Q(sim_telephone__gt=0.3) |
+                        Q(sim_gender__gt=0.3) |
+                        Q(sim_birth__gt=0.3) |
+                        Q(sim_pais__gt=0.3) |
+                        Q(sim_staff_position__gt=0.3)
+                    ).order_by(
+                        '-sim_name', '-sim_surname', '-sim_document', '-sim_email', '-sim_type_document', '-sim_telephone', '-sim_gender', '-sim_birth', '-sim_pais', '-sim_staff_position'
+                    )
 
-        paginator = Paginator(tutors.order_by('id'), 3)
+        paginator = Paginator(tutors.order_by('id'), 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
