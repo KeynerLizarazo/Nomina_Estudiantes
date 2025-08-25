@@ -30,30 +30,30 @@ STAFF_POSITION_LIST_PREDIFINED = [
     ("administrador", "Administrador"),
 ]
 
-NATIONALITY_CHOICES = [
-    ('Venezolana', 'Venezolana'),
-    ('Colombiana', 'Colombiana'),
+PAIS_ORIGEN_CHOICES = [
+    ('Venezuela', 'Venezuela'),
+    ('Colombia', 'Colombia'),
     ('Argentina', 'Argentina'),
-    ('Boliviana', 'Boliviana'),
-    ('Brasileña', 'Brasileña'),
-    ('Chilena', 'Chilena'),
-    ('Costarricense', 'Costarricense'),
-    ('Cubana', 'Cubana'),
-    ('Dominicana', 'Dominicana'),
-    ('Ecuatoriana', 'Ecuatoriana'),
-    ('Salvadoreña', 'Salvadoreña'),
-    ('Española', 'Española'),
-    ('Estadounidense', 'Estadounidense'),
-    ('Guatemalteca', 'Guatemalteca'),
-    ('Hondureña', 'Hondureña'),
-    ('Mexicana', 'Mexicana'),
-    ('Nicaragüense', 'Nicaragüense'),
-    ('Panameña', 'Panameña'),
-    ('Paraguaya', 'Paraguaya'),
-    ('Peruana', 'Peruana'),
-    ('Puertorriqueña', 'Puertorriqueña'),
-    ('Uruguaya', 'Uruguaya'),
-    ('Otra', 'Otra'),
+    ('Bolivia', 'Bolivia'),
+    ('Brasil', 'Brasil'),
+    ('Chile', 'Chile'),
+    ('Costa Rica', 'Costa Rica'),
+    ('Cuba', 'Cuba'),
+    ('República Dominicana', 'República Dominicana'),
+    ('Ecuador', 'Ecuador'),
+    ('El Salvador', 'El Salvador'),
+    ('España', 'España'),
+    ('Estados Unidos', 'Estados Unidos'),
+    ('Guatemala', 'Guatemala'),
+    ('Honduras', 'Honduras'),
+    ('México', 'México'),
+    ('Nicaragua', 'Nicaragua'),
+    ('Panamá', 'Panamá'),
+    ('Paraguay', 'Paraguay'),
+    ('Perú', 'Perú'),
+    ('Puerto Rico', 'Puerto Rico'),
+    ('Uruguay', 'Uruguay'),
+    ('Otro', 'Otro'),
 ]
 
 class SoftDeleteManager(models.Manager):
@@ -153,7 +153,7 @@ class Person(SoftDeleteModel):
     email = models.EmailField(blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     gender = models.CharField(max_length=10, choices=GENDER_LIST_PREDIFINED, default='H')
-    nationality = models.CharField(max_length=50, choices=NATIONALITY_CHOICES, blank=True, null=True)
+    pais_origen = models.CharField("País de origen", max_length=50, choices=PAIS_ORIGEN_CHOICES, blank=True, null=True)
     class Meta:
         db_table = 'personas'
         verbose_name = 'Persona'

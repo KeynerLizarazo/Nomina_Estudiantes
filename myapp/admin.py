@@ -17,7 +17,7 @@ admin.site.register(Tutors) #Registro para tutores
 class PersonResource(resources.ModelResource):
     fields = ('id', 'name', 'surname', 'type_document', 'document_number', 'telephone_number',
               'progenitor_name', 'progenitor_document_number', 'email', 'date_of_birth',
-              'gender', 'nationality')
+              'gender', 'pais_origen')
 
     class Meta:
         model = Person
@@ -27,7 +27,7 @@ class PersonAdmin(ImportExportModelAdmin):
     list_display= ('id', 'name', 'surname','type_document', 
                    'document_number','telephone_number','progenitor_name',
                    'progenitor_document_number','email', 'date_of_birth', 
-                   'gender', 'nationality')
+                   'gender', 'pais_origen')
     search_fields= ('name', 'surname', 'document_number', 'email')
     list_editable=('email', 'telephone_number', 'date_of_birth',)
     list_per_page= 20

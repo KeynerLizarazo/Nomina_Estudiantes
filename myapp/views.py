@@ -15,7 +15,7 @@ from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Cedula, User, Calendario, Courses, Tutors, Levels, TodoItem, Person
 from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm, DocenteForm
-from .models import User
+from .models import Person, Students, User
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q
@@ -78,8 +78,8 @@ class UserView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         form = UserForm()
-        # Mostrar solo usuarios eliminados lógicamente
-        users = User.all_objects.filter(is_deleted=True).only('id', 'username', 'email', 'documento', 'role')
+    # Mostrar solo usuarios activos
+        users = User.all_objects.filter(is_deleted=False).only('id', 'username', 'email', 'documento', 'role')
         persons = Person.objects.all().only('id', 'name', 'surname', 'document_number')
 
         query = request.GET.get('q')
@@ -93,7 +93,7 @@ class UserView(LoginRequiredMixin, View):
             users = users.filter(role=role)
 
         # Paginación tradicional (1 registro por página para demo)
-        paginator = Paginator(users.order_by('id'), 2)
+        paginator = Paginator(users.order_by('id'), 3)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
@@ -187,18 +187,38 @@ class PersonApiView(View):
             'email': person.email,
             'date_of_birth': person.date_of_birth.strftime('%Y-%m-%d') if person.date_of_birth else '',
             'gender': person.gender,
-            'nationality': person.nationality,
+            'pais_origen': person.pais_origen,
             'progenitor_document_number': person.progenitor_document_number,
             'progenitor_name': person.progenitor_name,
         }
         return JsonResponse(data)
 class PersonView(LoginRequiredMixin, View):
+    def sync_students(self):
+        # Solo crear Students para personas cuyo usuario tiene rol 'estudiante'
+        existing_student_ids = set(Students.objects.values_list('person_id', flat=True))
+        student_users = User.objects.filter(role='estudiante', is_deleted=False)
+        missing_persons = Person.objects.filter(is_deleted=False, id__in=student_users.values_list('person_id', flat=True)).exclude(id__in=existing_student_ids)
+        for p in missing_persons:
+            user = student_users.filter(person=p).first()
+            if user:
+                Students.objects.create(
+                    date_register=p.date_of_birth or timezone.now().date(),
+                    status='activo',
+                    user=user,
+                    person=p
+                )
     template_name = 'cedulas.html'
     login_url = 'login'
 
     def get(self, request, *args, **kwargs):
+        # Sincronizar estudiantes antes de mostrar
+        self.sync_students()
         form = PersonForm()
-        persons = Person.objects.filter(is_deleted=False).only('id', 'name', 'surname', 'document_number', 'email')
+        # Solo personas que son estudiantes (tienen registro en Students y usuario con rol estudiante)
+        student_person_ids = set(Students.objects.filter(is_deleted=False).values_list('person_id', flat=True))
+        student_users = set(User.objects.filter(role='estudiante', is_deleted=False).values_list('person_id', flat=True))
+        ids = student_person_ids & student_users
+        persons = Person.objects.filter(is_deleted=False, id__in=ids).only('id', 'name', 'surname', 'document_number', 'email')
 
         query = request.GET.get('q')
         campo = request.GET.get('campo')
@@ -215,8 +235,7 @@ class PersonView(LoginRequiredMixin, View):
                     Q(email__startswith=query)
                 )
 
-        # Paginación tradicional
-        paginator = Paginator(persons.order_by('id'), 2)
+        paginator = Paginator(persons.order_by('id'), 3)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
@@ -575,7 +594,7 @@ class DocenteApiView(View):
             'email': person.email,
             'date_of_birth': person.date_of_birth.strftime('%Y-%m-%d') if person.date_of_birth else '',
             'gender': person.gender,
-            'nationality': person.nationality,
+            'pais_origen': person.pais_origen,
             'staff_position': tutor.staff_position,
         }
         return JsonResponse(data)
@@ -584,7 +603,22 @@ class DocenteView(LoginRequiredMixin, View):
     template_name = 'docentes.html'
     login_url = 'login'
 
+    def sync_tutors(self):
+        from .models import Person, Tutors, User
+        existing_tutor_ids = set(Tutors.objects.values_list('person_id', flat=True))
+        tutor_users = User.objects.filter(role__in=['profesor', 'tutor', 'administrador'], is_deleted=False)
+        missing_persons = Person.objects.filter(is_deleted=False, id__in=tutor_users.values_list('person_id', flat=True)).exclude(id__in=existing_tutor_ids)
+        for p in missing_persons:
+            user = tutor_users.filter(person=p).first()
+            if user:
+                Tutors.objects.create(
+                    staff_position=user.role,
+                    user=user,
+                    person=p
+                )
+
     def get(self, request, *args, **kwargs):
+        self.sync_tutors()
         form = DocenteForm()
         tutors = Tutors.objects.filter(is_deleted=False).only('id', 'person', 'staff_position')
 
@@ -603,8 +637,7 @@ class DocenteView(LoginRequiredMixin, View):
                     Q(person__email__startswith=query)
                 )
 
-        # Paginación tradicional
-        paginator = Paginator(tutors.order_by('id'), 2)
+        paginator = Paginator(tutors.order_by('id'), 3)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
@@ -631,7 +664,7 @@ class DocenteView(LoginRequiredMixin, View):
                         email=form.cleaned_data['email'],
                         date_of_birth=form.cleaned_data['date_of_birth'],
                         gender=form.cleaned_data['gender'],
-                        nationality=form.cleaned_data['nationality']
+                        pais_origen=form.cleaned_data['pais_origen']
                     )
 
                     # Crear el usuario asociado

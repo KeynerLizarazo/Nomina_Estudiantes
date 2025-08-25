@@ -54,7 +54,7 @@
                   <option value="telephone_number" {% if campo == "telephone_number" %}selected{% endif %}>Teléfono</option>
                   <option value="email" {% if campo == "email" %}selected{% endif %}>Email</option>
                   <option value="date_of_birth" {% if campo == "date_of_birth" %}selected{% endif %}>Fecha de Nacimiento</option>
-                  <option value="nationality" {% if campo == "nationality" %}selected{% endif %}>Nacionalidad</option>
+                  <option value="pais_origen" {% if campo == "pais_origen" %}selected{% endif %}>País de origen</option>
                   <option value="progenitor_document_number" {% if campo == "progenitor_document_number" %}selected{% endif %}>C.Represe</option>
                   <option value="progenitor_name" {% if campo == "progenitor_name" %}selected{% endif %}>Representante</option>
                 </select>
@@ -72,7 +72,6 @@
             <form class="d-flex mb-2" method="get" action="{% url 'export_persons' %}">
               <select name="format" class="form-select w-auto me-2">
                 <option value="xlsx">Excel (.xlsx)</option>
-                <option value="xls">Excel 97-2003 (.xls)</option>
                 <option value="csv">CSV</option>
               </select>
               <button type="submit" class="btn btn-success">Descargar Reporte</button>
@@ -91,7 +90,7 @@
                   <th>Email</th>
                   <th>Fecha Nac.</th>
                   <th>Sexo</th>
-                  <th>Nacionalidad</th>
+                  <th>País de origen</th>
                   <th>C.Represe</th>
                   <th>Representante</th>
                   <th>Acciones</th>
@@ -109,7 +108,7 @@
                   <td>{{ person.email }}</td>
                   <td>{{ person.date_of_birth }}</td>
                   <td>{{ person.get_gender_display }}</td>
-                  <td>{{ person.nationality|default_if_none:"" }}</td>
+                  <td>{{ person.pais_origen|default_if_none:"" }}</td>
                   <td>{{ person.progenitor_document_number|default_if_none:"" }}</td>
                   <td>{{ person.progenitor_name|default_if_none:"" }}</td>
                   <td>

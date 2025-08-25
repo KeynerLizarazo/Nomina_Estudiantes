@@ -23,7 +23,7 @@ class DocenteForm(forms.ModelForm):
             'email',
             'date_of_birth',
             'gender',
-            'nationality',
+            'pais_origen',
         ]
         labels = {
             'type_document': 'Tipo de Documento',
@@ -34,12 +34,12 @@ class DocenteForm(forms.ModelForm):
             'email': 'Email',
             'date_of_birth': 'Fecha de Nacimiento',
             'gender': 'Sexo',
-            'nationality': 'Nacionalidad',
+            'pais_origen': 'País de origen',
         }
         widgets = {
             'type_document': forms.Select(attrs={'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
-            'nationality': forms.Select(attrs={'class': 'form-control'}),
+            'pais_origen': forms.Select(attrs={'class': 'form-control'}),
         }
 
 class CourseForm(forms.ModelForm):
@@ -117,7 +117,7 @@ class PersonForm(forms.ModelForm):
             'email',
             'date_of_birth',
             'gender',
-            'nationality'
+            'pais_origen'
         ]
         labels = {
             'type_document': 'Tipo de Documento',
@@ -130,12 +130,12 @@ class PersonForm(forms.ModelForm):
             'email': 'Email',
             'date_of_birth': 'Fecha de Nacimiento',
             'gender': 'Sexo',
-            'nationality': 'Nacionalidad',
+            'pais_origen': 'País de origen',
         }
         widgets = {
             'type_document': forms.Select(attrs={'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
-            'nationality': forms.Select(attrs={'class': 'form-control'}),
+            'pais_origen': forms.Select(attrs={'class': 'form-control'}),
         }
 
     def clean_date_of_birth(self):
