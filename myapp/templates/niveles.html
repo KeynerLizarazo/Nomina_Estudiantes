@@ -82,15 +82,26 @@
                   <div class="btn-group cursos_btn_size">
             <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button" href="{% url 'cursos' %}">
               <img src="{% static 'assets/images/logout2.png' %}" alt="globe" width="38" height="40" class="rounded-circle me-4" style="filter: brightness(0);">
-              <span class="fs-1 text-my-text-purple fw-bold">Salir</span>
+              <span class="fs-1 text-my-text-purple fw-bold">Volver</span>
             </a>
 
           </div>
           {% for level in levels %}
           <div class="btn-group cursos_btn_size">
-            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" href="#" type="button">
-              <img src="{% static 'assets/images/red_globe.png' %}" alt="globe" width="38" height="40" class="rounded-circle me-4">
-              <span class="fs-1 text-my-text-purple fw-bold">{{ level.level_name }}</span>
+            <a class="btn btn-light btn-lg w-100 d-flex align-items-center py-1" href="#" type="button">
+  
+              <!-- Parte izquierda -->
+              <div class="d-flex align-items-center">
+                <img src="{% static 'assets/images/red_globe.png' %}" alt="globe" width="38" height="40" class="rounded-circle me-4">
+                <span class="fs-1 text-my-text-purple fw-bold">{{ level.level_name }}</span>
+              </div>
+
+              <!-- Este ms-auto empuja todo lo que está después hacia la derecha -->
+              <div class="ms-auto d-flex align-items-center">
+                <img src="{% static 'assets/images/reloj-azul.png' %}" alt="globe" width="22" height="22" class="rounded-circle me-2">
+                <span class="fs-6 text-my-text-purple fw-bold">{{ level.duration }} H</span>
+              </div>
+
             </a>
             <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
               <span class="visually-hidden">Toggle Dropdown</span>
