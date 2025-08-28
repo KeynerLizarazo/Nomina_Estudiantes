@@ -26,10 +26,10 @@
     {% include 'partials/sidebar.html' %}
 
     <!-- Contenido principal -->
-    <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto">
+    <main class="main-content vh-100 pb-3 mx-3 flex-grow-1 overflow-auto">
       <!-- Encabezado y barra de búsqueda -->
       <div class="container-fluid ">
-        <div class="sticky-top bg-my-background-color">
+        <div class="sticky-top bg-my-background-color pt-3">
         <div class="d-flex justify-content-between align-items-center ">
           <div class="d-flex flex-column flex-grow-1">
             <!-- Breadcrumb de navegación -->
@@ -41,12 +41,12 @@
                 <li class="breadcrumb-item active fw-bold text-primary" aria-current="page">Cursos</li>
               </ol>
             </nav>
-            <h2 class="fw-bold mb-0">Cursos</h2>
+            <h2 class="fw-bold mb-2">Cursos</h2>
             <form method="get" action="{% url 'cursos' %}">
               <div class="input-group mb-4 search-bar search-lens z-0">
                 <input type="text" name="q" class="w-25 bg-my-background-color text-white border rounded p-2 pe-5" aria-label="Buscar" value="{{ query|default_if_none:'' }}">
-                <button class="btn btn-sm rounded-circle mt-1 z-4" type="submit">
-                  <i class="bi bi-search"></i>
+                <button class="btn btn-sm rounded-circle mt-1 z-4 btn-primary" type="submit">
+                  <i class="bi bi-search text-light"></i>
                 </button>
               </div>
             </form>
@@ -78,7 +78,7 @@
               {% if course.image_course %}
               <img src="{{ course.image_course.url }}" alt="Imagen del curso" width="40" height="40" class="rounded-circle me-4">
               {% else %}
-              <img src="{% static 'assets/images/flag.png' %}" alt="Bandera" width="40" height="40" class="rounded-circle me-4">
+              <img src="{% static 'assets/images/red_globe.png' %}" alt="Bandera" width="40" height="40" class="rounded-circle me-4">
               {% endif %}
               <span class="fs-1 text-my-text-purple fw-bold">{{ course.course_name }}</span>
             </a>
