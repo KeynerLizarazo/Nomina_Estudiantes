@@ -1,3 +1,6 @@
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import update_session_auth_hash
 from django.db.models import CharField
 from django.db.models.functions import Cast
 from django.views import View
@@ -65,7 +68,8 @@ def tutor_admin_required(view_func):
 @login_required
 def welcome(request):
     
-    return render(request, 'welcome.html')
+    must_change_password = request.session.get('must_change_password', False)
+    return render(request, 'welcome.html', {'must_change_password': must_change_password})
 
 
 @login_required
@@ -73,6 +77,21 @@ def docentes(request):
 
     return render(request, 'docentes.html')
 
+@csrf_exempt
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        user = request.user
+        new_password = request.POST.get('new_password', '').strip()
+        if not new_password or len(new_password) < 8:
+            return JsonResponse({'success': False, 'error': 'La nueva contraseña debe tener al menos 8 caracteres.'})
+        user.set_password(new_password)
+        user.must_change_password = False
+        user.save()
+        update_session_auth_hash(request, user)  # Mantiene la sesión activa
+        request.session['must_change_password'] = False  # Actualiza la sesión
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'error': 'Método no permitido.'})
 class UserView(LoginRequiredMixin, View):
     template_name = 'usuarios.html'
     login_url = 'login'
@@ -337,7 +356,8 @@ class PersonView(LoginRequiredMixin, View):
                         email=person.email,
                         documento=person.document_number,
                         role='estudiante',
-                        person=person
+                        person=person,
+                        must_change_password=True
                     )
                     user.first_name = person.name
                     user.last_name = person.surname
@@ -793,7 +813,8 @@ class DocenteView(LoginRequiredMixin, View):
                         email=person.email,
                         documento=person.document_number,
                         role='tutor',
-                        person=person
+                        person=person,
+                        must_change_password=True
                     )
                     user.first_name = person.name
                     user.last_name = person.surname
@@ -890,6 +911,11 @@ def login_view(request):
         
         if user is not None:
             login(request, user)
+            # Guardar en sesión si debe cambiar contraseña
+            if hasattr(user, 'must_change_password') and user.must_change_password:
+                request.session['must_change_password'] = True
+            else:
+                request.session['must_change_password'] = False
             return redirect('welcome')
         else:
             messages.error(request, 'Usuario o contraseña incorrectos.')

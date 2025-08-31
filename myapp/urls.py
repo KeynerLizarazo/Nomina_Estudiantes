@@ -1,15 +1,20 @@
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
+
 from . import views
 from . import views_export
 from .views import PersonApiView, DocenteApiView
+from .views import change_password
 
 urlpatterns = [
     path('', views.home, name='home'),  # Esto debe estar definido en views.py
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('welcome/', views.welcome, name='welcome'),
+
+    # Endpoint para cambio de contraseña forzado
+    path('change_password/', change_password, name='change_password'),
 
     path('cedulas/', views.PersonView.as_view(), name='cedulas'),
     path('cedulas/editar/<int:id>/', views.UpdatePersonView.as_view(), name='editar_persona'),
