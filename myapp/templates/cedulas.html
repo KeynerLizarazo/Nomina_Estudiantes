@@ -102,7 +102,7 @@
                 {% for person in persons %}
                 <tr>
                   <td>
-                    <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                    <button type="button" class="btn btn-warning btn-sm mb-2" data-bs-toggle="modal"
                       data-bs-target="#controlNominaModal" data-person-id="{{ person.id }}">Editar</button>
                     <form action="{% url 'eliminar_persona' person.id %}" method="post" style="display:inline;">
                       {% csrf_token %}

@@ -21,132 +21,164 @@
 
 <body class="m-0 p-0">
   <div class="bg-my-background-color d-flex text-white ">
-    
+
     <!-- SIDEBAR -->
     {% include 'partials/sidebar.html' %}
 
     <!-- Contenido principal -->
-    <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto">
+    <main class="main-content vh-100 mx-3 pb-3 flex-grow-1 overflow-auto">
       <!-- Encabezado y barra de búsqueda -->
       <div class="container-fluid ">
-        <div class="sticky-top bg-my-background-color">
-        <div class="d-flex justify-content-between align-items-center ">
-          <div class="d-flex flex-column flex-grow-1">
-            <!-- Breadcrumb de navegación -->
-            <nav aria-label="breadcrumb">
-              <ol class="breadcrumb p-2 mb-2 bg-light rounded" >
-                <li class="breadcrumb-item">
-                  <a href="{% url 'home' %}" class="fw-bold text-dark text-decoration-none">Inicio</a>
-                </li>
-                <li class="breadcrumb-item">
-                  <a href="{% url 'cursos' %}" class="fw-bold text-dark text-decoration-none">Cursos</a>
-                </li>
-                <li class="breadcrumb-item active fw-bold text-primary" aria-current="page">{{ course.course_name }}</li>
-              </ol>
-            </nav>
-            <div class="row flex">
-              <h2 class="fw-bold mb-0 col-3">Niveles</h2>
-              <h1 class="fw-bold mb-0 col-9 text-center">{{ course.course_name }}</h1>
-            
-              <form method="get" action="{% url 'niveles' course.id %}">
-                <div class="input-group mb-4 search-bar search-lens z-0">
-                  <input type="text" name="q" class="col-3 bg-my-background-color text-white border rounded p-2 pe-5" aria-label="Buscar" value="{{ query|default_if_none:'' }}">
-                  <button class="btn btn-sm rounded-circle mt-1 z-4" type="submit">
-                    <i class="bi bi-search"></i>
-                  </button>
-                </div>
-              </form>
+        <div class="sticky-top bg-my-background-color pt-3 ">
+          <div class="d-flex justify-content-between align-items-center ">
+            <div class="d-flex flex-column flex-grow-1">
+              <!-- Breadcrumb de navegación -->
+              <nav aria-label="breadcrumb">
+                <ol class="breadcrumb p-2 mb-2 bg-light rounded">
+                  <li class="breadcrumb-item">
+                    <a href="{% url 'home' %}" class="fw-bold text-dark text-decoration-none">Inicio</a>
+                  </li>
+                  <li class="breadcrumb-item">
+                    <a href="{% url 'cursos' %}" class="fw-bold text-dark text-decoration-none">Cursos</a>
+                  </li>
+                  <li class="breadcrumb-item active fw-bold text-primary" aria-current="page">{{ course.course_name }}
+                  </li>
+                </ol>
+              </nav>
+              <div class="row flex">
+                <h2 class="fw-bold mb-0 col-3">Niveles</h2>
+                {% if course.image_course %}
+                <h1 class="fw-bold mb-0 col-8 text-center">
+                {% else %}
+                <h1 class="fw-bold mb-0 col-9 text-center">
+                {% endif %}
+                  {% if course.image_course %}
+                  <img src="{{ course.image_course.url }}" alt="Imagen del curso" width="40" height="40"
+                    class="rounded-circle me-1">
+
+                  {% endif %}
+
+                  <span class="align-middle">{{ course.course_name }}</span>
+                </h1>
+
+                <form method="get" action="{% url 'niveles' course.id %}">
+                  <div class="input-group mb-4 search-bar search-lens z-0">
+                    <input type="text" name="q" class="col-3 bg-my-background-color text-white border rounded p-2 pe-5"
+                      aria-label="Buscar" value="{{ query|default_if_none:'' }}">
+                    <button class="btn btn-sm rounded-circle mt-1 z-4 btn-primary" type="submit">
+                      <i class="bi bi-search text-light"></i>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div class="d-flex flex-column align-items-center align-items-end">
+              <button type="button" class="btn rounded-circle" data-bs-toggle="modal" data-bs-target="#addLevelModal">
+                <img src="{% static 'assets/images/agregar.png' %}" alt="agregar" width="70" height="70" class="">
+              </button>
+              <span class="text-white fw-bold mt-2 mb-2">Añadir Nivel</span>
             </div>
           </div>
-          <div class="d-flex flex-column align-items-center align-items-end">
-            <button type="button" class="btn rounded-circle" data-bs-toggle="modal" data-bs-target="#addLevelModal">
-              <img src="{% static 'assets/images/agregar.png' %}" alt="agregar" width="70" height="70" class="">
-            </button>
-            <span class="text-white fw-bold mt-2 mb-2">Añadir Nivel</span>
-          </div>
-        </div>
         </div>
 
         {% if messages %}
         <div class="container">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            {% endfor %}
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          {% endfor %}
         </div>
         {% endif %}
 
-                <div class="list-group d-flex flex-column gap-4 w-100 mt-2 ">
-                  <div class="btn-group cursos_btn_size">
-            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button" href="{% url 'cursos' %}">
-              <img src="{% static 'assets/images/logout2.png' %}" alt="globe" width="38" height="40" class="rounded-circle me-4" style="filter: brightness(0);">
-              <span class="fs-1 text-my-text-purple fw-bold">Salir</span>
+        <div class="list-group d-flex flex-column gap-4 w-100 mt-2 ">
+          <div class="btn-group cursos_btn_size">
+            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" type="button"
+              href="{% url 'cursos' %}">
+              <img src="{% static 'assets/images/logout2.png' %}" alt="globe" width="38" height="40"
+                class="rounded-circle me-4" style="filter: brightness(0);">
+              <span class="fs-1 text-my-text-purple fw-bold">Volver</span>
             </a>
 
           </div>
           {% for level in levels %}
           <div class="btn-group cursos_btn_size">
-            <a class="btn btn-light btn-lg w-100 d-flex align-items-center justify-content-start py-1" href="#" type="button">
-              <img src="{% static 'assets/images/red_globe.png' %}" alt="globe" width="38" height="40" class="rounded-circle me-4">
-              <span class="fs-1 text-my-text-purple fw-bold">{{ level.level_name }}</span>
+            <a class="btn btn-light btn-lg w-100 d-flex align-items-center py-1" href="#" type="button">
+
+              <!-- Parte izquierda -->
+              <div class="d-flex align-items-center">
+                <img src="{% static 'assets/images/red_globe.png' %}" alt="globe" width="38" height="40"
+                  class="rounded-circle me-4">
+                <span class="fs-1 text-my-text-purple fw-bold">{{ level.level_name }}</span>
+              </div>
+
+              <!-- Este ms-auto empuja todo lo que está después hacia la derecha -->
+              <div class="ms-auto d-flex align-items-center">
+                <img src="{% static 'assets/images/reloj-azul.png' %}" alt="globe" width="22" height="22"
+                  class="rounded-circle me-2">
+                <span class="fs-6 text-my-text-purple fw-bold">{{ level.duration }} H</span>
+              </div>
+
             </a>
-            <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <button type="button" class="btn btn-lg btn-light dropdown-toggle" data-bs-toggle="dropdown"
+              aria-expanded="false">
               <span class="visually-hidden">Toggle Dropdown</span>
               <span class="dropdown-icon">⋮</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
               <li>
-                <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editLevelModal"
-                  data-level-id="{{ level.id }}"
-                  data-level-name="{{ level.level_name }}"
-                  data-level-description="{{ level.description }}"
-                  data-level-duration="{{ level.duration }}"
+                <button class="dropdown-item text-primary" data-bs-toggle="modal" data-bs-target="#editLevelModal"
+                  data-level-id="{{ level.id }}" data-level-name="{{ level.level_name }}"
+                  data-level-description="{{ level.description }}" data-level-duration="{{ level.duration }}"
                   data-level-action="{% url 'editar_nivel' level.id %}">Editar</button>
               </li>
+
               <li>
                 <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#viewDescriptionModal"
                   data-level-description="{{ level.description|default:'Sin descripción' }}">
                   Ver descripción
                 </button>
               </li>
-              <li><hr class="dropdown-divider"></li>
               <li>
-                <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteLevelModal"
-                        data-delete-url="{% url 'eliminar_nivel' level.id %}">
+                <hr class="dropdown-divider">
+              </li>
+              <li>
+                <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal"
+                  data-bs-target="#deleteLevelModal" data-delete-url="{% url 'eliminar_nivel' level.id %}">
                   Eliminar
                 </button>
               </li>
             </ul>
-      <!-- Modal para ver descripción del nivel -->
-      <div class="modal fade" id="viewDescriptionModal" tabindex="-1" aria-labelledby="viewDescriptionModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="viewDescriptionModalLabel">Descripción del Nivel</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            <!-- Modal para ver descripción del nivel -->
+            <div class="modal fade" id="viewDescriptionModal" tabindex="-1" aria-labelledby="viewDescriptionModalLabel"
+              aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="viewDescriptionModalLabel">Descripción del Nivel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p id="levelDescriptionText"></p>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="modal-body">
-              <p id="levelDescriptionText"></p>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    <script>
-      var viewDescriptionModal = document.getElementById('viewDescriptionModal');
-      if (viewDescriptionModal) {
-        viewDescriptionModal.addEventListener('show.bs.modal', function (event) {
-          var button = event.relatedTarget;
-          var description = button.getAttribute('data-level-description') || 'Sin descripción';
-          var descText = viewDescriptionModal.querySelector('#levelDescriptionText');
-          descText.textContent = description;
-        });
-      }
-    </script>
+            <script>
+              var viewDescriptionModal = document.getElementById('viewDescriptionModal');
+              if (viewDescriptionModal) {
+                viewDescriptionModal.addEventListener('show.bs.modal', function (event) {
+                  var button = event.relatedTarget;
+                  var description = button.getAttribute('data-level-description') || 'Sin descripción';
+                  var descText = viewDescriptionModal.querySelector('#levelDescriptionText');
+                  descText.textContent = description;
+                });
+              }
+            </script>
           </div>
           {% empty %}
           <p class="text-white text-center fs-3">No hay niveles registrados. Agrege uno:</p>
@@ -171,18 +203,18 @@
             <div class="modal-body">
               <form id="addLevelForm" method="POST" action="{% url 'niveles' course.id %}">
                 {% csrf_token %}
-                
+
                 {% if form.errors %}
-                    <div class="alert alert-danger">
-                        Por favor corrija los siguientes errores:
-                        <ul>
-                            {% for field in form %}
-                                {% if field.errors %}
-                                    <li>{{ field.label }}: {{ field.errors|striptags }}</li>
-                                {% endif %}
-                            {% endfor %}
-                        </ul>
-                    </div>
+                <div class="alert alert-danger">
+                  Por favor corrija los siguientes errores:
+                  <ul>
+                    {% for field in form %}
+                    {% if field.errors %}
+                    <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+                    {% endif %}
+                    {% endfor %}
+                  </ul>
+                </div>
                 {% endif %}
 
                 <div class="mb-3">
@@ -258,7 +290,8 @@
   </div>
 
   <!-- Modal para Eliminar Nivel -->
-  <div class="modal fade" id="deleteLevelModal" tabindex="-1" aria-labelledby="deleteLevelModalLabel" aria-hidden="true">
+  <div class="modal fade" id="deleteLevelModal" tabindex="-1" aria-labelledby="deleteLevelModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -314,4 +347,5 @@
     });
   </script>
 </body>
+
 </html>

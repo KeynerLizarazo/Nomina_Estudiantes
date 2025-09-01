@@ -94,7 +94,7 @@
                 {% for tutor in tutors %}
                 <tr>
                   <td>
-                    <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                    <button type="button" class="btn btn-warning btn-sm mb-2" data-bs-toggle="modal"
                       data-bs-target="#controlNominaModal" data-tutor-id="{{ tutor.id }}">Editar</button>
                     <form action="{% url 'eliminar_docente' tutor.id %}" method="post" style="display:inline;">
                       {% csrf_token %}
