@@ -77,6 +77,11 @@ def docentes(request):
 
     return render(request, 'docentes.html')
 
+@login_required
+def secciones(request):
+
+    return render(request, 'secciones.html')
+
 @csrf_exempt
 @login_required
 def change_password(request):

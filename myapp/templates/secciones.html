@@ -1,0 +1,351 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Nómina - The Professor</title>
+    <!-- Bootstrap CSS -->
+    <link href="{% static 'assets/styles/custom.css' %}" rel="stylesheet" />
+    <link href="{% static 'assets/styles/main-style.css' %}" rel="stylesheet" />
+    <!-- Estilo mínimo para el dropdown personalizado -->
+    <style>
+        .dropdown-custom {
+            display: block;
+        }
+
+        .dropdown-custom.d-none {
+            display: none;
+        }
+    </style>
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+
+<body class="m-0 p-0">
+    <div class="bg-my-background-color d-flex text-white ">
+        <!-- SIDEBAR -->
+        {% include 'partials/sidebar.html' %}
+
+        <!-- Contenido principal -->
+        <main class="main-content vh-100 mx-3  flex-grow-1 overflow-auto">
+            <!-- Encabezado y barra de búsqueda -->
+            <div class="container-fluid ">
+                <div class="sticky-top bg-my-background-color pt-3 ">
+                    <div class="d-flex justify-content-between align-items-center ">
+                        <div class="d-flex flex-column flex-grow-1">
+                            <!-- Breadcrumb de navegación -->
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb p-2 mb-2 bg-light rounded">
+                                    <li class="breadcrumb-item">
+                                        <a href="{% url 'home' %}"
+                                            class="fw-bold text-dark text-decoration-none">Inicio</a>
+                                    </li>
+                                    <li class="breadcrumb-item">
+                                        <a href="{% url 'cursos' %}"
+                                            class="fw-bold text-dark text-decoration-none">Cursos</a>
+                                    </li>
+                                    <li class="breadcrumb-item active fw-bold text-primary" aria-current="page">{{
+                                        course.course_name }}
+                                    </li>
+                                </ol>
+                            </nav>
+                            <div class="row align-items-center">
+                                <!-- Título a la izquierda -->
+                                <div class="col-auto">
+                                    <h2 class="fw-bold mb-0">{Nombre del Nivel}</h2>
+                                </div>
+
+                                <!-- Los botones y textos a la derecha (empujados con ms-auto) -->
+                                <div class="col mb-2">
+                                    <div class="d-flex justify-content-end align-items-center gap-4">
+                                        <!-- Primer botón con texto -->
+                                        <div class="text-center">
+                                            <button type="button" class="btn rounded-circle mb-1" data-bs-toggle="modal"
+                                                data-bs-target="#addSectionModal">
+                                                <img src="{% static 'assets/images/agregar.png' %}" alt="Agregar"
+                                                    width="70" height="70">
+                                            </button>
+                                            <span class="text-white fw-bold d-block">Grupos</span>
+                                        </div>
+
+                                        <!-- Segundo botón con texto -->
+                                        <div class="text-center">
+                                            <button type="button" class="btn rounded-circle mb-1" data-bs-toggle="modal"
+                                                data-bs-target="#addSectionModal">
+                                                <img src="{% static 'assets/images/agregar.png' %}" alt="Agregar"
+                                                    width="70" height="70">
+                                            </button>
+                                            <span class="text-white fw-bold d-block">Mis Notas (tentativo)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+
+
+            <div class="container-fluid">
+                <div class="row" style="height: 68vh;">
+                    <div class="col-10">
+                        <!-- Tarjeta principal -->
+                        <div class="card border-light shadow-sm">
+                            <div class="card-body overflow-auto" style="height: 70vh; padding: 0;">
+
+
+                                <!--(PARA HENRRY) aqui va el texto e imagenes que se agregaria con lo que reciva el formulario de TINY, talvez se podria usar una etiqueta Iframe para invocarlo aca -->
+
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Sidebar derecho -->
+
+                    <div class="col-2 p-0 d-flex flex-column">
+                        <div class="bg-dark text-white" style="height: 71vh; overflow-y: auto;" id="sidebarScroll">
+
+                            <!-- Botón para Material -->
+                            <div class="w-100 mb-1 position-relative">
+                                <!-- Botón dividido: izquierda (texto) y derecha (⋮) -->
+                                <div class="d-flex">
+                                    <!-- Parte izquierda: texto (no abre dropdown) -->
+                                    <button type="button"
+                                        class="btn btn-dark text-start d-flex align-items-center py-1 px-2 flex-grow-1"
+                                        style="font-size: 0.9rem; border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                                        <span class="fs-6 text-white fw-normal">Material</span>
+                                    </button>
+                                    <!-- Parte derecha: solo los puntos (abre dropdown) -->
+                                    <button type="button"
+                                        class="btn btn-dark d-flex align-items-center justify-content-center"
+                                        style="width: 40px; font-size: 1rem; border-top-left-radius: 0; border-bottom-left-radius: 0;"
+                                        onclick="toggleDropdown('dropdown-material'); event.stopPropagation();">
+                                        <span class="text-white">⋮</span>
+                                    </button>
+                                </div>
+
+                                <!-- Dropdown personalizado -->
+                                <div id="dropdown-material"
+                                    class="dropdown-custom bg-dark border border-secondary rounded mt-1 d-none position-absolute end-0"
+                                    style="z-index: 1000; min-width: 120px;">
+                                    <button class="dropdown-item text-light py-2 px-3" data-bs-toggle="modal"
+                                        data-bs-target="#editSectionModal" style="font-size: 0.85rem;">Editar</button>
+                                    <hr class="dropdown-divider border-secondary m-0">
+                                    <button class="dropdown-item text-danger py-2 px-3" data-bs-toggle="modal"
+                                        data-bs-target="#deleteSectionModal" style="font-size: 0.85rem;">Eliminar</button>
+                                </div>
+                            </div>
+
+                            <!-- Unidades -->
+                            <!-- (PARA HENRRY) cambia lo que esta aqui por las verdaderas unidades que alla en el nivel, ahorita solo esta iterando por los numeros que se le pasa y no por las unidades reales -->
+                            {% for i in '123456789'|make_list %}
+                            <div class="w-100 mb-1 position-relative">
+                                <div class="d-flex">
+                                    <button type="button"
+                                        class="btn btn-dark text-start d-flex align-items-center py-1 px-2 flex-grow-1"
+                                        style="font-size: 0.9rem; border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                                        <span class="fs-6 text-white fw-normal">Unidad {{ i }}</span>
+                                    </button>
+                                    <button type="button"
+                                        class="btn btn-dark d-flex align-items-center justify-content-center"
+                                        style="width: 40px; font-size: 1rem; border-top-left-radius: 0; border-bottom-left-radius: 0;"
+                                        onclick="toggleDropdown('dropdown-unidad-{{ i }}'); event.stopPropagation();">
+                                        <span class="text-white">⋮</span>
+                                    </button>
+                                </div>
+
+                                <!-- Dropdown personalizado -->
+                                <div id="dropdown-unidad-{{ i }}"
+                                    class="dropdown-custom bg-dark border border-secondary rounded mt-1 d-none position-absolute end-0"
+                                    style="z-index: 1000; min-width: 120px;">
+                                    <button class="dropdown-item text-light py-2 px-3"
+                                        style="font-size: 0.85rem;">Editar</button>
+                                    <hr class="dropdown-divider border-secondary m-0">
+                                    <button class="dropdown-item text-danger py-2 px-3"
+                                        style="font-size: 0.85rem;">Eliminar</button>
+                                </div>
+                            </div>
+                            {% endfor %}
+
+                            <!-- Botón fijo al final -->
+                            <div class="p-3 mt-auto">
+                                <button type="button"
+                                    class="btn btn-outline-light w-100 d-flex align-items-center justify-content-center gap-2 py-2">
+                                    <span class="fs-5">+</span>
+
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+
+
+                    <!-- Modal para Agregar seccion -->
+                    <div class="modal fade" id="addSectionModal" tabindex="-1" aria-labelledby="addSectionModalLabel"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title text-center w-100" id="modalTitle">Agregar Seccion</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form action="">
+
+                                        <!-- contenido del formulario -->
+                                        <div class="mb-3">
+                                            <label for="section_name" class="form-label">Nombre:</label>
+                                            <input type="text" class="form-control" id="section_name"
+                                                name="section_name" required>
+                                        </div>
+
+
+
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <div class="row w-100">
+                                        <div class="col">
+                                            <button type="submit" form="addSectionForm"
+                                                class="btn btn-primary w-100">Guardar</button>
+                                        </div>
+                                        <div class="col">
+                                            <button type="button" class="btn btn-danger w-100"
+                                                data-bs-dismiss="modal">Cancelar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal para Editar Sección -->
+                    <div class="modal fade" id="editSectionModal" tabindex="-1" aria-labelledby="editSectionModalLabel"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title text-center w-100" id="editSectionModalLabel">Editar Sección
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="editSectionForm" method="POST">
+                                        {% csrf_token %}
+                                        <div class="mb-3">
+                                            <label for="edit_section_name" class="form-label">Nombre De La
+                                                Sección:</label>
+                                            <input type="text" class="form-control" id="edit_section_name"
+                                                name="section_name">
+                                        </div>
+
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <div class="row w-100">
+                                        <div class="col">
+                                            <button type="submit" form="editLevelForm"
+                                                class="btn btn-primary w-100">Guardar Cambios</button>
+                                        </div>
+                                        <div class="col">
+                                            <button type="button" class="btn btn-danger w-100"
+                                                data-bs-dismiss="modal">Cancelar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal para Eliminar Sección -->
+                    <div class="modal fade" id="deleteSectionModal" tabindex="-1"
+                        aria-labelledby="deleteSectionModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteSectionModalLabel">Confirmar Eliminación</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    ¿Estás seguro de que deseas eliminar esta sección? Esta acción no se puede deshacer.
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Cancelar</button>
+                                    <form id="deleteSectionForm" method="POST">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- no borrar a partir de aquí -->
+                </div>
+            </div>
+            <!-- Importar Bootstrap Icons -->
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+
+            <!-- Importar Bootstrap JS (opcional) -->
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+            <!-- Bootstrap JS Bundle -->
+            <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+            <!-- Script para abrir/cerrar dropdowns -->
+            <script>
+                // Cierra cualquier dropdown abierto al hacer clic fuera
+                document.addEventListener('click', function (e) {
+                    const dropdowns = document.querySelectorAll('.dropdown-custom');
+                    dropdowns.forEach(dropdown => {
+                        const button = dropdown.previousElementSibling;
+                        if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+                            dropdown.classList.add('d-none');
+                        }
+                    });
+                });
+
+                // Alterna la visibilidad del dropdown
+                function toggleDropdown(id) {
+                    const dropdown = document.getElementById(id);
+                    const allDropdowns = document.querySelectorAll('.dropdown-custom');
+
+                    // Cierra todos los demás
+                    allDropdowns.forEach(d => {
+                        if (d.id !== id) d.classList.add('d-none');
+                    });
+
+                    // Alterna este
+                    dropdown.classList.toggle('d-none');
+
+                    // Previene que se cierre inmediatamente
+                    e.stopPropagation();
+                }
+            </script>
+
+
+
+
+        </main>
+    </div>
+
+</body>
+
+</html>
