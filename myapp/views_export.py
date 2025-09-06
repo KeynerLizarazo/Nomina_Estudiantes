@@ -24,14 +24,14 @@ def export_persons(request):
             'Email': p.email,
             'Fecha Nac.': p.date_of_birth.strftime('%d/%m/%Y') if p.date_of_birth else '',
             'Sexo': p.get_gender_display() if hasattr(p, 'get_gender_display') else '',
-            'Nacionalidad': p.get_nationality_display() if hasattr(p, 'get_nationality_display') else '',
+            'País de Origen': p.pais_origen or '',
             'C.Represe': p.progenitor_document_number or '',
             'Representante': p.progenitor_name or '',
         })
     df = pd.DataFrame(data)
     if format_param == 'csv':
         buffer = io.StringIO()
-        df.to_csv(buffer, index=False, encoding='utf-8')
+        df.to_csv(buffer, index=False, encoding='utf-8-sig')
         content_type = 'text/csv'
         ext = 'csv'
         data_out = buffer.getvalue()
@@ -63,14 +63,14 @@ def export_tutors(request):
             'Email': p.email,
             'Fecha Nac.': p.date_of_birth.strftime('%d/%m/%Y') if p.date_of_birth else '',
             'Sexo': p.get_gender_display() if hasattr(p, 'get_gender_display') else '',
-            'Nacionalidad': p.get_nationality_display() if hasattr(p, 'get_nationality_display') else '',
+            'País de Origen': p.pais_origen or '',
             'Usuario': u.username if u else '',
             'Cargo': t.get_staff_position_display() if hasattr(t, 'get_staff_position_display') else '',
         })
     df = pd.DataFrame(data)
     if format_param == 'csv':
         buffer = io.StringIO()
-        df.to_csv(buffer, index=False, encoding='utf-8')
+        df.to_csv(buffer, index=False, encoding='utf-8-sig')
         content_type = 'text/csv'
         ext = 'csv'
         data_out = buffer.getvalue()

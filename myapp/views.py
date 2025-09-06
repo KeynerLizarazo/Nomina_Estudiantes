@@ -164,9 +164,11 @@ class UserView(LoginRequiredMixin, View):
 
             return redirect('usuarios')
         else:
+            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
+            error_string = f"<ul>{error_list_html}</ul>"
+            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
             users = User.objects.all()
             persons = Person.objects.all()
-            messages.error(request, 'Por favor corrija los errores en el formulario.')
             context = {
                 'form': form,
                 'users': users,
@@ -203,9 +205,11 @@ class UpdateUserView(LoginRequiredMixin, View):
             messages.success(request, 'Usuario actualizado exitosamente.')
             return redirect('usuarios')
         else:
+            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
+            error_string = f"<ul>{error_list_html}</ul>"
+            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
             users = User.objects.all()
             persons = Person.objects.all()
-            messages.error(request, 'Por favor corrija los errores en el formulario.')
             context = {
                 'form': form,
                 'users': users,
@@ -243,18 +247,32 @@ class PersonApiView(View):
 class PersonView(LoginRequiredMixin, View):
     def sync_students(self):
         # Solo crear Students para personas cuyo usuario tiene rol 'estudiante'
-        existing_student_ids = set(Students.objects.values_list('person_id', flat=True))
-        student_users = User.objects.filter(role='estudiante', is_deleted=False)
-        missing_persons = Person.objects.filter(is_deleted=False, id__in=student_users.values_list('person_id', flat=True)).exclude(id__in=existing_student_ids)
+        existing_tutor_ids = set(Tutors.all_objects.values_list('person_id', flat=True))
+        tutor_users = User.objects.filter(role__in=['profesor', 'tutor', 'administrador'], is_deleted=False)
+        # Solo crear para personas que no tengan ningún registro de tutor (ni eliminado)
+        missing_persons = Person.objects.filter(is_deleted=False, id__in=tutor_users.values_list('person_id', flat=True)).exclude(id__in=existing_tutor_ids)
         for p in missing_persons:
-            user = student_users.filter(person=p).first()
+            user = tutor_users.filter(person=p).first()
             if user:
-                Students.objects.create(
-                    date_register=p.date_of_birth or timezone.now().date(),
-                    status='activo',
+                Tutors.objects.create(
+                    staff_position=user.role,
                     user=user,
                     person=p
                 )
+        """"""
+        # existing_student_ids = set(Students.objects.values_list('person_id', flat=True))
+        # student_users = User.objects.filter(role='estudiante', is_deleted=False)
+        # missing_persons = Person.objects.filter(is_deleted=False, id__in=student_users.values_list('person_id', flat=True)).exclude(id__in=existing_student_ids)
+        # for p in missing_persons:
+        #     user = student_users.filter(person=p).first()
+        #     if user:
+        #         Students.objects.create(
+        #             date_register=p.date_of_birth or timezone.now().date(),
+        #             status='activo',
+        #             user=user,
+        #             person=p
+        #         )
+        """"""
     template_name = 'cedulas.html'
     login_url = 'login'
 
@@ -329,7 +347,7 @@ class PersonView(LoginRequiredMixin, View):
                         '-sim_name', '-sim_surname', '-sim_document', '-sim_email', '-sim_type_document', '-sim_telephone', '-sim_gender', '-sim_birth', '-sim_pais', '-sim_progenitor_document', '-sim_progenitor_name'
                     )
 
-        paginator = Paginator(persons.order_by('id'), 3)
+        paginator = Paginator(persons.order_by('id'), 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
@@ -374,11 +392,13 @@ class PersonView(LoginRequiredMixin, View):
                 }
                 return render(request, self.template_name, context)
         else:
+            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
+            error_string = f"<ul>{error_list_html}</ul>"
+            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
             persons = Person.objects.all()
-            messages.error(request, 'Por favor corrija los errores en el formulario.')
             context = {
                 'form': form,
-                'persons': persons
+                'persons': persons,
             }
             return render(request, self.template_name, context)
         
@@ -415,8 +435,10 @@ class UpdatePersonView(LoginRequiredMixin, View):
             messages.success(request, 'Estudiante actualizado exitosamente.')
             return redirect('cedulas')
         else:
+            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
+            error_string = f"<ul>{error_list_html}</ul>"
+            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
             persons = Person.objects.all()
-            messages.error(request, 'Por favor corrija los errores en el formulario.')
             context = {
                 'form': form,
                 'persons': persons,
@@ -700,7 +722,7 @@ class DocenteView(LoginRequiredMixin, View):
 
     def sync_tutors(self):
         from .models import Person, Tutors, User
-        existing_tutor_ids = set(Tutors.objects.values_list('person_id', flat=True))
+        existing_tutor_ids = set(Tutors.all_objects.values_list('person_id', flat=True))
         tutor_users = User.objects.filter(role__in=['profesor', 'tutor', 'administrador'], is_deleted=False)
         missing_persons = Person.objects.filter(is_deleted=False, id__in=tutor_users.values_list('person_id', flat=True)).exclude(id__in=existing_tutor_ids)
         for p in missing_persons:
@@ -831,15 +853,17 @@ class DocenteView(LoginRequiredMixin, View):
                     return redirect('docentes')
             except Exception as e:
                 messages.error(request, f'Ocurrió un error al crear el docente: {e}')
-                tutors = Tutors.objects.all()
+                tutors = Tutors.objects.filter(is_deleted=False)
                 context = {
                     'form': form,
                     'tutors': tutors
                 }
                 return render(request, self.template_name, context)
         else:
-            tutors = Tutors.objects.all()
-            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
+            error_string = f"<ul>{error_list_html}</ul>"
+            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
+            tutors = Tutors.objects.filter(is_deleted=False)
             context = {
                 'form': form,
                 'tutors': tutors
@@ -853,12 +877,12 @@ class UpdateDocenteView(LoginRequiredMixin, View):
         tutor = get_object_or_404(Tutors, id=id)
         person = tutor.person
         form = DocenteForm(instance=person, initial={'staff_position': tutor.staff_position})
-        tutors = Tutors.objects.all()
+        tutors = Tutors.objects.filter(is_deleted=False)
         context = {
-            'form': form,
-            'tutors': tutors,
-            'tutor_to_edit': tutor
-        }
+                'form': form,
+                'tutors': tutors,
+                'tutor_to_edit': tutor
+            }
         return render(request, self.template_name, context)
 
     def post(self, request, id, *args, **kwargs):
@@ -881,8 +905,10 @@ class UpdateDocenteView(LoginRequiredMixin, View):
             messages.success(request, 'Docente actualizado exitosamente.')
             return redirect('docentes')
         else:
-            tutors = Tutors.objects.all()
-            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
+            error_string = f"<ul>{error_list_html}</ul>"
+            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
+            tutors = Tutors.objects.filter(is_deleted=False)
             context = {
                 'form': form,
                 'tutors': tutors,
