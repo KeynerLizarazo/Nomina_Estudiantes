@@ -16,6 +16,8 @@ urlpatterns = [
     # Endpoint para cambio de contraseña forzado
     path('change_password/', change_password, name='change_password'),
 
+    
+    path('secciones/', views.secciones, name='secciones'),
     path('cedulas/', views.PersonView.as_view(), name='cedulas'),
     path('cedulas/editar/<int:id>/', views.UpdatePersonView.as_view(), name='editar_persona'),
     path('cedulas/eliminar/<int:id>/', views.DeletePersonView.as_view(), name='eliminar_persona'),
