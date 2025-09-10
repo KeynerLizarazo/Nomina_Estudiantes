@@ -136,3 +136,19 @@ body {
   font-size: 1.2rem;
   font-weight: bold;
 }
+
+
+
+
+.custom-scroll {
+
+
+
+    scrollbar-color: #c44c4c #f8f9fa /* thumb y track (Firefox) */
+}
+
+
+
+
+
+
