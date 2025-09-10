@@ -57,9 +57,11 @@
 
                     <!-- Mensajes de error -->
                     {% if messages %}
-                    {% for message in messages %}
-                    <div class="alert alert-danger">{{ message }}</div>
-                    {% endfor %}
+                        {% for message in messages %}
+                            {% if message.tags == 'error' %}
+                                <div class="alert alert-danger">{{ message }}</div>
+                            {% endif %}
+                        {% endfor %}
                     {% endif %}
 
                     <!-- Formulario -->

@@ -1,7 +1,7 @@
 from django import forms
 import datetime
 import re
-from .models import Courses, Levels, Person, TodoItem, User, Tutors, STAFF_POSITION_LIST_PREDIFINED
+from .models import Courses, Levels, Person, TodoItem, User, Tutors, STAFF_POSITION_LIST_PREDIFINED, Units
 
 class BasePersonValidationForm(forms.ModelForm):
     def clean_date_of_birth(self):
@@ -101,6 +101,16 @@ class LevelForm(forms.ModelForm):
     class Meta:
         model = Levels
         fields = ['level_name', 'description', 'duration']
+
+class UnitForm(forms.ModelForm):
+    class Meta:
+        model = Units
+        fields = ['title', 'pdf_material', 'content']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'id': 'material_title'}),
+            'pdf_material': forms.ClearableFileInput(attrs={'class': 'form-control', 'id': 'material_pdf'}),
+            'content': forms.Textarea(attrs={'id': 'material_content'}),
+        }
 
 class TodoItemForm(forms.ModelForm):
     task = forms.CharField(label='Tarea', max_length=200, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nueva tarea'}))

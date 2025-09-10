@@ -223,16 +223,18 @@ class Testing(models.Model):
         return f"{self.name} ({self.date}) - {self.student.person.name}"
     
 class Units(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True, null=True)
+    title = models.CharField(max_length=100)
+    content = models.TextField(blank=True, null=True)
+    pdf_material = models.FileField(upload_to='materials/', blank=True, null=True)
     topic_order = models.IntegerField()
+    level = models.ForeignKey('Levels', on_delete=models.CASCADE, related_name='units', null=True)
     class Meta:
         db_table = 'unidades'
         verbose_name = 'Unidad'
         verbose_name_plural = 'Unidades'
 
     def __str__(self):
-        return f"{self.name} (Tema {self.topic_order})"
+        return f"{self.title} (Tema {self.topic_order})"
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 class User(AbstractUser, SoftDeleteModel):

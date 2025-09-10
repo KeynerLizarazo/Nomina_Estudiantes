@@ -23,13 +23,27 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
     <!-- FullCalendar CSS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
-
+    
+    <!-- TinyMCE -->
+    <!-- Place the first <script> tag in your HTML's <head> -->
+    <script src="https://cdn.tiny.cloud/1/kl3rg2rzyywb0pjih5yhwbsppelx9pefyera8gjlbhlz0asw/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+    <!-- SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script>
+        // Prevent Bootstrap modal from trapping focus on TinyMCE dialogs
+        document.addEventListener('focusin', (e) => {
+            if (e.target.closest(".tox-tinymce-aux, .moxman-window, .tam-assetmanager-root") !== null) {
+                e.stopImmediatePropagation();
+            }
+        });
+    </script>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 </head>
 
 <body class="m-0 p-0">
+    
     <div class="bg-my-background-color d-flex text-white ">
         <!-- SIDEBAR -->
         {% include 'partials/sidebar.html' %}
@@ -52,15 +66,16 @@
                                         <a href="{% url 'cursos' %}"
                                             class="fw-bold text-dark text-decoration-none">Cursos</a>
                                     </li>
-                                    <li class="breadcrumb-item active fw-bold text-primary" aria-current="page">{{
-                                        course.course_name }}
+                                    <li class="breadcrumb-item">
+                                        <a href="{% url 'niveles' course.id %}" class="fw-bold text-dark text-decoration-none">{{ course.course_name }}</a>
                                     </li>
+                                    <li class="breadcrumb-item active fw-bold text-primary" aria-current="page">{{ level.level_name }}</li>
                                 </ol>
                             </nav>
                             <div class="row align-items-center">
                                 <!-- Título a la izquierda -->
                                 <div class="col-auto">
-                                    <h2 class="fw-bold mb-0">{Nombre del Nivel}</h2>
+                                    <h2 class="fw-bold mb-0">{{ level.level_name }}</h2>
                                 </div>
 
                                 <!-- Los botones y textos a la derecha (empujados con ms-auto) -->
@@ -103,17 +118,14 @@
                         <!-- Tarjeta principal -->
                         <div class="card border-light shadow-sm">
                             <div class="card-body overflow-auto" style="height: 70vh; padding: 0;">
-
-
-                                <!--(PARA HENRRY) aqui va el texto e imagenes que se agregaria con lo que reciva el formulario de TINY, talvez se podria usar una etiqueta Iframe para invocarlo aca -->
-
+                                 <!--(PARA HENRRY) aqui va el texto e imagenes que se agregaria con lo que reciva el formulario de TINY, talvez se podria usar una etiqueta Iframe para invocarlo aca -->
                             </div>
                         </div>
                     </div>
                     <!-- Sidebar derecho -->
 
                     <div class="col-2 p-0 d-flex flex-column">
-                        <div class="bg-dark text-white" style="height: 71vh; overflow-y: auto;" id="sidebarScroll">
+                        <div class="bg-dark text-white" style="height: 71vh; overflow-y: auto;" id="unidades-list">
 
                             <!-- Botón para Material -->
                             <div class="w-100 mb-1 position-relative">
@@ -129,7 +141,7 @@
                                     <button type="button"
                                         class="btn btn-dark d-flex align-items-center justify-content-center"
                                         style="width: 40px; font-size: 1rem; border-top-left-radius: 0; border-bottom-left-radius: 0;"
-                                        onclick="toggleDropdown('dropdown-material'); event.stopPropagation();">
+                                        onclick="toggleDropdown('dropdown-material', event)">
                                         <span class="text-white">⋮</span>
                                     </button>
                                 </div>
@@ -147,152 +159,43 @@
                             </div>
 
                             <!-- Unidades -->
-                            <!-- (PARA HENRRY) cambia lo que esta aqui por las verdaderas unidades que alla en el nivel, ahorita solo esta iterando por los numeros que se le pasa y no por las unidades reales -->
-                            {% for i in '123456789'|make_list %}
-                            <div class="w-100 mb-1 position-relative">
+                              <!-- (PARA HENRRY) cambia lo que esta aqui por las verdaderas unidades que alla en el nivel, ahorita solo esta iterando por los numeros que se le pasa y no por las unidades reales -->
+                            {% comment %} {% for i in '123456789'|make_list %} {% endcomment %}
+                            {% for unit in units %}
+                            <div class="w-100 mb-1 position-relative" data-id="{{ unit.id }}" id="unit-{{ unit.id }}">
                                 <div class="d-flex">
                                     <button type="button"
                                         class="btn btn-dark text-start d-flex align-items-center py-1 px-2 flex-grow-1"
-                                        style="font-size: 0.9rem; border-top-right-radius: 0; border-bottom-right-radius: 0;">
-                                        <span class="fs-6 text-white fw-normal">Unidad {{ i }}</span>
+                                        style="font-size: 0.9rem; border-top-right-radius: 0; border-bottom-right-radius: 0;"
+                                        onclick="loadUnitContent({{ unit.id }})">
+                                        <span class="fs-6 text-white fw-normal">{{ unit.title }}</span>
                                     </button>
                                     <button type="button"
                                         class="btn btn-dark d-flex align-items-center justify-content-center"
                                         style="width: 40px; font-size: 1rem; border-top-left-radius: 0; border-bottom-left-radius: 0;"
-                                        onclick="toggleDropdown('dropdown-unidad-{{ i }}'); event.stopPropagation();">
+                                        onclick="toggleDropdown('dropdown-unidad-{{ unit.id }}', event)">
                                         <span class="text-white">⋮</span>
                                     </button>
                                 </div>
 
                                 <!-- Dropdown personalizado -->
-                                <div id="dropdown-unidad-{{ i }}"
+                                <div id="dropdown-unidad-{{ unit.id }}"
                                     class="dropdown-custom bg-dark border border-secondary rounded mt-1 d-none position-absolute end-0"
                                     style="z-index: 1000; min-width: 120px;">
-                                    <button class="dropdown-item text-light py-2 px-3"
-                                        style="font-size: 0.85rem;">Editar</button>
+                                    <a href="{% url 'edit_unit' unit.id %}" class="dropdown-item text-light py-2 px-3"
+                                        style="font-size: 0.85rem;">Editar</a>
                                     <hr class="dropdown-divider border-secondary m-0">
-                                    <button class="dropdown-item text-danger py-2 px-3"
-                                        style="font-size: 0.85rem;">Eliminar</button>
+                                    <button type="button" class="dropdown-item text-danger py-2 px-3" data-bs-toggle="modal" data-bs-target="#deleteUnitModal" data-url="{% url 'delete_unit' unit.id %}" style="font-size: 0.85rem;">Eliminar</button>
                                 </div>
                             </div>
                             {% endfor %}
 
                             <!-- Botón fijo al final -->
                             <div class="p-3 mt-auto">
-                                <button type="button"
+                                <a href="{% url 'add_unit' level.id %}"
                                     class="btn btn-outline-light w-100 d-flex align-items-center justify-content-center gap-2 py-2">
                                     <span class="fs-5">+</span>
-
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-
-
-
-
-
-                    <!-- Modal para Agregar seccion -->
-                    <div class="modal fade" id="addSectionModal" tabindex="-1" aria-labelledby="addSectionModalLabel"
-                        aria-hidden="true">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content">
-                                <div class="modal-header bg-primary text-white">
-                                    <h5 class="modal-title text-center w-100" id="modalTitle">Agregar Seccion</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <form action="">
-
-                                        <!-- contenido del formulario -->
-                                        <div class="mb-3">
-                                            <label for="section_name" class="form-label">Nombre:</label>
-                                            <input type="text" class="form-control" id="section_name"
-                                                name="section_name" required>
-                                        </div>
-
-
-
-                                    </form>
-                                </div>
-                                <div class="modal-footer">
-                                    <div class="row w-100">
-                                        <div class="col">
-                                            <button type="submit" form="addSectionForm"
-                                                class="btn btn-primary w-100">Guardar</button>
-                                        </div>
-                                        <div class="col">
-                                            <button type="button" class="btn btn-danger w-100"
-                                                data-bs-dismiss="modal">Cancelar</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Modal para Editar Sección -->
-                    <div class="modal fade" id="editSectionModal" tabindex="-1" aria-labelledby="editSectionModalLabel"
-                        aria-hidden="true">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content">
-                                <div class="modal-header bg-primary text-white">
-                                    <h5 class="modal-title text-center w-100" id="editSectionModalLabel">Editar Sección
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <form id="editSectionForm" method="POST">
-                                        {% csrf_token %}
-                                        <div class="mb-3">
-                                            <label for="edit_section_name" class="form-label">Nombre De La
-                                                Sección:</label>
-                                            <input type="text" class="form-control" id="edit_section_name"
-                                                name="section_name">
-                                        </div>
-
-                                    </form>
-                                </div>
-                                <div class="modal-footer">
-                                    <div class="row w-100">
-                                        <div class="col">
-                                            <button type="submit" form="editLevelForm"
-                                                class="btn btn-primary w-100">Guardar Cambios</button>
-                                        </div>
-                                        <div class="col">
-                                            <button type="button" class="btn btn-danger w-100"
-                                                data-bs-dismiss="modal">Cancelar</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Modal para Eliminar Sección -->
-                    <div class="modal fade" id="deleteSectionModal" tabindex="-1"
-                        aria-labelledby="deleteSectionModalLabel" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="deleteSectionModalLabel">Confirmar Eliminación</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    ¿Estás seguro de que deseas eliminar esta sección? Esta acción no se puede deshacer.
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary"
-                                        data-bs-dismiss="modal">Cancelar</button>
-                                    <form id="deleteSectionForm" method="POST">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-danger">Eliminar</button>
-                                    </form>
-                                </div>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -302,6 +205,9 @@
             </div>
             <!-- Importar Bootstrap Icons -->
             <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+            
+            <!-- SweetAlert2 JS -->
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.all.min.js"></script>
 
             <!-- Importar Bootstrap JS (opcional) -->
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -311,6 +217,20 @@
 
             <!-- Script para abrir/cerrar dropdowns -->
             <script>
+                function loadUnitContent(unitId) {
+                    fetch(`/secciones/unit/${unitId}/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const cardBody = document.querySelector('.card-body.overflow-auto');
+                            let contentHTML = `<h1>${data.name}</h1><div>${data.description}</div>`;
+                            if (data.pdf_material_url) {
+                                contentHTML += `<a href="${data.pdf_material_url}" target="_blank">Ver PDF</a>`;
+                            }
+                            cardBody.innerHTML = contentHTML;
+                        })
+                        .catch(error => console.error('Error:', error));
+                }
+
                 // Cierra cualquier dropdown abierto al hacer clic fuera
                 document.addEventListener('click', function (e) {
                     const dropdowns = document.querySelectorAll('.dropdown-custom');
@@ -323,7 +243,8 @@
                 });
 
                 // Alterna la visibilidad del dropdown
-                function toggleDropdown(id) {
+                function toggleDropdown(id, event) {
+                    event.stopPropagation();
                     const dropdown = document.getElementById(id);
                     const allDropdowns = document.querySelectorAll('.dropdown-custom');
 
@@ -334,18 +255,209 @@
 
                     // Alterna este
                     dropdown.classList.toggle('d-none');
-
-                    // Previene que se cierre inmediatamente
-                    e.stopPropagation();
                 }
+
+                const list = document.getElementById('unidades-list');
+                new Sortable(list, {
+                    animation: 150,
+                    ghostClass: 'blue-background-class',
+                    onEnd: function (evt) {
+                        const order = [];
+                        const items = list.querySelectorAll('[data-id]');
+                        items.forEach((item, index) => {
+                            order.push({
+                                id: item.dataset.id,
+                                order: index + 1
+                            });
+                        });
+
+                        fetch("{% url 'update_unit_order' %}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({ order: order })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                console.log('Order updated successfully');
+                            } else {
+                                console.error('Error updating order');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                    }
+                });
+
+                document.addEventListener('DOMContentLoaded', function() {
+                    const deleteUnitModal = document.getElementById('deleteUnitModal');
+                    if (deleteUnitModal) {
+                        deleteUnitModal.addEventListener('show.bs.modal', function (event) {
+                            const button = event.relatedTarget;
+                            const url = button.getAttribute('data-url');
+                            const form = deleteUnitModal.querySelector('#deleteUnitForm');
+                            form.action = url;
+                        });
+                    }
+
+                    {% if messages %}
+                        {% for message in messages %}
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: '{{ message.tags }}',
+                            title: '{{ message }}',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer)
+                                toast.addEventListener('mouseleave', Swal.resumeTimer)
+                            }
+                        });
+                        {% endfor %}
+                    {% endif %}
+                });
             </script>
 
 
 
 
         </main>
-    </div>
+                    <!-- ========= MODALS ========= -->
 
+            <!-- Modal para Agregar seccion -->
+            <div class="modal fade" id="addSectionModal" tabindex="-1" aria-labelledby="addSectionModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title text-center w-100" id="modalTitle">Agregar Seccion</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="">
+
+                                <!-- contenido del formulario -->
+                                <div class="mb-3">
+                                    <label for="section_name" class="form-label">Nombre:</label>
+                                    <input type="text" class="form-control" id="section_name"
+                                        name="section_name" required>
+                                </div>
+
+
+
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="row w-100">
+                                <div class="col">
+                                    <button type="submit" form="addSectionForm"
+                                        class="btn btn-primary w-100">Guardar</button>
+                                </div>
+                                <div class="col">
+                                    <button type="button" class="btn btn-danger w-100"
+                                        data-bs-dismiss="modal">Cancelar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para Editar Sección -->
+            <div class="modal fade" id="editSectionModal" tabindex="-1" aria-labelledby="editSectionModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title text-center w-100" id="editSectionModalLabel">Editar Sección
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editSectionForm" method="POST">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="edit_section_name" class="form-label">Nombre De La
+                                        Sección:</label>
+                                    <input type="text" class="form-control" id="edit_section_name"
+                                        name="section_name">
+                                </div>
+
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="row w-100">
+                                <div class="col">
+                                    <button type="submit" form="editLevelForm"
+                                        class="btn btn-primary w-100">Guardar Cambios</button>
+                                </div>
+                                <div class="col">
+                                    <button type="button" class="btn btn-danger w-100"
+                                        data-bs-dismiss="modal">Cancelar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Modal para Eliminar Unidad -->
+            <div class="modal fade" id="deleteUnitModal" tabindex="-1" aria-labelledby="deleteUnitModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteUnitModalLabel">Confirmar Eliminación</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            ¿Estás seguro de que deseas eliminar este material?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <form id="deleteUnitForm" method="POST" action="">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">Eliminar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para Eliminar Sección -->
+            <div class="modal fade" id="deleteSectionModal" tabindex="-1"
+                aria-labelledby="deleteSectionModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteSectionModalLabel">Confirmar Eliminación</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            ¿Estás seguro de que deseas eliminar esta sección? Esta acción no se puede deshacer.
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary"
+                                data-bs-dismiss="modal">Cancelar</button>
+                            <form id="deleteSectionForm" method="POST">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">Eliminar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>                    <!-- no borrar a partir de aquí -->
+            </div>
+    </div>
 </body>
 
 </html>

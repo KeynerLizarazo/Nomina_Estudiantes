@@ -13,8 +13,8 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Cedula, User, Calendario, Courses, Tutors, Levels, TodoItem, Person
-from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm, DocenteForm
-from .models import Person, Students, User
+from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm, DocenteForm, UnitForm
+from .models import Person, Students, User, Units
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q, CharField
@@ -77,10 +77,162 @@ def docentes(request):
 
     return render(request, 'docentes.html')
 
-@login_required
-def secciones(request):
+class SeccionView(LoginRequiredMixin, View):
+    template_name = 'secciones.html'
+    login_url = 'login'
 
-    return render(request, 'secciones.html')
+    def get(self, request, level_id, *args, **kwargs):
+        level = get_object_or_404(Levels, id=level_id)
+        course = level.course
+        units = level.units.order_by('topic_order')
+        context = {
+            'level': level,
+            'course': course,
+            'units': units
+        }
+        return render(request, self.template_name, context)
+
+class UpdateUnitOrderView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            order_data = data.get('order', [])
+            with transaction.atomic():
+                for item in order_data:
+                    unit_id = item.get('id')
+                    order = item.get('order')
+                    if unit_id is not None and order is not None:
+                        unit = get_object_or_404(Units, id=unit_id)
+                        unit.topic_order = order
+                        unit.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+class CreateUnitView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def post(self, request, level_id, *args, **kwargs):
+        try:
+            level = get_object_or_404(Levels, id=level_id)
+            
+            # Obtener el último `topic_order` y sumarle 1
+            last_unit = Units.objects.filter(level=level).order_by('-topic_order').first()
+            new_order = (last_unit.topic_order + 1) if last_unit else 1
+            
+            unit = Units.objects.create(
+                title=request.POST.get('material_title'),
+                content=request.POST.get('material_content'),
+                pdf_material=request.FILES.get('material_pdf'),
+                level=level,
+                topic_order=new_order
+            )
+            
+            return JsonResponse({
+                'status': 'success',
+                'unit': {
+                    'id': unit.id,
+                    'name': unit.title,
+                    'topic_order': unit.topic_order
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+class UnitJsonView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def get(self, request, unit_id, *args, **kwargs):
+        unit = get_object_or_404(Units, id=unit_id)
+        pdf_filename = ''
+        if unit.pdf_material:
+            pdf_filename = unit.pdf_material.name.split('/')[-1]
+
+        return JsonResponse({
+            'id': unit.id,
+            'name': unit.title,
+            'description': unit.content,
+            'pdf_material_url': unit.pdf_material.url if unit.pdf_material else None,
+            'pdf_filename': pdf_filename
+        })
+
+class UpdateUnitView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def post(self, request, unit_id, *args, **kwargs):
+        try:
+            unit = get_object_or_404(Units, id=unit_id)
+            unit.title = request.POST.get('material_title')
+            unit.content = request.POST.get('material_content')
+            
+            if 'material_pdf' in request.FILES:
+                unit.pdf_material = request.FILES['material_pdf']
+            
+            unit.save()
+            
+            return JsonResponse({
+                'status': 'success',
+                'unit': {
+                    'id': unit.id,
+                    'name': unit.title,
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+class DeleteUnitView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def post(self, request, unit_id, *args, **kwargs):
+        unit = get_object_or_404(Units, id=unit_id)
+        level_id = unit.level.id
+        unit.delete()
+        messages.success(request, 'Unidad eliminada exitosamente.')
+        return redirect('secciones', level_id=level_id)
+
+class UnitCreateView(LoginRequiredMixin, View):
+    template_name = 'unit_form.html'
+    login_url = 'login'
+
+    def get(self, request, level_id):
+        level = get_object_or_404(Levels, id=level_id)
+        form = UnitForm()
+        return render(request, self.template_name, {'form': form, 'level': level})
+
+    def post(self, request, level_id):
+        level = get_object_or_404(Levels, id=level_id)
+        form = UnitForm(request.POST, request.FILES)
+        if form.is_valid():
+            unit = form.save(commit=False)
+            unit.level = level
+            last_unit = Units.objects.filter(level=level).order_by('-topic_order').first()
+            unit.topic_order = (last_unit.topic_order + 1) if last_unit else 1
+            unit.save()
+            messages.success(request, 'Unidad agregada exitosamente.')
+            return redirect('secciones', level_id=level.id)
+        return render(request, self.template_name, {'form': form, 'level': level})
+
+class UnitUpdateView(LoginRequiredMixin, View):
+    template_name = 'unit_form.html'
+    login_url = 'login'
+
+    def get(self, request, unit_id):
+        unit = get_object_or_404(Units, id=unit_id)
+        level = unit.level
+        form = UnitForm(instance=unit)
+        return render(request, self.template_name, {'form': form, 'level': level, 'unit': unit})
+
+    def post(self, request, unit_id):
+        unit = get_object_or_404(Units, id=unit_id)
+        level = unit.level
+        form = UnitForm(request.POST, request.FILES, instance=unit)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Unidad actualizada exitosamente.')
+            return redirect('secciones', level_id=level.id)
+        return render(request, self.template_name, {'form': form, 'level': level, 'unit': unit})
 
 @csrf_exempt
 @login_required
