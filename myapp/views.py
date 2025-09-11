@@ -13,8 +13,8 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Cedula, User, Calendario, Courses, Tutors, Levels, TodoItem, Person
-from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm, DocenteForm
-from .models import Person, Students, User
+from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm, DocenteForm, UnitForm
+from .models import Person, Students, User, Units
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q, CharField
@@ -77,10 +77,162 @@ def docentes(request):
 
     return render(request, 'docentes.html')
 
-@login_required
-def secciones(request):
+class SeccionView(LoginRequiredMixin, View):
+    template_name = 'secciones.html'
+    login_url = 'login'
 
-    return render(request, 'secciones.html')
+    def get(self, request, level_id, *args, **kwargs):
+        level = get_object_or_404(Levels, id=level_id)
+        course = level.course
+        units = level.units.order_by('topic_order')
+        context = {
+            'level': level,
+            'course': course,
+            'units': units
+        }
+        return render(request, self.template_name, context)
+
+class UpdateUnitOrderView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            order_data = data.get('order', [])
+            with transaction.atomic():
+                for item in order_data:
+                    unit_id = item.get('id')
+                    order = item.get('order')
+                    if unit_id is not None and order is not None:
+                        unit = get_object_or_404(Units, id=unit_id)
+                        unit.topic_order = order
+                        unit.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+class CreateUnitView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def post(self, request, level_id, *args, **kwargs):
+        try:
+            level = get_object_or_404(Levels, id=level_id)
+            
+            # Obtener el último `topic_order` y sumarle 1
+            last_unit = Units.objects.filter(level=level).order_by('-topic_order').first()
+            new_order = (last_unit.topic_order + 1) if last_unit else 1
+            
+            unit = Units.objects.create(
+                title=request.POST.get('material_title'),
+                content=request.POST.get('material_content'),
+                pdf_material=request.FILES.get('material_pdf'),
+                level=level,
+                topic_order=new_order
+            )
+            
+            return JsonResponse({
+                'status': 'success',
+                'unit': {
+                    'id': unit.id,
+                    'name': unit.title,
+                    'topic_order': unit.topic_order
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+class UnitJsonView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def get(self, request, unit_id, *args, **kwargs):
+        unit = get_object_or_404(Units, id=unit_id)
+        pdf_filename = ''
+        if unit.pdf_material:
+            pdf_filename = unit.pdf_material.name.split('/')[-1]
+
+        return JsonResponse({
+            'id': unit.id,
+            'name': unit.title,
+            'description': unit.content,
+            'pdf_material_url': unit.pdf_material.url if unit.pdf_material else None,
+            'pdf_filename': pdf_filename
+        })
+
+class UpdateUnitView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def post(self, request, unit_id, *args, **kwargs):
+        try:
+            unit = get_object_or_404(Units, id=unit_id)
+            unit.title = request.POST.get('material_title')
+            unit.content = request.POST.get('material_content')
+            
+            if 'material_pdf' in request.FILES:
+                unit.pdf_material = request.FILES['material_pdf']
+            
+            unit.save()
+            
+            return JsonResponse({
+                'status': 'success',
+                'unit': {
+                    'id': unit.id,
+                    'name': unit.title,
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+class DeleteUnitView(LoginRequiredMixin, View):
+    login_url = 'login'
+
+    def post(self, request, unit_id, *args, **kwargs):
+        unit = get_object_or_404(Units, id=unit_id)
+        level_id = unit.level.id
+        unit.delete()
+        messages.success(request, 'Unidad eliminada exitosamente.')
+        return redirect('secciones', level_id=level_id)
+
+class UnitCreateView(LoginRequiredMixin, View):
+    template_name = 'unit_form.html'
+    login_url = 'login'
+
+    def get(self, request, level_id):
+        level = get_object_or_404(Levels, id=level_id)
+        form = UnitForm()
+        return render(request, self.template_name, {'form': form, 'level': level})
+
+    def post(self, request, level_id):
+        level = get_object_or_404(Levels, id=level_id)
+        form = UnitForm(request.POST, request.FILES)
+        if form.is_valid():
+            unit = form.save(commit=False)
+            unit.level = level
+            last_unit = Units.objects.filter(level=level).order_by('-topic_order').first()
+            unit.topic_order = (last_unit.topic_order + 1) if last_unit else 1
+            unit.save()
+            messages.success(request, 'Unidad agregada exitosamente.')
+            return redirect('secciones', level_id=level.id)
+        return render(request, self.template_name, {'form': form, 'level': level})
+
+class UnitUpdateView(LoginRequiredMixin, View):
+    template_name = 'unit_form.html'
+    login_url = 'login'
+
+    def get(self, request, unit_id):
+        unit = get_object_or_404(Units, id=unit_id)
+        level = unit.level
+        form = UnitForm(instance=unit)
+        return render(request, self.template_name, {'form': form, 'level': level, 'unit': unit})
+
+    def post(self, request, unit_id):
+        unit = get_object_or_404(Units, id=unit_id)
+        level = unit.level
+        form = UnitForm(request.POST, request.FILES, instance=unit)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Unidad actualizada exitosamente.')
+            return redirect('secciones', level_id=level.id)
+        return render(request, self.template_name, {'form': form, 'level': level, 'unit': unit})
 
 @csrf_exempt
 @login_required
@@ -169,9 +321,11 @@ class UserView(LoginRequiredMixin, View):
 
             return redirect('usuarios')
         else:
+            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
+            error_string = f"<ul>{error_list_html}</ul>"
+            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
             users = User.objects.all()
             persons = Person.objects.all()
-            messages.error(request, 'Por favor corrija los errores en el formulario.')
             context = {
                 'form': form,
                 'users': users,
@@ -208,9 +362,11 @@ class UpdateUserView(LoginRequiredMixin, View):
             messages.success(request, 'Usuario actualizado exitosamente.')
             return redirect('usuarios')
         else:
+            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
+            error_string = f"<ul>{error_list_html}</ul>"
+            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
             users = User.objects.all()
             persons = Person.objects.all()
-            messages.error(request, 'Por favor corrija los errores en el formulario.')
             context = {
                 'form': form,
                 'users': users,
@@ -248,18 +404,32 @@ class PersonApiView(View):
 class PersonView(LoginRequiredMixin, View):
     def sync_students(self):
         # Solo crear Students para personas cuyo usuario tiene rol 'estudiante'
-        existing_student_ids = set(Students.objects.values_list('person_id', flat=True))
-        student_users = User.objects.filter(role='estudiante', is_deleted=False)
-        missing_persons = Person.objects.filter(is_deleted=False, id__in=student_users.values_list('person_id', flat=True)).exclude(id__in=existing_student_ids)
+        existing_tutor_ids = set(Tutors.all_objects.values_list('person_id', flat=True))
+        tutor_users = User.objects.filter(role__in=['profesor', 'tutor', 'administrador'], is_deleted=False)
+        # Solo crear para personas que no tengan ningún registro de tutor (ni eliminado)
+        missing_persons = Person.objects.filter(is_deleted=False, id__in=tutor_users.values_list('person_id', flat=True)).exclude(id__in=existing_tutor_ids)
         for p in missing_persons:
-            user = student_users.filter(person=p).first()
+            user = tutor_users.filter(person=p).first()
             if user:
-                Students.objects.create(
-                    date_register=p.date_of_birth or timezone.now().date(),
-                    status='activo',
+                Tutors.objects.create(
+                    staff_position=user.role,
                     user=user,
                     person=p
                 )
+        """"""
+        # existing_student_ids = set(Students.objects.values_list('person_id', flat=True))
+        # student_users = User.objects.filter(role='estudiante', is_deleted=False)
+        # missing_persons = Person.objects.filter(is_deleted=False, id__in=student_users.values_list('person_id', flat=True)).exclude(id__in=existing_student_ids)
+        # for p in missing_persons:
+        #     user = student_users.filter(person=p).first()
+        #     if user:
+        #         Students.objects.create(
+        #             date_register=p.date_of_birth or timezone.now().date(),
+        #             status='activo',
+        #             user=user,
+        #             person=p
+        #         )
+        """"""
     template_name = 'cedulas.html'
     login_url = 'login'
 
@@ -334,7 +504,7 @@ class PersonView(LoginRequiredMixin, View):
                         '-sim_name', '-sim_surname', '-sim_document', '-sim_email', '-sim_type_document', '-sim_telephone', '-sim_gender', '-sim_birth', '-sim_pais', '-sim_progenitor_document', '-sim_progenitor_name'
                     )
 
-        paginator = Paginator(persons.order_by('id'), 3)
+        paginator = Paginator(persons.order_by('id'), 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
@@ -379,11 +549,13 @@ class PersonView(LoginRequiredMixin, View):
                 }
                 return render(request, self.template_name, context)
         else:
+            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
+            error_string = f"<ul>{error_list_html}</ul>"
+            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
             persons = Person.objects.all()
-            messages.error(request, 'Por favor corrija los errores en el formulario.')
             context = {
                 'form': form,
-                'persons': persons
+                'persons': persons,
             }
             return render(request, self.template_name, context)
         
@@ -420,8 +592,10 @@ class UpdatePersonView(LoginRequiredMixin, View):
             messages.success(request, 'Estudiante actualizado exitosamente.')
             return redirect('cedulas')
         else:
+            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
+            error_string = f"<ul>{error_list_html}</ul>"
+            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
             persons = Person.objects.all()
-            messages.error(request, 'Por favor corrija los errores en el formulario.')
             context = {
                 'form': form,
                 'persons': persons,
@@ -705,7 +879,7 @@ class DocenteView(LoginRequiredMixin, View):
 
     def sync_tutors(self):
         from .models import Person, Tutors, User
-        existing_tutor_ids = set(Tutors.objects.values_list('person_id', flat=True))
+        existing_tutor_ids = set(Tutors.all_objects.values_list('person_id', flat=True))
         tutor_users = User.objects.filter(role__in=['profesor', 'tutor', 'administrador'], is_deleted=False)
         missing_persons = Person.objects.filter(is_deleted=False, id__in=tutor_users.values_list('person_id', flat=True)).exclude(id__in=existing_tutor_ids)
         for p in missing_persons:
@@ -836,15 +1010,17 @@ class DocenteView(LoginRequiredMixin, View):
                     return redirect('docentes')
             except Exception as e:
                 messages.error(request, f'Ocurrió un error al crear el docente: {e}')
-                tutors = Tutors.objects.all()
+                tutors = Tutors.objects.filter(is_deleted=False)
                 context = {
                     'form': form,
                     'tutors': tutors
                 }
                 return render(request, self.template_name, context)
         else:
-            tutors = Tutors.objects.all()
-            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
+            error_string = f"<ul>{error_list_html}</ul>"
+            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
+            tutors = Tutors.objects.filter(is_deleted=False)
             context = {
                 'form': form,
                 'tutors': tutors
@@ -858,12 +1034,12 @@ class UpdateDocenteView(LoginRequiredMixin, View):
         tutor = get_object_or_404(Tutors, id=id)
         person = tutor.person
         form = DocenteForm(instance=person, initial={'staff_position': tutor.staff_position})
-        tutors = Tutors.objects.all()
+        tutors = Tutors.objects.filter(is_deleted=False)
         context = {
-            'form': form,
-            'tutors': tutors,
-            'tutor_to_edit': tutor
-        }
+                'form': form,
+                'tutors': tutors,
+                'tutor_to_edit': tutor
+            }
         return render(request, self.template_name, context)
 
     def post(self, request, id, *args, **kwargs):
@@ -886,8 +1062,10 @@ class UpdateDocenteView(LoginRequiredMixin, View):
             messages.success(request, 'Docente actualizado exitosamente.')
             return redirect('docentes')
         else:
-            tutors = Tutors.objects.all()
-            messages.error(request, 'Por favor corrija los errores en el formulario.')
+            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
+            error_string = f"<ul>{error_list_html}</ul>"
+            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
+            tutors = Tutors.objects.filter(is_deleted=False)
             context = {
                 'form': form,
                 'tutors': tutors,

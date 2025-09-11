@@ -1,9 +1,53 @@
 from django import forms
 import datetime
 import re
-from .models import Courses, Levels, Person, TodoItem, User, Tutors, STAFF_POSITION_LIST_PREDIFINED
+from .models import Courses, Levels, Person, TodoItem, User, Tutors, STAFF_POSITION_LIST_PREDIFINED, Units
 
-class DocenteForm(forms.ModelForm):
+class BasePersonValidationForm(forms.ModelForm):
+    def clean_date_of_birth(self):
+        date_of_birth = self.cleaned_data.get('date_of_birth')
+        if date_of_birth and date_of_birth > datetime.date.today():
+            raise forms.ValidationError("La fecha de nacimiento no puede ser mayor al día de hoy.")
+        return date_of_birth
+
+    def clean_document_number(self):
+        document_number = self.cleaned_data.get('document_number')
+        if document_number and not re.match(r'^[0-9.]+$', document_number):
+            raise forms.ValidationError("El número de documento solo puede contener números y puntos.")
+        return document_number
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if name and not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$', name):
+            raise forms.ValidationError("El nombre solo puede contener letras y espacios.")
+        return name
+
+    def clean_surname(self):
+        surname = self.cleaned_data.get('surname')
+        if surname and not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$', surname):
+            raise forms.ValidationError("El apellido solo puede contener letras y espacios.")
+        return surname
+
+    def clean_telephone_number(self):
+        telephone = self.cleaned_data.get('telephone_number')
+        TELEFONO_REGEX = re.compile(r'^\+(58|57|54|591|55|56|506|53|1(?:809|829|849|787|939)|593|503|34|1|502|504|52|505|507|595|51|598)(?:[0-9]{7,11})$')
+        if telephone and not TELEFONO_REGEX.match(telephone):
+            raise forms.ValidationError("El número de teléfono debe tener el formato +[código][número], ej: +584121234567")
+        return telephone
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email and not re.match(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$', email):
+            raise forms.ValidationError("Ingrese un correo electrónico válido.")
+        return email
+
+    def clean_progenitor_document_number(self):
+        doc = self.cleaned_data.get('progenitor_document_number')
+        if doc and not re.match(r'^[A-Za-z0-9.]+$', doc):
+            raise forms.ValidationError("El documento del representante solo puede contener letras, números y puntos.")
+        return doc
+
+class DocenteForm(BasePersonValidationForm):
     staff_position = forms.ChoiceField(label='Cargo', choices=STAFF_POSITION_LIST_PREDIFINED, widget=forms.Select(attrs={'class': 'form-control'}))
     document_number = forms.CharField(label='Número de Documento', max_length=20, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba su número de documento'}))
     name = forms.CharField(label='Nombre', max_length=50, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus nombres'}))
@@ -58,6 +102,16 @@ class LevelForm(forms.ModelForm):
         model = Levels
         fields = ['level_name', 'description', 'duration']
 
+class UnitForm(forms.ModelForm):
+    class Meta:
+        model = Units
+        fields = ['title', 'pdf_material', 'content']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'id': 'material_title'}),
+            'pdf_material': forms.ClearableFileInput(attrs={'class': 'form-control', 'id': 'material_pdf'}),
+            'content': forms.Textarea(attrs={'id': 'material_content'}),
+        }
+
 class TodoItemForm(forms.ModelForm):
     task = forms.CharField(label='Tarea', max_length=200, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nueva tarea'}))
     due_date = forms.DateField(label='Fecha de Vencimiento', widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
@@ -66,7 +120,7 @@ class TodoItemForm(forms.ModelForm):
         fields = ['task', 'due_date']
 
 
-class UserForm(forms.ModelForm):
+class UserForm(BasePersonValidationForm):
     username = forms.CharField(label='Nombre de Usuario', max_length=150, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de Usuario'}))
     password = forms.CharField(label='Contraseña', widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña'}))
     email = forms.EmailField(label='Correo Electrónico', widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo Electrónico'}))
@@ -83,7 +137,14 @@ class UserForm(forms.ModelForm):
         widgets = {
             'role': forms.Select(attrs={'class': 'form-control'})
         }
-class UserUpdateForm(forms.ModelForm):
+
+    def clean_documento(self):
+        documento = self.cleaned_data.get('documento')
+        if documento and not re.match(r'^[0-9.]+$', documento):
+            raise forms.ValidationError("El número de documento solo puede contener números y puntos.")
+        return documento
+
+class UserUpdateForm(BasePersonValidationForm):
     username = forms.CharField(label='Nombre de Usuario', max_length=150)
     email = forms.EmailField(label='Email', widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}))
     documento = forms.CharField(label='Documento', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Documento'}))
@@ -93,8 +154,14 @@ class UserUpdateForm(forms.ModelForm):
         model = User
         fields = ['username', 'email', 'documento', 'role', 'person']
 
+    def clean_documento(self):
+        documento = self.cleaned_data.get('documento')
+        if documento and not re.match(r'^[0-9.]+$', documento):
+            raise forms.ValidationError("El número de documento solo puede contener números y puntos.")
+        return documento
 
-class PersonForm(forms.ModelForm):
+
+class PersonForm(BasePersonValidationForm):
     document_number = forms.CharField(label='Número de Documento', max_length=20, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba su número de documento'}))
     name = forms.CharField(label='Nombre', max_length=50, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus nombres'}))
     surname = forms.CharField(label='Apellido', max_length=50, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escriba sus apellidos'}))
@@ -137,15 +204,3 @@ class PersonForm(forms.ModelForm):
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'pais_origen': forms.Select(attrs={'class': 'form-control'}),
         }
-
-    def clean_date_of_birth(self):
-        date_of_birth = self.cleaned_data.get('date_of_birth')
-        if date_of_birth and date_of_birth > datetime.date.today():
-            raise forms.ValidationError("La fecha de nacimiento no puede ser mayor al día de hoy.")
-        return date_of_birth
-
-    def clean_document_number(self):
-        document_number = self.cleaned_data.get('document_number')
-        if document_number and not re.match(r'^[0-9.]+$', document_number):
-            raise forms.ValidationError("El número de documento solo puede contener números y puntos.")
-        return document_number

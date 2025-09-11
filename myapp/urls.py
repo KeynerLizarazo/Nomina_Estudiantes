@@ -17,7 +17,6 @@ urlpatterns = [
     path('change_password/', change_password, name='change_password'),
 
     
-    path('secciones/', views.secciones, name='secciones'),
     path('cedulas/', views.PersonView.as_view(), name='cedulas'),
     path('cedulas/editar/<int:id>/', views.UpdatePersonView.as_view(), name='editar_persona'),
     path('cedulas/eliminar/<int:id>/', views.DeletePersonView.as_view(), name='eliminar_persona'),
@@ -38,6 +37,12 @@ urlpatterns = [
     path('cursos/<int:course_id>/niveles/', views.LevelView.as_view(), name='niveles'),
     path('niveles/editar/<int:id>/', views.UpdateLevelView.as_view(), name='editar_nivel'),
     path('niveles/eliminar/<int:id>/', views.DeleteLevelView.as_view(), name='eliminar_nivel'),
+    path('secciones/<int:level_id>/', views.SeccionView.as_view(), name='secciones'),
+    path('secciones/level/<int:level_id>/unit/add/', views.UnitCreateView.as_view(), name='add_unit'),
+    path('secciones/unit/<int:unit_id>/edit/', views.UnitUpdateView.as_view(), name='edit_unit'),
+    path('secciones/update-order/', views.UpdateUnitOrderView.as_view(), name='update_unit_order'),
+    path('secciones/unit/<int:unit_id>/', views.UnitJsonView.as_view(), name='unit_json'),
+    path('secciones/unit/delete/<int:unit_id>/', views.DeleteUnitView.as_view(), name='delete_unit'),
 
     path('test-zone/', views.test_zone, name='test_zone'),
 

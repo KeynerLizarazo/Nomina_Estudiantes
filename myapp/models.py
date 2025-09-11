@@ -144,7 +144,12 @@ class Calendario(models.Model):
 # MODELOS DE NUEVA BASE DE DATOS ACADEMIA
 class Person(SoftDeleteModel):
     type_document = models.CharField(max_length=2, choices=TIPO_DOCUMENTO_CHOICES, default='V')
-    document_number = models.CharField(max_length=20, unique=True)
+    document_number = models.CharField(
+    max_length=20, 
+    unique=True,
+    error_messages={
+    'unique': 'Ya existe una persona registrada con este número de documento.'
+    })
     name= models.CharField(max_length=50)
     surname= models.CharField(max_length=50)
     progenitor_name= models.CharField(max_length=50, blank=True, null=True)
@@ -218,16 +223,18 @@ class Testing(models.Model):
         return f"{self.name} ({self.date}) - {self.student.person.name}"
     
 class Units(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True, null=True)
+    title = models.CharField(max_length=100)
+    content = models.TextField(blank=True, null=True)
+    pdf_material = models.FileField(upload_to='materials/', blank=True, null=True)
     topic_order = models.IntegerField()
+    level = models.ForeignKey('Levels', on_delete=models.CASCADE, related_name='units', null=True)
     class Meta:
         db_table = 'unidades'
         verbose_name = 'Unidad'
         verbose_name_plural = 'Unidades'
 
     def __str__(self):
-        return f"{self.name} (Tema {self.topic_order})"
+        return f"{self.title} (Tema {self.topic_order})"
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 class User(AbstractUser, SoftDeleteModel):
