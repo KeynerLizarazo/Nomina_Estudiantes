@@ -18,6 +18,13 @@
         .dropdown-custom.d-none {
             display: none;
         }
+
+        .clickable-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            filter: brightness(0.90);
+            
+        }
     </style>
     <!-- SweetAlert2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
@@ -58,7 +65,7 @@
                         <div class="d-flex justify-content-between align-items-center ">
                             <div class="d-flex flex-column flex-grow-1">
                                 <!-- Breadcrumb de navegación -->
-                                
+
                                 <nav aria-label="breadcrumb">
                                     <ol class="breadcrumb p-2 mb-2 bg-light rounded">
                                         <li class="breadcrumb-item">
@@ -122,7 +129,7 @@
                     <div class="col-10 ">
                         <!-- Tarjeta principal -->
                         <div class="card border-light shadow-sm">
-                            <div class="card-body overflow-auto" style="height: 70vh; padding: 0;">
+                            <div class="card-body overflow-auto" style="height: 69vh; padding: 0;">
 
                             </div>
                         </div>
@@ -131,7 +138,7 @@
 
                     <div class="col-2  mx-0 p-0 d-flex flex-column">
                         <div class="bg-light text-dark border border-red rounded-start custom-scroll"
-                            style="height: 71vh; overflow-y: auto; " id="sidebarScroll">
+                            style="height: 69vh; overflow-y: auto; " id="sidebarScroll">
 
 
 
@@ -214,10 +221,47 @@
                 .then(response => response.json())
                 .then(data => {
                     const cardBody = document.querySelector('.card-body.overflow-auto');
+                    
                     let contentHTML = `<h1>${data.name}</h1><div>${data.description}</div>`;
                     if (data.pdf_material_url) {
-                        contentHTML += `<a href="${data.pdf_material_url}" target="_blank">Ver PDF</a>`;
+                        contentHTML += `
+                        
+                        <div class="mt-2 border rounded shadow-sm overflow-hidden bg-white clickable-card"
+                        onclick="window.open('${data.pdf_material_url}', '_blank');"
+                        style="cursor: pointer;">
+                        <div class="d-flex align-items-center p-3">
+                            <!-- Icono de PDF -->
+                            <div class="fs-1 text-danger me-3">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+
+                            <!-- Información del PDF -->
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 text-primary fw-semibold">Material en PDF disponible</h6>
+                                <p class="mb-1 small">
+                                    <strong>Nombre:</strong> 
+                                    <span class="text-dark">${data.pdf_filename}</span>
+                                </p>
+                                <small class="text-muted">Haz clic en cualquier parte para abrir el PDF</small>
+                            </div>
+
+                            <!-- Botón de descarga (no hereda el clic) -->
+                            <div onclick="event.stopPropagation();">
+                                <a 
+                                    href="${data.pdf_material_url}" 
+                                    class="btn btn-outline-primary btn-sm" 
+                                    target="_blank"
+                                    download
+                                >
+                                    <i class="fas fa-download me-1"></i> Descargar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                        `;
+
                     }
+                    
                     cardBody.innerHTML = contentHTML;
                 })
                 .catch(error => console.error('Error:', error));

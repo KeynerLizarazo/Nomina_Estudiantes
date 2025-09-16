@@ -15,9 +15,11 @@
             selector: '#material_content',
             plugins: [
                 'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
-                'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'ai', 'uploadcare', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf'
+                'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste',
+                 'advtable', 'advcode', 'advtemplate', 'ai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 
+                 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf', 'image'
             ],
-            toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+            toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
             tinycomments_mode: 'embedded',
             tinycomments_author: 'Author name',
             mergetags_list: [
@@ -25,7 +27,55 @@
                 { value: 'Email', title: 'Email' },
             ],
             ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
-            uploadcare_public_key: '0af609a19a832ea089f9',
+             // ==============================
+            // Manejador de subida de imágenes
+            // ==============================
+            images_upload_handler: function (blobInfo, success, failure) {
+                var formData = new FormData();
+                formData.append('file', blobInfo.blob(), blobInfo.filename());
+
+                fetch('{% url "upload_image" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.location) {
+                        success(data.location);
+                    } else {
+                        failure('Error: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(() => failure('Image upload failed due to a network error.'));
+            },
+
+            // Opcional: permitir elegir imágenes locales
+            file_picker_types: 'image',
+            file_picker_callback: function (cb, value, meta) {
+                var input = document.createElement('input');
+                input.setAttribute('type', 'file');
+                input.setAttribute('accept', 'image/*');
+
+                input.onchange = function () {
+                    var file = this.files[0];
+                    var reader = new FileReader();
+
+                    reader.onload = function () {
+                        cb(reader.result, { alt: file.name });
+                    };
+
+                    reader.readAsDataURL(file);
+                };
+
+                input.click();
+            },
+
+            // Otras opciones...
+            automatic_uploads: false,
+            paste_data_images: true,  // Permite pegar imágenes (como desde el portapapeles)
         });
     </script>
 </head>

@@ -7,7 +7,7 @@ from django.views import View
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
+
 from django.utils.decorators import method_decorator
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -29,6 +29,15 @@ from datetime import datetime
 from django.contrib.postgres.search import TrigramSimilarity 
 # Extensión de PostgreSQL que permite filtrar datos de búsqueda de forma sensible
 """"""
+import os
+import uuid
+from django.http import JsonResponse
+
+from django.conf import settings
+from PIL import Image
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+
 
 # ==============================
 # Función home - Redirigir raíz a login o welcome
@@ -1081,6 +1090,37 @@ class DeleteDocenteView(LoginRequiredMixin, View):
         tutor.delete()
         messages.success(request, 'Docente eliminado exitosamente.')
         return redirect('docentes')
+
+# ==============================
+# Subida de imágenes para TinyMCE
+# ==============================
+
+@csrf_exempt
+def upload_image(request):
+    if request.method != 'POST' or not request.FILES.get('file'):
+        return JsonResponse({'error': 'Invalid request.'}, status=400)
+
+    file = request.FILES['file']
+
+    # Validar que es una imagen
+    try:
+        Image.open(file).verify()
+        file.seek(0)
+    except Exception:
+        return JsonResponse({'error': 'Invalid image file.'}, status=400)
+
+    # Generar nombre único
+    ext = os.path.splitext(file.name)[1]
+    filename = f"tinymce_{uuid.uuid4().hex}{ext}"
+    path = os.path.join('tinymce', 'images', filename)
+
+    # Guardar usando el sistema de almacenamiento predeterminado
+    default_storage.save(path, ContentFile(file.read()))
+
+    # Devolver la URL pública
+    location = f'{settings.MEDIA_URL}{path}'
+    return JsonResponse({'location': location})
+
 
 # ==============================
 # Funciones de Autenticación

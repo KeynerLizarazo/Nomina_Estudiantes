@@ -44,6 +44,9 @@ urlpatterns = [
     path('secciones/unit/<int:unit_id>/', views.UnitJsonView.as_view(), name='unit_json'),
     path('secciones/unit/delete/<int:unit_id>/', views.DeleteUnitView.as_view(), name='delete_unit'),
 
+    # Subir imagen para tinyMCE
+    path('upload-image/', views.upload_image, name='upload_image'),
+
     path('test-zone/', views.test_zone, name='test_zone'),
 
     # Exportar datos
