@@ -1,6 +1,7 @@
 import os, dj_database_url
 from pathlib import Path
 from decouple import config, Csv
+import psycopg2
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent  # Ruta base del proyecto
 SECRET_KEY = config('SECRET_KEY')  # Clave secreta para cifrado (cámbiala en producción)
@@ -112,24 +113,60 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'nomina.wsgi.application'
 
-USE_SQLITE = os.getenv('USE_SQLITE', 'False') == 'True'
+# ==============================
+# BASE DE DATOS CON FALLBACK AUTOMÁTICO
+# ==============================
+def get_database_config():
+    """
+    Intenta conectarse a Railway, si falla usa SQLite como fallback
+    """
+    USE_SQLITE = os.getenv('USE_SQLITE', 'False') == 'True'
+    
+    if USE_SQLITE:
+        print("🔄 Usando SQLite por configuración manual")
+        return {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / "db.sqlite3",
+            }
+        }
+    
+    try:
+        # Intentar obtener la configuración de Railway
+        database_url = config('DATABASE_URL')
+        railway_config = dj_database_url.parse(database_url)
+        
+        # Probar la conexión a Railway
+        test_conn = psycopg2.connect(
+            host=railway_config['HOST'],
+            port=railway_config['PORT'],
+            user=railway_config['USER'],
+            password=railway_config['PASSWORD'],
+            database=railway_config['NAME'],
+            connect_timeout=5  # Timeout de 5 segundos
+        )
+        test_conn.close()
+        
+        print("✅ Conectado exitosamente a Railway PostgreSQL")
+        return {
+            'default': railway_config,
+            'local_db': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / "db.sqlite3",
+            }
+        }
+        
+    except (psycopg2.OperationalError, Exception) as e:
+        print(f"❌ Error conectando a Railway: {e}")
+        print("🔄 Cambiando automáticamente a SQLite local")
+        return {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / "db.sqlite3",
+            }
+        }
 
-if USE_SQLITE:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / "db.sqlite3",
-        }
-    }
-else:
-    DATABASES = {
-        'default': dj_database_url.parse(config('DATABASE_URL')),  # Puerto predeterminado de PostgreSQL,
-        # Configuración para la base de datos local (SQLite)
-        'local_db': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / "db.sqlite3",
-        }
-    }
+DATABASES = get_database_config()
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -161,3 +198,29 @@ AUTH_USER_MODEL = 'myapp.User'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ==============================
+# CONFIGURACIÓN DE LOGGING
+# ==============================
+import logging
+import warnings
+
+# Suprimir warnings de collation de PostgreSQL
+warnings.filterwarnings('ignore', message='.*collation version mismatch.*')
+
+# Configuración de logging para suprimir warnings de PostgreSQL
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.db.backends.postgresql': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Solo mostrar errores, no warnings
+        },
+    },
+}
