@@ -112,26 +112,59 @@ WSGI_APPLICATION = 'nomina_estudiantes.wsgi.application'  # Configuración WSGI
 # ==============================
 # BASE DE DATOS
 # ==============================
-# Cambia tu configuración para que 'default' apunte a SQLite cuando Railway no esté disponible.
-# Puedes hacerlo manualmente o con una variable de entorno:
-USE_SQLITE = os.getenv('USE_SQLITE', 'False') == 'True'
+import psycopg2
 
-if USE_SQLITE:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / "db.sqlite3",
+def get_database_config():
+    """
+    Intenta conectarse a Railway, si falla usa SQLite como fallback
+    """
+    USE_SQLITE = os.getenv('USE_SQLITE', 'False') == 'True'
+    
+    if USE_SQLITE:
+        print("🔄 Usando SQLite por configuración manual")
+        return {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / "db.sqlite3",
+            }
         }
-    }
-else:
-    DATABASES = {
-        'default': dj_database_url.parse(config('DATABASE_URL')),  # Puerto predeterminado de PostgreSQL,
-        # Configuración para la base de datos local (SQLite)
-        'local_db': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / "db.sqlite3",
+    
+    try:
+        # Intentar obtener la configuración de Railway
+        database_url = config('DATABASE_URL')
+        railway_config = dj_database_url.parse(database_url)
+        
+        # Probar la conexión a Railway
+        test_conn = psycopg2.connect(
+            host=railway_config['HOST'],
+            port=railway_config['PORT'],
+            user=railway_config['USER'],
+            password=railway_config['PASSWORD'],
+            database=railway_config['NAME'],
+            connect_timeout=5  # Timeout de 5 segundos
+        )
+        test_conn.close()
+        
+        print("✅ Conectado exitosamente a Railway PostgreSQL")
+        return {
+            'default': railway_config,
+            'local_db': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / "db.sqlite3",
+            }
         }
-    }
+        
+    except (psycopg2.OperationalError, Exception) as e:
+        print(f"❌ Error conectando a Railway: {e}")
+        print("🔄 Cambiando automáticamente a SQLite local")
+        return {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / "db.sqlite3",
+            }
+        }
+
+DATABASES = get_database_config()
 # ==============================
 # VALIDACIÓN DE CONTRASEÑAS (OPCIONAL)
 # ==============================
