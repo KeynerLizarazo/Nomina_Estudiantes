@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestión de Grupos - The Professor</title>
+  <title>Gestión de Evaluaciones - The Professor</title>
 
   <!-- Bootstrap CSS -->
   <link href="{% static 'assets/styles/custom.css' %}" rel="stylesheet" />
@@ -25,24 +25,23 @@
   <!-- Contenido principal -->
   <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto pt-4">
     <div class="card shadow">
-      <div class="card-header">Gestión de Grupos</div>
+      <div class="card-header">Gestión de Evaluaciones</div>
       <div class="card-body">
         <div class="mb-3">
           <!-- Formulario de Búsqueda -->
-          <form class="d-flex" method="get" action="{% url 'grupos' %}">
+          <form class="d-flex" method="get" action="{% url 'evaluaciones' %}">
             <div class="input-group me-2">
-              <input type="text" name="q" class="form-control" placeholder="Buscar por nombre..." value="{{ query|default_if_none:'' }}">
+              <input type="text" name="q" class="form-control" placeholder="Buscar grupo..." value="{{ query|default_if_none:'' }}">
             </div>
             <select name="campo" class="form-select w-25 me-2">
               <option value="todos" {% if campo == "todos" %}selected{% endif %}>Todos los campos</option>
               <option value="name_group_levels" {% if campo == "name_group_levels" %}selected{% endif %}>Nombre del Grupo</option>
             </select>
             <button class="btn btn-secondary" type="submit">Buscar</button>
-            <a href="{% url 'grupos' %}" class="btn btn-secondary ms-2 me-2">Refrescar</a>
-            <a href="{% url 'addgroup' %}" class="btn btn-primary" >
+            <a href="{% url 'evaluaciones' %}" class="btn btn-secondary ms-2 me-2">Refrescar</a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
               Añadir
-            </a>
-            
+            </button>
           </form>
         </div>
 
@@ -52,20 +51,22 @@
             <thead>
               <tr>
                 <th>Acciones</th>
-                <th>Nombre del Grupo</th>
+                <th>Tipo</th>
+                <th>Unidad</th>
               </tr>
             </thead>
             <tbody id="tabla-resultados">
               
                 <tr>
-                  <td>
+                  <td class="text-center">
                     <button type="button" class="btn btn-warning btn-sm mb-1" data-bs-toggle="modal"
                       data-bs-target="#controlNominaModal" data-grupo-id="{{ grupo.id }}">Editar</button>
                     <form action="" method="post" >
                       {% csrf_token %}
                       <button type="submit" class="btn btn-danger btn-sm mb-1">Eliminar</button>
                     </form>
-                    <a href="{% url 'evaluaciones' %}" class="btn btn-primary btn-sm">Evaluaciones</a>
+
+                    <a href="{% url 'notas' %}" class="btn btn-primary btn-sm">Notas</a>
                   </td>
                   <td>{{ grupo.name_group_levels }}</td>
                 </tr>
@@ -100,37 +101,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Modal -->
-    <div class="modal fade" id="controlNominaModal" tabindex="-1" aria-labelledby="controlNominaModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title text-center w-100" id="modalTitle">Control de Grupos</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form id="nominaForm" method="POST">
-              {% csrf_token %}
-              <div class="mb-3">
-                <label for="id_name_group_levels" class="form-label">Nombre del Grupo</label>
-                <input type="text" name="name_group_levels" id="id_name_group_levels" class="form-control" required>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <div class="row w-100">
-              <div class="col">
-                <button type="submit" form="nominaForm" class="btn btn-primary w-100">Guardar</button>
-              </div>
-              <div class="col">
-                <button type="button" class="btn btn-danger w-100" data-bs-dismiss="modal">Cancelar</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </main>
 </div>
 
@@ -138,40 +108,6 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.all.min.js"></script>
-
-<script>
-  // Manejo del modal: abrir para crear o editar
-  const modal = document.getElementById('controlNominaModal');
-  const modalTitle = document.getElementById('modalTitle');
-  const nominaForm = document.getElementById('nominaForm');
-
-  modal.addEventListener('show.bs.modal', function (event) {
-    const button = event.relatedTarget;
-    const grupoId = button.getAttribute('data-grupo-id');
-
-    if (grupoId) {
-      modalTitle.textContent = 'Editar Grupo';
-      nominaForm.action = `/grupos/editar/${grupoId}/`;
-
-      fetch(`/grupos/api/${grupoId}/`)
-        .then(response => response.json())
-        .then(data => {
-          nominaForm.querySelector('[name="name_group_levels"]').value = data.name_group_levels || '';
-        })
-        .catch(err => console.error('Error al cargar datos:', err));
-    } else {
-      modalTitle.textContent = 'Crear Grupo';
-      nominaForm.reset();
-      nominaForm.action = "{% url 'grupos' %}";
-    }
-  });
-
-  // Resetear formulario al cerrar
-  modal.addEventListener('hidden.bs.modal', function () {
-    nominaForm.reset();
-    nominaForm.action = "{% url 'grupos' %}";
-  });
-</script>
 
 <script>
   // Paginación con flechas personalizadas

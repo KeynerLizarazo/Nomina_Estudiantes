@@ -12,7 +12,7 @@ from django.utils.decorators import method_decorator
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from .models import Cedula, User, Calendario, Courses, Tutors, Levels, TodoItem, Person
+from .models import Cedula, Group_Levels, User, Calendario, Courses, Tutors, Levels, TodoItem, Person
 from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm, DocenteForm, UnitForm
 from .models import Person, Students, User, Units
 from django.utils import timezone
@@ -392,6 +392,333 @@ class DeleteUserView(LoginRequiredMixin, View):
         user.delete()
         messages.success(request, 'Usuario eliminado exitosamente.')
         return redirect('usuarios')
+
+
+class NotasApiView(View):
+    def get(self, request, id, *args, **kwargs):
+        person = get_object_or_404(Person, id=id)
+        data = {
+            'type_document': person.type_document,
+            'document_number': person.document_number,
+            'name': person.name,
+            'surname': person.surname,
+            'telephone_number': person.telephone_number,
+            'email': person.email,
+            'date_of_birth': person.date_of_birth.strftime('%Y-%m-%d') if person.date_of_birth else '',
+            'gender': person.gender,
+            'pais_origen': person.pais_origen,
+            'progenitor_document_number': person.progenitor_document_number,
+            'progenitor_name': person.progenitor_name,
+        }
+        return JsonResponse(data)
+class NotasView(LoginRequiredMixin, View):
+    def sync_students(self):
+        # Solo crear Students para personas cuyo usuario tiene rol 'estudiante'
+        existing_tutor_ids = set(Tutors.all_objects.values_list('person_id', flat=True))
+        tutor_users = User.objects.filter(role__in=['profesor', 'tutor', 'administrador'], is_deleted=False)
+        # Solo crear para personas que no tengan ningún registro de tutor (ni eliminado)
+        missing_persons = Person.objects.filter(is_deleted=False, id__in=tutor_users.values_list('person_id', flat=True)).exclude(id__in=existing_tutor_ids)
+        for p in missing_persons:
+            user = tutor_users.filter(person=p).first()
+            if user:
+                Tutors.objects.create(
+                    staff_position=user.role,
+                    user=user,
+                    person=p
+                )
+        
+    template_name = 'notas.html'
+    login_url = 'login'
+
+    def get(self, request, *args, **kwargs):
+        # Sincronizar estudiantes antes de mostrar
+        self.sync_students()
+        form = PersonForm()
+        # Solo personas que son estudiantes (tienen registro en Students y usuario con rol estudiante)
+        student_person_ids = set(Students.objects.filter(is_deleted=False).values_list('person_id', flat=True))
+        student_users = set(User.objects.filter(role='estudiante', is_deleted=False).values_list('person_id', flat=True))
+        ids = student_person_ids & student_users
+        persons = Person.objects.filter(is_deleted=False, id__in=ids).only('id', 'name', 'surname', 'document_number', 'email')
+
+        query = request.GET.get('q')
+        campo = request.GET.get('campo')
+
+        if query:
+            if campo and campo != "todos":
+                filter_kwargs = {f"{campo}__icontains": query}
+                persons = persons.filter(**filter_kwargs)
+            else:
+                # Si la búsqueda es corta o es 'masculino'/'femenino', usar también icontains y mapear sexo
+                if len(query) < 4 or query.lower() in ['masculino', 'femenino']:
+                    gender_map = {
+                        'masculino': 'M',
+                        'femenino': 'F',
+                        'm': 'M',
+                        'f': 'F',
+                    }
+                    q_gender = Q(gender__icontains=query)
+                    if query.lower() in gender_map:
+                        q_gender = Q(gender=gender_map[query.lower()])
+                    persons = persons.filter(
+                        Q(name__icontains=query) |
+                        Q(surname__icontains=query) |
+                        Q(document_number__icontains=query) |
+                        Q(email__icontains=query) |
+                        Q(type_document__icontains=query) |
+                        Q(telephone_number__icontains=query) |
+                        q_gender |
+                        Q(date_of_birth__icontains=query) |
+                        Q(pais_origen__icontains=query) |
+                        Q(progenitor_document_number__icontains=query) |
+                        Q(progenitor_name__icontains=query)
+                    )
+                else:
+                    persons = persons.annotate(
+                        sim_name=TrigramSimilarity('name', query),
+                        sim_surname=TrigramSimilarity('surname', query),
+                        sim_document=TrigramSimilarity('document_number', query),
+                        sim_email=TrigramSimilarity('email', query),
+                        sim_type_document=TrigramSimilarity('type_document', query),
+                        sim_telephone=TrigramSimilarity('telephone_number', query),
+                        sim_gender=TrigramSimilarity('gender', query),
+                        sim_birth=TrigramSimilarity(Cast('date_of_birth', CharField()), query),
+                        sim_pais=TrigramSimilarity('pais_origen', query),
+                        sim_progenitor_document=TrigramSimilarity('progenitor_document_number', query),
+                        sim_progenitor_name=TrigramSimilarity('progenitor_name', query),
+                    ).filter(
+                        Q(sim_name__gt=0.3) |
+                        Q(sim_surname__gt=0.3) |
+                        Q(sim_document__gt=0.3) |
+                        Q(sim_email__gt=0.3) |
+                        Q(sim_type_document__gt=0.3) |
+                        Q(sim_telephone__gt=0.3) |
+                        Q(sim_gender__gt=0.3) |
+                        Q(sim_birth__gt=0.3) |
+                        Q(sim_pais__gt=0.3) |
+                        Q(sim_progenitor_document__gt=0.3) |
+                        Q(sim_progenitor_name__gt=0.3)
+                    ).order_by(
+                        '-sim_name', '-sim_surname', '-sim_document', '-sim_email', '-sim_type_document', '-sim_telephone', '-sim_gender', '-sim_birth', '-sim_pais', '-sim_progenitor_document', '-sim_progenitor_name'
+                    )
+
+        paginator = Paginator(persons.order_by('id'), 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        context = {
+            'form': form,
+            'persons': page_obj,
+            'query': query,
+            'campo': campo
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        form = PersonForm(request.POST)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Guardar la persona
+                    person = form.save()
+
+                    # Crear el usuario asociado
+                    user = User.objects.create_user(
+                        username=person.document_number,
+                        password=person.document_number,
+                        email=person.email,
+                        documento=person.document_number,
+                        role='estudiante',
+                        person=person,
+                        must_change_password=True
+                    )
+                    user.first_name = person.name
+                    user.last_name = person.surname
+                    user.save()
+
+                    messages.success(request, 'Estudiante agregado exitosamente.')
+                    return redirect('cedulas')
+            except Exception as e:
+                messages.error(request, f'Ocurrió un error al crear el usuario: {e}')
+                persons = Person.objects.all()
+                context = {
+                    'form': form,
+                    'persons': persons
+                }
+                return render(request, self.template_name, context)
+        else:
+            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
+            error_string = f"<ul>{error_list_html}</ul>"
+            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
+            persons = Person.objects.all()
+            context = {
+                'form': form,
+                'persons': persons,
+            }
+            return render(request, self.template_name, context)
+        
+
+class AñadirGrupoApiView(View):
+    def get(self, request, id, *args, **kwargs):
+        person = get_object_or_404(Person, id=id)
+        data = {
+            'type_document': person.type_document,
+            'document_number': person.document_number,
+            'name': person.name,
+            'surname': person.surname,
+            'telephone_number': person.telephone_number,
+            'email': person.email,
+            'date_of_birth': person.date_of_birth.strftime('%Y-%m-%d') if person.date_of_birth else '',
+            'gender': person.gender,
+            'pais_origen': person.pais_origen,
+            'progenitor_document_number': person.progenitor_document_number,
+            'progenitor_name': person.progenitor_name,
+        }
+        return JsonResponse(data)
+class AñadirGrupoView(LoginRequiredMixin, View):
+    def sync_students(self):
+        # Solo crear Students para personas cuyo usuario tiene rol 'estudiante'
+        existing_tutor_ids = set(Tutors.all_objects.values_list('person_id', flat=True))
+        tutor_users = User.objects.filter(role__in=['profesor', 'tutor', 'administrador'], is_deleted=False)
+        # Solo crear para personas que no tengan ningún registro de tutor (ni eliminado)
+        missing_persons = Person.objects.filter(is_deleted=False, id__in=tutor_users.values_list('person_id', flat=True)).exclude(id__in=existing_tutor_ids)
+        for p in missing_persons:
+            user = tutor_users.filter(person=p).first()
+            if user:
+                Tutors.objects.create(
+                    staff_position=user.role,
+                    user=user,
+                    person=p
+                )
+        
+    template_name = 'addgroup.html'
+    login_url = 'login'
+
+    def get(self, request, *args, **kwargs):
+        # Sincronizar estudiantes antes de mostrar
+        self.sync_students()
+        form = PersonForm()
+        # Solo personas que son estudiantes (tienen registro en Students y usuario con rol estudiante)
+        student_person_ids = set(Students.objects.filter(is_deleted=False).values_list('person_id', flat=True))
+        student_users = set(User.objects.filter(role='estudiante', is_deleted=False).values_list('person_id', flat=True))
+        ids = student_person_ids & student_users
+        persons = Person.objects.filter(is_deleted=False, id__in=ids).only('id', 'name', 'surname', 'document_number', 'email')
+
+        query = request.GET.get('q')
+        campo = request.GET.get('campo')
+
+        if query:
+            if campo and campo != "todos":
+                filter_kwargs = {f"{campo}__icontains": query}
+                persons = persons.filter(**filter_kwargs)
+            else:
+                # Si la búsqueda es corta o es 'masculino'/'femenino', usar también icontains y mapear sexo
+                if len(query) < 4 or query.lower() in ['masculino', 'femenino']:
+                    gender_map = {
+                        'masculino': 'M',
+                        'femenino': 'F',
+                        'm': 'M',
+                        'f': 'F',
+                    }
+                    q_gender = Q(gender__icontains=query)
+                    if query.lower() in gender_map:
+                        q_gender = Q(gender=gender_map[query.lower()])
+                    persons = persons.filter(
+                        Q(name__icontains=query) |
+                        Q(surname__icontains=query) |
+                        Q(document_number__icontains=query) |
+                        Q(email__icontains=query) |
+                        Q(type_document__icontains=query) |
+                        Q(telephone_number__icontains=query) |
+                        q_gender |
+                        Q(date_of_birth__icontains=query) |
+                        Q(pais_origen__icontains=query) |
+                        Q(progenitor_document_number__icontains=query) |
+                        Q(progenitor_name__icontains=query)
+                    )
+                else:
+                    persons = persons.annotate(
+                        sim_name=TrigramSimilarity('name', query),
+                        sim_surname=TrigramSimilarity('surname', query),
+                        sim_document=TrigramSimilarity('document_number', query),
+                        sim_email=TrigramSimilarity('email', query),
+                        sim_type_document=TrigramSimilarity('type_document', query),
+                        sim_telephone=TrigramSimilarity('telephone_number', query),
+                        sim_gender=TrigramSimilarity('gender', query),
+                        sim_birth=TrigramSimilarity(Cast('date_of_birth', CharField()), query),
+                        sim_pais=TrigramSimilarity('pais_origen', query),
+                        sim_progenitor_document=TrigramSimilarity('progenitor_document_number', query),
+                        sim_progenitor_name=TrigramSimilarity('progenitor_name', query),
+                    ).filter(
+                        Q(sim_name__gt=0.3) |
+                        Q(sim_surname__gt=0.3) |
+                        Q(sim_document__gt=0.3) |
+                        Q(sim_email__gt=0.3) |
+                        Q(sim_type_document__gt=0.3) |
+                        Q(sim_telephone__gt=0.3) |
+                        Q(sim_gender__gt=0.3) |
+                        Q(sim_birth__gt=0.3) |
+                        Q(sim_pais__gt=0.3) |
+                        Q(sim_progenitor_document__gt=0.3) |
+                        Q(sim_progenitor_name__gt=0.3)
+                    ).order_by(
+                        '-sim_name', '-sim_surname', '-sim_document', '-sim_email', '-sim_type_document', '-sim_telephone', '-sim_gender', '-sim_birth', '-sim_pais', '-sim_progenitor_document', '-sim_progenitor_name'
+                    )
+
+        paginator = Paginator(persons.order_by('id'), 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        context = {
+            'form': form,
+            'persons': page_obj,
+            'query': query,
+            'campo': campo
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        form = PersonForm(request.POST)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Guardar la persona
+                    person = form.save()
+
+                    # Crear el usuario asociado
+                    user = User.objects.create_user(
+                        username=person.document_number,
+                        password=person.document_number,
+                        email=person.email,
+                        documento=person.document_number,
+                        role='estudiante',
+                        person=person,
+                        must_change_password=True
+                    )
+                    user.first_name = person.name
+                    user.last_name = person.surname
+                    user.save()
+
+                    messages.success(request, 'Estudiante agregado exitosamente.')
+                    return redirect('cedulas')
+            except Exception as e:
+                messages.error(request, f'Ocurrió un error al crear el usuario: {e}')
+                persons = Person.objects.all()
+                context = {
+                    'form': form,
+                    'persons': persons
+                }
+                return render(request, self.template_name, context)
+        else:
+            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
+            error_string = f"<ul>{error_list_html}</ul>"
+            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
+            persons = Person.objects.all()
+            context = {
+                'form': form,
+                'persons': persons,
+            }
+            return render(request, self.template_name, context)
+
 
 class PersonApiView(View):
     def get(self, request, id, *args, **kwargs):
@@ -861,6 +1188,53 @@ def test_zone(request):
 
     return render(request, 'test_zone.html')
 
+class GrupoView(LoginRequiredMixin, View):
+    template_name = 'grupos.html'
+    login_url = 'login'
+
+    def get(self, request, *args, **kwargs):
+        # Obtener todos los grupos (sin is_deleted)
+        grupos = Group_Levels.objects.all().order_by('id')
+        
+        # Pasar contexto básico
+        context = {
+            'grupos': grupos,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        # Recibir solo el nombre del grupo
+        nombre = request.POST.get('nombre', '').strip()
+        
+        if nombre:
+            Group_Levels.objects.create(
+                name_group_levels=nombre,
+                date_begin='2025-01-01',   # temporal
+                date_end='2025-12-31',     # temporal
+                study_modality='presencial' # temporal
+            )
+            return redirect('grupos')
+        else:
+            context = {
+                'grupos': Group_Levels.objects.all().order_by('id'),
+                'error': 'El nombre del grupo es obligatorio.'
+            }
+            return render(request, self.template_name, context)
+
+
+#usar esta plantilla
+class EvaluacionesListView(LoginRequiredMixin, View):
+    template_name = 'evaluaciones.html'
+    login_url = 'login'
+
+    def get(self, request, *args, **kwargs):
+        
+        
+        
+        
+
+        
+        return render(request, self.template_name)
 
 # INTENTO DE BACKEND DE GABO !!!!
 class DocenteApiView(View):

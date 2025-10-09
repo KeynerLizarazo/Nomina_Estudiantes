@@ -147,8 +147,10 @@ body {
     scrollbar-color: #c44c4c #f8f9fa /* thumb y track (Firefox) */
 }
 
-
-
-
-
-
+.custom-checkbox {
+  /* Hace el checkbox más grande */
+  width: 1.9em;
+  height: 1.9em;
+  /* Cambia el color del "tick" y el fondo cuando está marcado */
+  accent-color: #0dfd19 !important;
+}

@@ -44,6 +44,20 @@ urlpatterns = [
     path('secciones/unit/<int:unit_id>/', views.UnitJsonView.as_view(), name='unit_json'),
     path('secciones/unit/delete/<int:unit_id>/', views.DeleteUnitView.as_view(), name='delete_unit'),
 
+# NUEVO
+
+    path('grupos/', views.GrupoView.as_view(), name='grupos'),
+    #path('grupos/editar/<int:id>/', views.UpdateGrupoView.as_view(), name='editar_grupo'),
+    #path('grupos/eliminar/<int:id>/', views.DeleteGrupoView.as_view(), name='eliminar_grupo'),
+    #path('grupos/api/<int:id>/', views.GrupoApiView.as_view(), name='grupo_api'),
+
+    path('evaluaciones/', views.EvaluacionesListView.as_view(), name='evaluaciones'),
+    
+    path('notas/', views.NotasView.as_view(), name='notas'),
+    path('addgroup/', views.AñadirGrupoView.as_view(), name='addgroup'),
+    
+
+
     # Subir imagen para tinyMCE
     path('upload-image/', views.upload_image, name='upload_image'),
 
