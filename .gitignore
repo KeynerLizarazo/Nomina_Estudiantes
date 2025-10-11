@@ -9,6 +9,8 @@ __pycache__/
 #CHANGELOG MD
 CHANGELOG.md
 views_refactor.py
+migrate_all_data.py
+railway_data.sql
 
 # Distribution / packaging
 .Python
@@ -225,3 +227,8 @@ myapp/__pycache__/forms.cpython-313.pyc
 myapp/__pycache__/apps.cpython-313.pyc
 myapp/__pycache__/admin.cpython-313.pyc
 myapp/__pycache__/__init__.cpython-313.pyc
+
+# Kiro IDE specifications and documentation
+.kiro/specs/*/design.md
+.kiro/specs/*/requirements.md
+.kiro/specs/*/tasks.md

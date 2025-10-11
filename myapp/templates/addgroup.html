@@ -34,40 +34,118 @@
     <!-- Contenido principal -->
 
     <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto pt-4">
+      <!-- Breadcrumb de navegación -->
+      {% if selected_level %}
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb p-2 mb-2 bg-light rounded">
+          <li class="breadcrumb-item">
+            <a href="{% url 'home' %}" class="fw-bold text-dark text-decoration-none">Inicio</a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="{% url 'cursos' %}" class="fw-bold text-dark text-decoration-none">Cursos</a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="{% url 'niveles' selected_level.course.id %}" class="fw-bold text-dark text-decoration-none">
+              {{ selected_level.course.course_name }}
+            </a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="{% url 'secciones' selected_level.id %}" class="fw-bold text-dark text-decoration-none">
+              {{ selected_level.level_name }}
+            </a>
+          </li>
+          <li class="breadcrumb-item active fw-bold text-primary" aria-current="page">
+            Crear Grupo
+          </li>
+        </ol>
+      </nav>
+      {% endif %}
+      
       <div class="card shadow">
-        <div class="card-header">Crear Grupo</div>
-        <div class="card-body ">
-          <div class="mb-3">
-            <label for="group_title" class="form-label">Título del Grupo:</label>
-            <input type="text" id="group_title" name="group_title" class="form-control" required>
-          </div>
-          <hr>
-          <div class="mb-3">
-            <label for="students_list" class="form-label">Lista de Estudiantes:</label>
+        <div class="card-header">
+          {% if selected_level %}
+            Crear Grupo para {{ selected_level.level_name }}
+          {% else %}
+            Crear Grupo
+          {% endif %}
+        </div>
+        <div class="card-body">
+          <form method="POST" id="groupForm">
+            {% csrf_token %}
+            
+            <!-- Información básica del grupo -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="group_title" class="form-label">Título del Grupo:</label>
+                <input type="text" id="group_title" name="group_title" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label for="level" class="form-label">Nivel:</label>
+                {% if selected_level %}
+                  <!-- Mostrar nivel fijo cuando viene del contexto -->
+                  <div class="form-control bg-light d-flex align-items-center">
+                    <strong>{{ selected_level.level_name }}</strong>
+                    <span class="text-muted ms-2">- {{ selected_level.course.course_name }}</span>
+                  </div>
+                  <input type="hidden" name="level" value="{{ selected_level.id }}">
+                {% else %}
+                  <!-- Selector normal cuando se accede directamente -->
+                  <select id="level" name="level" class="form-control" required>
+                    <option value="">Seleccione un nivel</option>
+                    {% for level in levels %}
+                      <option value="{{ level.id }}">{{ level.level_name }} - {{ level.course.course_name }}</option>
+                    {% endfor %}
+                  </select>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label for="date_begin" class="form-label">Fecha de Inicio:</label>
+                <input type="date" id="date_begin" name="date_begin" class="form-control" required>
+              </div>
+              <div class="col-md-4">
+                <label for="date_end" class="form-label">Fecha de Fin:</label>
+                <input type="date" id="date_end" name="date_end" class="form-control" required>
+              </div>
+              <div class="col-md-4">
+                <label for="cohort" class="form-label">Cohorte:</label>
+                <input type="number" id="cohort" name="cohort" class="form-control" placeholder="Ej: 2025">
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="study_modality" class="form-label">Modalidad:</label>
+                <select id="study_modality" name="study_modality" class="form-control">
+                  <option value="presencial">Presencial</option>
+                  <option value="virtual">Virtual</option>
+                </select>
+              </div>
+            </div>
+
+            <hr>
+            <div class="mb-3">
+              <label for="students_list" class="form-label">Lista de Estudiantes:</label>
               <!-- Formulario de Búsqueda -->
-              <form class="d-flex" method="get" action="{% url 'cedulas' %}">
+              <div class="d-flex mb-3" id="searchForm">
                 <div class="input-group me-2">
-                  <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ query|default_if_none:''  }}">
+                  <input type="text" name="q" class="form-control" placeholder="Buscar estudiantes..." value="{{ query|default_if_none:'' }}">
                 </div>
                 <select name="campo" class="form-select w-25 me-2">
                   <option value="todos" {% if campo == "todos" %}selected{% endif %}>Todos los campos</option>
-                  <option value="document_number" {% if campo == "document_number" %}selected{% endif %}>Nro de
-                    documento
-                  </option>
+                  <option value="document_number" {% if campo == "document_number" %}selected{% endif %}>Nro de documento</option>
                   <option value="name" {% if campo == "name" %}selected{% endif %}>Nombre</option>
                   <option value="surname" {% if campo == "surname" %}selected{% endif %}>Apellido</option>
                   <option value="telephone_number" {% if campo == "telephone_number" %}selected{% endif %}>Teléfono</option>
                   <option value="email" {% if campo == "email" %}selected{% endif %}>Email</option>
-                  <option value="date_of_birth" {% if campo == "date_of_birth" %}selected{% endif %}>Fecha de Nacimiento</option>
-                  <option value="pais_origen" {% if campo == "pais_origen" %}selected{% endif %}>País de origen</option>
-                  <option value="progenitor_document_number" {% if campo == "progenitor_document_number" %}selected{% endif %}>C.Represe</option>
-                  <option value="progenitor_name" {% if campo == "progenitor_name" %}selected{% endif %}>Representante</option>
                 </select>
 
-                <button class="btn btn-secondary" type="submit">Buscar</button>
-                <a href="{% url 'cedulas' %}" class="btn btn-secondary ms-2 me-2">Refrescar</a>
+                <button class="btn btn-secondary" type="button" onclick="searchStudents()">Buscar</button>
+                <button class="btn btn-secondary ms-2 me-2" type="button" onclick="clearSearch()">Refrescar</button>
                 
-              </form>
+              </div>
             </div>
 
             
@@ -116,11 +194,15 @@
             </div>
           </div>
           
+            </div>
+            
+            <!-- Botones de acción -->
+            <div class="text-end mt-3">
+              <a href="{% url 'grupos' %}" class="btn btn-danger">Cancelar</a>
+              <button type="submit" class="btn btn-primary">Guardar Grupo</button>
+            </div>
+          </form>
         </div>
-        <div class="text-end mt-3">
-          <button class="btn btn-danger">Cancelar</button>
-          <button class="btn btn-primary">Guardar</button>
-          </div>
         <!-- Paginación -->
       <!-- <div class="pagination-container d-flex justify-content-center align-items-center my-4">
         <button 
@@ -298,6 +380,106 @@
         }
       }
     };
+
+    // Funciones para búsqueda de estudiantes
+    function searchStudents() {
+      const query = document.querySelector('input[name="q"]').value;
+      const campo = document.querySelector('select[name="campo"]').value;
+      
+      let url = new URL(window.location.href);
+      url.searchParams.set('q', query);
+      url.searchParams.set('campo', campo);
+      
+      window.location.href = url.toString();
+    }
+
+    function clearSearch() {
+      let url = new URL(window.location.href);
+      url.searchParams.delete('q');
+      url.searchParams.delete('campo');
+      
+      window.location.href = url.toString();
+    }
+
+    // Validación del formulario
+    document.getElementById('groupForm').addEventListener('submit', function(e) {
+      const title = document.getElementById('group_title').value.trim();
+      const levelSelect = document.getElementById('level');
+      const levelHidden = document.querySelector('input[name="level"]');
+      const level = levelSelect ? levelSelect.value : (levelHidden ? levelHidden.value : '');
+      const dateBegin = document.getElementById('date_begin').value;
+      const dateEnd = document.getElementById('date_end').value;
+
+      if (!title) {
+        e.preventDefault();
+        Swal.fire('Error', 'El título del grupo es obligatorio', 'error');
+        return;
+      }
+
+      if (!level) {
+        e.preventDefault();
+        Swal.fire('Error', 'Debe seleccionar un nivel', 'error');
+        return;
+      }
+
+      if (!dateBegin || !dateEnd) {
+        e.preventDefault();
+        Swal.fire('Error', 'Las fechas de inicio y fin son obligatorias', 'error');
+        return;
+      }
+
+      if (new Date(dateBegin) >= new Date(dateEnd)) {
+        e.preventDefault();
+        Swal.fire('Error', 'La fecha de inicio debe ser anterior a la fecha de fin', 'error');
+        return;
+      }
+
+      // Contar estudiantes seleccionados
+      const selectedStudents = document.querySelectorAll('input[name="selected_students"]:checked').length;
+      
+      if (selectedStudents === 0) {
+        e.preventDefault();
+        Swal.fire({
+          title: '¿Crear grupo sin estudiantes?',
+          text: 'No ha seleccionado ningún estudiante. ¿Desea crear el grupo vacío?',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, crear',
+          cancelButtonText: 'Cancelar'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            document.getElementById('groupForm').submit();
+          }
+        });
+        return;
+      }
+
+      // Confirmar creación
+      Swal.fire({
+        title: 'Confirmar creación',
+        text: `¿Crear el grupo "${title}" con ${selectedStudents} estudiante(s)?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Crear grupo',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          document.getElementById('groupForm').submit();
+        } else {
+          e.preventDefault();
+        }
+      });
+      
+      e.preventDefault();
+    });
+
+    // Permitir búsqueda con Enter
+    document.querySelector('input[name="q"]').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        searchStudents();
+      }
+    });
   </script>
   <script>
 

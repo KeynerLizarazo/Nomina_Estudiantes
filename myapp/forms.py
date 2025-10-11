@@ -1,7 +1,7 @@
 from django import forms
 import datetime
 import re
-from .models import Courses, Levels, Person, TodoItem, User, Tutors, STAFF_POSITION_LIST_PREDIFINED, Units
+from .models import Courses, Levels, Person, TodoItem, User, Tutors, STAFF_POSITION_LIST_PREDIFINED, Units, Group_Levels, Students, Testing
 
 class BasePersonValidationForm(forms.ModelForm):
     def clean_date_of_birth(self):
@@ -204,3 +204,197 @@ class PersonForm(BasePersonValidationForm):
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'pais_origen': forms.Select(attrs={'class': 'form-control'}),
         }
+
+class GroupLevelForm(forms.ModelForm):
+    name_group_levels = forms.CharField(
+        label='Título del Grupo', 
+        max_length=100, 
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 
+            'placeholder': 'Nombre del grupo de estudio'
+        })
+    )
+    date_begin = forms.DateField(
+        label='Fecha de Inicio', 
+        widget=forms.DateInput(attrs={
+            'class': 'form-control', 
+            'type': 'date'
+        })
+    )
+    date_end = forms.DateField(
+        label='Fecha de Fin', 
+        widget=forms.DateInput(attrs={
+            'class': 'form-control', 
+            'type': 'date'
+        })
+    )
+    level = forms.ModelChoiceField(
+        queryset=Levels.objects.all(), 
+        label='Nivel', 
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    cohort = forms.IntegerField(
+        label='Cohorte', 
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control', 
+            'placeholder': 'Número de cohorte'
+        })
+    )
+    students = forms.ModelMultipleChoiceField(
+        queryset=Students.objects.filter(is_deleted=False),
+        label='Estudiantes',
+        widget=forms.CheckboxSelectMultiple,
+        required=False
+    )
+
+    class Meta:
+        model = Group_Levels
+        fields = ['name_group_levels', 'date_begin', 'date_end', 'study_modality', 'level', 'cohort', 'students']
+        labels = {
+            'study_modality': 'Modalidad de Estudio',
+        }
+        widgets = {
+            'study_modality': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        date_begin = cleaned_data.get('date_begin')
+        date_end = cleaned_data.get('date_end')
+
+        if date_begin and date_end and date_begin >= date_end:
+            raise forms.ValidationError("La fecha de inicio debe ser anterior a la fecha de fin.")
+
+        return cleaned_data
+
+
+class EvaluacionForm(forms.ModelForm):
+    """
+    Formulario para crear y editar evaluaciones.
+    Este formulario se usa para definir evaluaciones que luego se crean masivamente para todos los estudiantes del grupo.
+    """
+    
+    name = forms.CharField(
+        label='Título de la Evaluación',
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Ej: Prueba de Unidad 1 y 2'
+        }),
+        help_text='Título descriptivo de la evaluación (máximo 200 caracteres)'
+    )
+    
+    description = forms.CharField(
+        label='Descripción',
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Descripción detallada de la evaluación...'
+        }),
+        required=False,
+        help_text='Descripción opcional con detalles sobre la evaluación'
+    )
+    
+    date = forms.DateField(
+        label='Fecha de Evaluación',
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        }),
+        help_text='Fecha en que se realizará la evaluación'
+    )
+    
+    percentage_grade = forms.DecimalField(
+        label='Porcentaje de Calificación',
+        max_digits=5,
+        decimal_places=2,
+        min_value=0,
+        max_value=100,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'step': '0.01',
+            'min': '0',
+            'max': '100',
+            'placeholder': 'Ej: 25.00'
+        }),
+        help_text='Peso de esta evaluación en la nota final (0-100%)'
+    )
+    
+    tipo_evaluacion = forms.ChoiceField(
+        label='Tipo de Evaluación',
+        choices=Testing.TIPOS_EVALUACION,
+        widget=forms.Select(attrs={
+            'class': 'form-control'
+        }),
+        help_text='Seleccione el tipo de evaluación'
+    )
+    
+    class Meta:
+        model = Testing
+        fields = ['name', 'description', 'date', 'percentage_grade', 'tipo_evaluacion']
+    
+    def clean_date(self):
+        """Validar que la fecha no sea anterior a hoy"""
+        date = self.cleaned_data.get('date')
+        if date and date < datetime.date.today():
+            raise forms.ValidationError("La fecha de evaluación no puede ser anterior a hoy.")
+        return date
+    
+    def clean_percentage_grade(self):
+        """Validar que el porcentaje esté en el rango correcto"""
+        percentage = self.cleaned_data.get('percentage_grade')
+        if percentage is not None:
+            if percentage < 0:
+                raise forms.ValidationError("El porcentaje no puede ser negativo.")
+            if percentage > 100:
+                raise forms.ValidationError("El porcentaje no puede ser mayor a 100.")
+        return percentage
+    
+    def clean_name(self):
+        """Validar que el título no esté vacío y tenga una longitud apropiada"""
+        name = self.cleaned_data.get('name')
+        if name:
+            name = name.strip()
+            if len(name) < 3:
+                raise forms.ValidationError("El título debe tener al menos 3 caracteres.")
+            if len(name) > 200:
+                raise forms.ValidationError("El título no puede exceder 200 caracteres.")
+        return name
+    
+    def __init__(self, *args, **kwargs):
+        """Inicializar el formulario con configuraciones adicionales"""
+        self.group_level = kwargs.pop('group_level', None)
+        super().__init__(*args, **kwargs)
+        
+        # Si tenemos el grupo, podemos hacer validaciones adicionales
+        if self.group_level:
+            self.fields['name'].help_text = f'Título para el grupo: {self.group_level.name_group_levels}'
+    
+    def validate_unique_name_in_group(self):
+        """
+        Validar que el título sea único en el grupo.
+        Esta validación se hace por separado porque necesita el contexto del grupo.
+        """
+        if not self.group_level:
+            return True
+            
+        name = self.cleaned_data.get('name')
+        if name:
+            # Verificar si ya existe una evaluación con este nombre en el grupo
+            existing = Testing.objects.filter(
+                name=name,
+                group_level=self.group_level
+            ).exists()
+            
+            # Si estamos editando, excluir la evaluación actual
+            if self.instance and self.instance.pk:
+                existing = Testing.objects.filter(
+                    name=name,
+                    group_level=self.group_level
+                ).exclude(pk=self.instance.pk).exists()
+            
+            if existing:
+                raise forms.ValidationError(f'Ya existe una evaluación con el título "{name}" en este grupo.')
+        
+        return True

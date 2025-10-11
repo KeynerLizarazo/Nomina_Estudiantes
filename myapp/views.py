@@ -7,17 +7,17 @@ from django.views import View
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
-
 from django.utils.decorators import method_decorator
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from .models import Cedula, Group_Levels, User, Calendario, Courses, Tutors, Levels, TodoItem, Person
-from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm, DocenteForm, UnitForm
-from .models import Person, Students, User, Units
+from .models import Cedula, Group_Levels, User, Calendario, Courses, Tutors, Levels, TodoItem, Person, Testing, Grade_Students
+from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm, DocenteForm, UnitForm, GroupLevelForm, EvaluacionForm
+from django import forms
+from .models import Person, Students, User, Units, Tutors
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import Q, CharField
+from django.db.models import Q, CharField, Max
 from django.db.models.functions import Cast
 from django.urls import reverse_lazy
 from functools import wraps
@@ -574,35 +574,53 @@ class AñadirGrupoApiView(View):
             'progenitor_name': person.progenitor_name,
         }
         return JsonResponse(data)
+
 class AñadirGrupoView(LoginRequiredMixin, View):
-    def sync_students(self):
-        # Solo crear Students para personas cuyo usuario tiene rol 'estudiante'
-        existing_tutor_ids = set(Tutors.all_objects.values_list('person_id', flat=True))
-        tutor_users = User.objects.filter(role__in=['profesor', 'tutor', 'administrador'], is_deleted=False)
-        # Solo crear para personas que no tengan ningún registro de tutor (ni eliminado)
-        missing_persons = Person.objects.filter(is_deleted=False, id__in=tutor_users.values_list('person_id', flat=True)).exclude(id__in=existing_tutor_ids)
-        for p in missing_persons:
-            user = tutor_users.filter(person=p).first()
-            if user:
-                Tutors.objects.create(
-                    staff_position=user.role,
-                    user=user,
-                    person=p
-                )
-        
     template_name = 'addgroup.html'
     login_url = 'login'
 
-    def get(self, request, *args, **kwargs):
+    def sync_students(self):
+        """Sincronizar estudiantes con usuarios que tienen rol 'estudiante'"""
+        existing_student_ids = set(Students.objects.filter(is_deleted=False).values_list('person_id', flat=True))
+        student_users = User.objects.filter(role='estudiante', is_deleted=False)
+        
+        # Crear Students para personas que no tengan registro
+        missing_persons = Person.objects.filter(
+            is_deleted=False, 
+            id__in=student_users.values_list('person_id', flat=True)
+        ).exclude(id__in=existing_student_ids)
+        
+        for person in missing_persons:
+            user = student_users.filter(person=person).first()
+            if user:
+                Students.objects.create(
+                    date_register=timezone.now().date(),
+                    status='activo',
+                    user=user,
+                    person=person
+                )
+
+    def get(self, request, level_id=None, *args, **kwargs):
         # Sincronizar estudiantes antes de mostrar
         self.sync_students()
-        form = PersonForm()
-        # Solo personas que son estudiantes (tienen registro en Students y usuario con rol estudiante)
+        
+        # Si viene de un nivel específico, obtenerlo
+        selected_level = None
+        if level_id:
+            selected_level = get_object_or_404(Levels, id=level_id)
+        
+        # Crear formulario para el grupo
+        form = GroupLevelForm()
+        
+        # Obtener estudiantes disponibles para búsqueda
         student_person_ids = set(Students.objects.filter(is_deleted=False).values_list('person_id', flat=True))
         student_users = set(User.objects.filter(role='estudiante', is_deleted=False).values_list('person_id', flat=True))
         ids = student_person_ids & student_users
-        persons = Person.objects.filter(is_deleted=False, id__in=ids).only('id', 'name', 'surname', 'document_number', 'email')
+        persons = Person.objects.filter(is_deleted=False, id__in=ids).only(
+            'id', 'name', 'surname', 'document_number', 'email', 'telephone_number', 'type_document'
+        )
 
+        # Aplicar filtros de búsqueda
         query = request.GET.get('q')
         campo = request.GET.get('campo')
 
@@ -611,60 +629,17 @@ class AñadirGrupoView(LoginRequiredMixin, View):
                 filter_kwargs = {f"{campo}__icontains": query}
                 persons = persons.filter(**filter_kwargs)
             else:
-                # Si la búsqueda es corta o es 'masculino'/'femenino', usar también icontains y mapear sexo
-                if len(query) < 4 or query.lower() in ['masculino', 'femenino']:
-                    gender_map = {
-                        'masculino': 'M',
-                        'femenino': 'F',
-                        'm': 'M',
-                        'f': 'F',
-                    }
-                    q_gender = Q(gender__icontains=query)
-                    if query.lower() in gender_map:
-                        q_gender = Q(gender=gender_map[query.lower()])
-                    persons = persons.filter(
-                        Q(name__icontains=query) |
-                        Q(surname__icontains=query) |
-                        Q(document_number__icontains=query) |
-                        Q(email__icontains=query) |
-                        Q(type_document__icontains=query) |
-                        Q(telephone_number__icontains=query) |
-                        q_gender |
-                        Q(date_of_birth__icontains=query) |
-                        Q(pais_origen__icontains=query) |
-                        Q(progenitor_document_number__icontains=query) |
-                        Q(progenitor_name__icontains=query)
-                    )
-                else:
-                    persons = persons.annotate(
-                        sim_name=TrigramSimilarity('name', query),
-                        sim_surname=TrigramSimilarity('surname', query),
-                        sim_document=TrigramSimilarity('document_number', query),
-                        sim_email=TrigramSimilarity('email', query),
-                        sim_type_document=TrigramSimilarity('type_document', query),
-                        sim_telephone=TrigramSimilarity('telephone_number', query),
-                        sim_gender=TrigramSimilarity('gender', query),
-                        sim_birth=TrigramSimilarity(Cast('date_of_birth', CharField()), query),
-                        sim_pais=TrigramSimilarity('pais_origen', query),
-                        sim_progenitor_document=TrigramSimilarity('progenitor_document_number', query),
-                        sim_progenitor_name=TrigramSimilarity('progenitor_name', query),
-                    ).filter(
-                        Q(sim_name__gt=0.3) |
-                        Q(sim_surname__gt=0.3) |
-                        Q(sim_document__gt=0.3) |
-                        Q(sim_email__gt=0.3) |
-                        Q(sim_type_document__gt=0.3) |
-                        Q(sim_telephone__gt=0.3) |
-                        Q(sim_gender__gt=0.3) |
-                        Q(sim_birth__gt=0.3) |
-                        Q(sim_pais__gt=0.3) |
-                        Q(sim_progenitor_document__gt=0.3) |
-                        Q(sim_progenitor_name__gt=0.3)
-                    ).order_by(
-                        '-sim_name', '-sim_surname', '-sim_document', '-sim_email', '-sim_type_document', '-sim_telephone', '-sim_gender', '-sim_birth', '-sim_pais', '-sim_progenitor_document', '-sim_progenitor_name'
-                    )
+                persons = persons.filter(
+                    Q(name__icontains=query) |
+                    Q(surname__icontains=query) |
+                    Q(document_number__icontains=query) |
+                    Q(email__icontains=query) |
+                    Q(type_document__icontains=query) |
+                    Q(telephone_number__icontains=query)
+                )
 
-        paginator = Paginator(persons.order_by('id'), 10)
+        # Paginación
+        paginator = Paginator(persons.order_by('name', 'surname'), 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
@@ -672,53 +647,66 @@ class AñadirGrupoView(LoginRequiredMixin, View):
             'form': form,
             'persons': page_obj,
             'query': query,
-            'campo': campo
+            'campo': campo,
+            'selected_level': selected_level,
+            'levels': Levels.objects.all() if not selected_level else None,
+            'courses': Courses.objects.filter(is_deleted=False)
         }
         return render(request, self.template_name, context)
 
-    def post(self, request, *args, **kwargs):
-        form = PersonForm(request.POST)
-        if form.is_valid():
-            try:
-                with transaction.atomic():
-                    # Guardar la persona
-                    person = form.save()
-
-                    # Crear el usuario asociado
-                    user = User.objects.create_user(
-                        username=person.document_number,
-                        password=person.document_number,
-                        email=person.email,
-                        documento=person.document_number,
-                        role='estudiante',
-                        person=person,
-                        must_change_password=True
-                    )
-                    user.first_name = person.name
-                    user.last_name = person.surname
-                    user.save()
-
-                    messages.success(request, 'Estudiante agregado exitosamente.')
-                    return redirect('cedulas')
-            except Exception as e:
-                messages.error(request, f'Ocurrió un error al crear el usuario: {e}')
-                persons = Person.objects.all()
-                context = {
-                    'form': form,
-                    'persons': persons
-                }
-                return render(request, self.template_name, context)
+    def post(self, request, level_id=None, *args, **kwargs):
+        # Obtener datos del formulario
+        group_title = request.POST.get('group_title', '').strip()
+        date_begin = request.POST.get('date_begin')
+        date_end = request.POST.get('date_end')
+        study_modality = request.POST.get('study_modality', 'presencial')
+        
+        # Si viene de URL con level_id, usarlo; sino, obtenerlo del formulario
+        if level_id:
+            selected_level_id = level_id
         else:
-            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
-            error_string = f"<ul>{error_list_html}</ul>"
-            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
-            persons = Person.objects.all()
-            context = {
-                'form': form,
-                'persons': persons,
-            }
-            return render(request, self.template_name, context)
+            selected_level_id = request.POST.get('level')
+        
+        cohort = request.POST.get('cohort')
+        selected_students = request.POST.getlist('selected_students')
 
+        # Validaciones básicas
+        if not group_title:
+            messages.error(request, 'El título del grupo es obligatorio.')
+            return redirect('addgroup_level', level_id=level_id) if level_id else redirect('addgroup')
+
+        if not selected_level_id:
+            messages.error(request, 'Debe seleccionar un nivel.')
+            return redirect('addgroup_level', level_id=level_id) if level_id else redirect('addgroup')
+
+        try:
+            with transaction.atomic():
+                # Crear el grupo
+                level = get_object_or_404(Levels, id=selected_level_id)
+                group = Group_Levels.objects.create(
+                    name_group_levels=group_title,
+                    date_begin=date_begin or timezone.now().date(),
+                    date_end=date_end or timezone.now().date(),
+                    study_modality=study_modality,
+                    level=level,
+                    cohort=int(cohort) if cohort else None
+                )
+
+                # Agregar estudiantes seleccionados
+                if selected_students:
+                    # Obtener objetos Students basados en las personas seleccionadas
+                    students_to_add = Students.objects.filter(
+                        person_id__in=selected_students,
+                        is_deleted=False
+                    )
+                    group.students.set(students_to_add)
+
+                messages.success(request, f'Grupo {group_title} creado exitosamente con {len(selected_students)} estudiantes.')
+                return redirect('grupos')
+
+        except Exception as e:
+            messages.error(request, f'Error al crear el grupo: {str(e)}')
+            return redirect('addgroup_level', level_id=level_id) if level_id else redirect('addgroup')
 
 class PersonApiView(View):
     def get(self, request, id, *args, **kwargs):
@@ -752,20 +740,6 @@ class PersonView(LoginRequiredMixin, View):
                     user=user,
                     person=p
                 )
-        """"""
-        # existing_student_ids = set(Students.objects.values_list('person_id', flat=True))
-        # student_users = User.objects.filter(role='estudiante', is_deleted=False)
-        # missing_persons = Person.objects.filter(is_deleted=False, id__in=student_users.values_list('person_id', flat=True)).exclude(id__in=existing_student_ids)
-        # for p in missing_persons:
-        #     user = student_users.filter(person=p).first()
-        #     if user:
-        #         Students.objects.create(
-        #             date_register=p.date_of_birth or timezone.now().date(),
-        #             status='activo',
-        #             user=user,
-        #             person=p
-        #         )
-        """"""
     template_name = 'cedulas.html'
     login_url = 'login'
 
@@ -1192,34 +1166,139 @@ class GrupoView(LoginRequiredMixin, View):
     template_name = 'grupos.html'
     login_url = 'login'
 
-    def get(self, request, *args, **kwargs):
-        # Obtener todos los grupos (sin is_deleted)
-        grupos = Group_Levels.objects.all().order_by('id')
+    def get(self, request, level_id=None, *args, **kwargs):
+        # Si viene de un nivel específico, obtenerlo
+        selected_level = None
+        if level_id:
+            selected_level = get_object_or_404(Levels, id=level_id)
         
-        # Pasar contexto básico
+        # Obtener grupos con relaciones
+        grupos = Group_Levels.objects.select_related('level', 'level__course').prefetch_related('students').order_by('-id')
+        
+        # Filtrar por nivel si viene del contexto específico
+        if selected_level:
+            grupos = grupos.filter(level=selected_level)
+        
+        # Aplicar filtros de búsqueda
+        query = request.GET.get('q')
+        campo = request.GET.get('campo', 'todos')
+
+        if query:
+            if campo == 'name_group_levels':
+                grupos = grupos.filter(name_group_levels__icontains=query)
+            else:  # todos los campos
+                grupos = grupos.filter(
+                    Q(name_group_levels__icontains=query) |
+                    Q(level__level_name__icontains=query) |
+                    Q(level__course__course_name__icontains=query) |
+                    Q(study_modality__icontains=query)
+                )
+
+        # Paginación
+        paginator = Paginator(grupos, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
         context = {
-            'grupos': grupos,
+            'grupos': page_obj,
+            'query': query,
+            'campo': campo,
+            'selected_level': selected_level,
         }
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
-        # Recibir solo el nombre del grupo
-        nombre = request.POST.get('nombre', '').strip()
+        # Crear grupo básico desde el modal (funcionalidad legacy)
+        nombre = request.POST.get('name_group_levels', '').strip()
         
         if nombre:
-            Group_Levels.objects.create(
-                name_group_levels=nombre,
-                date_begin='2025-01-01',   # temporal
-                date_end='2025-12-31',     # temporal
-                study_modality='presencial' # temporal
-            )
-            return redirect('grupos')
+            # Crear grupo con datos mínimos - requiere nivel
+            try:
+                # Buscar el primer nivel disponible como fallback
+                first_level = Levels.objects.first()
+                if not first_level:
+                    messages.error(request, 'No hay niveles disponibles. Cree un nivel primero.')
+                    return redirect('grupos')
+                
+                Group_Levels.objects.create(
+                    name_group_levels=nombre,
+                    date_begin=timezone.now().date(),
+                    date_end=timezone.now().date() + timezone.timedelta(days=365),
+                    study_modality='presencial',
+                    level=first_level
+                )
+                messages.success(request, f'Grupo {nombre} creado exitosamente.')
+                return redirect('grupos')
+            except Exception as e:
+                messages.error(request, f'Error al crear el grupo: {str(e)}')
         else:
-            context = {
-                'grupos': Group_Levels.objects.all().order_by('id'),
-                'error': 'El nombre del grupo es obligatorio.'
-            }
-            return render(request, self.template_name, context)
+            messages.error(request, 'El nombre del grupo es obligatorio.')
+        
+        return redirect('grupos')
+
+
+class UpdateGrupoView(LoginRequiredMixin, View):
+    def post(self, request, id, *args, **kwargs):
+        grupo = get_object_or_404(Group_Levels, id=id)
+        
+        # Obtener datos del formulario
+        nombre = request.POST.get('name_group_levels', '').strip()
+        date_begin = request.POST.get('date_begin')
+        date_end = request.POST.get('date_end')
+        study_modality = request.POST.get('study_modality')
+        cohort = request.POST.get('cohort')
+        
+        if not nombre:
+            messages.error(request, 'El nombre del grupo es obligatorio.')
+            return redirect('grupos')
+        
+        try:
+            # Actualizar campos
+            grupo.name_group_levels = nombre
+            
+            if date_begin:
+                grupo.date_begin = date_begin
+            if date_end:
+                grupo.date_end = date_end
+            if study_modality:
+                grupo.study_modality = study_modality
+            if cohort:
+                grupo.cohort = int(cohort) if cohort else None
+            
+            grupo.save()
+            messages.success(request, f'Grupo {nombre} actualizado exitosamente.')
+            
+        except Exception as e:
+            messages.error(request, f'Error al actualizar el grupo: {str(e)}')
+        
+        return redirect('grupos')
+
+
+class DeleteGrupoView(LoginRequiredMixin, View):
+    def post(self, request, id, *args, **kwargs):
+        grupo = get_object_or_404(Group_Levels, id=id)
+        nombre = grupo.name_group_levels
+        grupo.delete()
+        messages.success(request, f'Grupo {nombre} eliminado exitosamente.')
+        return redirect('grupos')
+
+
+class GrupoApiView(View):
+    def get(self, request, id, *args, **kwargs):
+        grupo = get_object_or_404(Group_Levels, id=id)
+        data = {
+            'id': grupo.id,
+            'name_group_levels': grupo.name_group_levels,
+            'date_begin': grupo.date_begin.strftime('%Y-%m-%d') if grupo.date_begin else '',
+            'date_end': grupo.date_end.strftime('%Y-%m-%d') if grupo.date_end else '',
+            'study_modality': grupo.study_modality,
+            'level_id': grupo.level.id,
+            'level_name': grupo.level.level_name,
+            'course_name': grupo.level.course.course_name,
+            'cohort': grupo.cohort,
+            'students_count': grupo.students.count()
+        }
+        return JsonResponse(data)
 
 
 #usar esta plantilla
@@ -1239,7 +1318,6 @@ class EvaluacionesListView(LoginRequiredMixin, View):
 # INTENTO DE BACKEND DE GABO !!!!
 class DocenteApiView(View):
     def get(self, request, id, *args, **kwargs):
-        from .models import Tutors
         tutor = get_object_or_404(Tutors, id=id)
         person = tutor.person
         data = {
@@ -1527,3 +1605,810 @@ def logout_view(request):
     """
     logout(request)
     return redirect('login')
+
+class GrupoStudentsApiView(View):
+    def get(self, request, id, *args, **kwargs):
+        grupo = get_object_or_404(Group_Levels, id=id)
+        students = grupo.students.select_related('person').filter(is_deleted=False)
+        
+        students_data = []
+        for student in students:
+            students_data.append({
+                'id': student.id,
+                'person_id': student.person.id,
+                'person_name': f"{student.person.name} {student.person.surname}",
+                'person_document': f"{student.person.get_type_document_display()} {student.person.document_number}",
+                'person_email': student.person.email or '',
+                'person_phone': student.person.telephone_number or ''
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'students': students_data,
+            'count': len(students_data)
+        })
+
+
+class StudentSearchApiView(View):
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get('q', '').strip()
+        
+        if not query or len(query) < 2:
+            return JsonResponse({
+                'success': False,
+                'message': 'La búsqueda debe tener al menos 2 caracteres',
+                'students': []
+            })
+        
+        # Buscar estudiantes
+        student_person_ids = set(Students.objects.filter(is_deleted=False).values_list('person_id', flat=True))
+        student_users = set(User.objects.filter(role='estudiante', is_deleted=False).values_list('person_id', flat=True))
+        ids = student_person_ids & student_users
+        
+        persons = Person.objects.filter(
+            is_deleted=False, 
+            id__in=ids
+        ).filter(
+            Q(name__icontains=query) |
+            Q(surname__icontains=query) |
+            Q(document_number__icontains=query)
+        ).select_related()[:20]  # Limitar a 20 resultados
+        
+        students_data = []
+        for person in persons:
+            try:
+                student = Students.objects.get(person=person, is_deleted=False)
+                students_data.append({
+                    'id': student.id,
+                    'person_id': person.id,
+                    'person_name': f"{person.name} {person.surname}",
+                    'person_document': f"{person.get_type_document_display()} {person.document_number}",
+                    'person_email': person.email or '',
+                    'person_phone': person.telephone_number or ''
+                })
+            except Students.DoesNotExist:
+                continue
+        
+        return JsonResponse({
+            'success': True,
+            'students': students_data,
+            'count': len(students_data)
+        })
+
+
+class AddStudentToGroupView(LoginRequiredMixin, View):
+    def post(self, request, id, *args, **kwargs):
+        try:
+            grupo = get_object_or_404(Group_Levels, id=id)
+            data = json.loads(request.body)
+            student_id = data.get('student_id')
+            
+            if not student_id:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'ID de estudiante requerido'
+                })
+            
+            student = get_object_or_404(Students, id=student_id, is_deleted=False)
+            
+            # Verificar si ya está en el grupo
+            if grupo.students.filter(id=student_id).exists():
+                return JsonResponse({
+                    'success': False,
+                    'message': 'El estudiante ya está en este grupo'
+                })
+            
+            # Agregar estudiante al grupo
+            grupo.students.add(student)
+            
+            # Sincronizar evaluaciones: crear evaluaciones existentes para el nuevo estudiante
+            evaluaciones_existentes = Testing.objects.filter(
+                group_level=grupo
+            ).values('name', 'description', 'date', 'percentage_grade', 'tipo_evaluacion').distinct()
+            
+            evaluaciones_creadas = 0
+            for eval_data in evaluaciones_existentes:
+                # Verificar si ya existe esta evaluación para el estudiante
+                if not Testing.objects.filter(
+                    name=eval_data['name'],
+                    student=student,
+                    group_level=grupo
+                ).exists():
+                    Testing.objects.create(
+                        name=eval_data['name'],
+                        description=eval_data['description'],
+                        date=eval_data['date'],
+                        percentage_grade=eval_data['percentage_grade'],
+                        tipo_evaluacion=eval_data['tipo_evaluacion'],
+                        student=student,
+                        group_level=grupo
+                    )
+                    evaluaciones_creadas += 1
+            
+            message = f'Estudiante {student.person.name} agregado al grupo'
+            if evaluaciones_creadas > 0:
+                message += f' y sincronizado con {evaluaciones_creadas} evaluaciones'
+            
+            return JsonResponse({
+                'success': True,
+                'message': message,
+                'students_count': grupo.students.count(),
+                'evaluaciones_sincronizadas': evaluaciones_creadas
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al agregar estudiante: {str(e)}'
+            })
+
+
+class RemoveStudentFromGroupView(LoginRequiredMixin, View):
+    def post(self, request, id, *args, **kwargs):
+        try:
+            grupo = get_object_or_404(Group_Levels, id=id)
+            data = json.loads(request.body)
+            student_id = data.get('student_id')
+            
+            if not student_id:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'ID de estudiante requerido'
+                })
+            
+            student = get_object_or_404(Students, id=student_id, is_deleted=False)
+            
+            # Verificar si está en el grupo
+            if not grupo.students.filter(id=student_id).exists():
+                return JsonResponse({
+                    'success': False,
+                    'message': 'El estudiante no está en este grupo'
+                })
+            
+            # Remover estudiante del grupo
+            grupo.students.remove(student)
+            
+            # Sincronizar evaluaciones: eliminar evaluaciones del estudiante en este grupo
+            evaluaciones_eliminadas = Testing.objects.filter(
+                student=student,
+                group_level=grupo
+            ).count()
+            
+            # Eliminar también las notas asociadas
+            Grade_Students.objects.filter(
+                student=student,
+                group_level=grupo
+            ).delete()
+            
+            # Eliminar las evaluaciones
+            Testing.objects.filter(
+                student=student,
+                group_level=grupo
+            ).delete()
+            
+            message = f'Estudiante {student.person.name} removido del grupo'
+            if evaluaciones_eliminadas > 0:
+                message += f' y eliminadas {evaluaciones_eliminadas} evaluaciones asociadas'
+            
+            return JsonResponse({
+                'success': True,
+                'message': message,
+                'students_count': grupo.students.count(),
+                'evaluaciones_eliminadas': evaluaciones_eliminadas
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al remover estudiante: {str(e)}'
+            })
+
+
+class EvaluacionesListView(LoginRequiredMixin, View):
+    """
+    Vista para listar evaluaciones de un grupo específico.
+    Incluye funcionalidades de búsqueda, filtrado y paginación.
+    """
+    template_name = 'evaluaciones.html'
+    login_url = 'login'
+
+    def get(self, request, group_id, *args, **kwargs):
+        # Obtener el grupo específico
+        group = get_object_or_404(Group_Levels, id=group_id)
+        
+        # Obtener todas las evaluaciones del grupo (agrupadas por nombre)
+        evaluaciones_raw = Testing.objects.filter(group_level=group).select_related('student', 'student__person')
+        
+        # Agrupar evaluaciones por nombre para mostrar una fila por evaluación
+        evaluaciones_dict = {}
+        for evaluacion in evaluaciones_raw:
+            if evaluacion.name not in evaluaciones_dict:
+                evaluaciones_dict[evaluacion.name] = {
+                    'evaluacion': evaluacion,  # Usar la primera como representante
+                    'total_estudiantes': 0,
+                    'estudiantes_con_notas': 0,
+                    'estado': 'pendiente'
+                }
+            
+            evaluaciones_dict[evaluacion.name]['total_estudiantes'] += 1
+            
+            # Verificar si tiene notas en Grade_Students
+            if Grade_Students.objects.filter(evaluacion=evaluacion, grades__isnull=False).exists():
+                evaluaciones_dict[evaluacion.name]['estudiantes_con_notas'] += 1
+        
+        # Convertir a lista para paginación
+        evaluaciones_list = []
+        for nombre, data in evaluaciones_dict.items():
+            eval_data = data['evaluacion']
+            
+            # Calcular estado basado en notas (simplificado por ahora)
+            total = data['total_estudiantes']
+            con_notas = data['estudiantes_con_notas']
+            
+            if con_notas == 0:
+                estado = 'pendiente'
+            elif con_notas == total:
+                estado = 'completada'
+            else:
+                estado = 'en_progreso'
+            
+            evaluaciones_list.append({
+                'id': eval_data.id,
+                'name': eval_data.name,
+                'description': eval_data.description,
+                'date': eval_data.date,
+                'percentage_grade': eval_data.percentage_grade,
+                'tipo_evaluacion': eval_data.get_tipo_evaluacion_display(),
+                'tipo_evaluacion_code': eval_data.tipo_evaluacion,
+                'total_estudiantes': total,
+                'estudiantes_con_notas': con_notas,
+                'estado': estado,
+                'group_level': group
+            })
+        
+        # Aplicar filtros de búsqueda
+        query = request.GET.get('q', '').strip()
+        tipo_filter = request.GET.get('tipo', '')
+        estado_filter = request.GET.get('estado', '')
+        
+        if query:
+            evaluaciones_list = [
+                e for e in evaluaciones_list 
+                if query.lower() in e['name'].lower() or 
+                   query.lower() in e['description'].lower()
+            ]
+        
+        if tipo_filter:
+            evaluaciones_list = [
+                e for e in evaluaciones_list 
+                if e['tipo_evaluacion_code'] == tipo_filter
+            ]
+        
+        if estado_filter:
+            evaluaciones_list = [
+                e for e in evaluaciones_list 
+                if e['estado'] == estado_filter
+            ]
+        
+        # Ordenar por fecha (más recientes primero)
+        evaluaciones_list.sort(key=lambda x: x['date'], reverse=True)
+        
+        # Paginación
+        paginator = Paginator(evaluaciones_list, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        # Calcular estadísticas del grupo
+        total_evaluaciones = len(evaluaciones_list)
+        total_porcentaje = sum(e['percentage_grade'] for e in evaluaciones_list)
+        
+        context = {
+            'group': group,
+            'evaluaciones': page_obj,
+            'query': query,
+            'tipo_filter': tipo_filter,
+            'estado_filter': estado_filter,
+            'total_evaluaciones': total_evaluaciones,
+            'total_porcentaje': total_porcentaje,
+            'tipos_evaluacion': Testing.TIPOS_EVALUACION,
+            'estados_evaluacion': [
+                ('pendiente', 'Pendiente'),
+                ('en_progreso', 'En Progreso'),
+                ('completada', 'Completada')
+            ]
+        }
+        
+        return render(request, self.template_name, context)
+
+
+class CrearEvaluacionView(LoginRequiredMixin, View):
+    """
+    Vista para crear una nueva evaluación para un grupo.
+    Crea automáticamente una evaluación para cada estudiante del grupo.
+    """
+    login_url = 'login'
+
+    def post(self, request, group_id, *args, **kwargs):
+        group = get_object_or_404(Group_Levels, id=group_id)
+        form = EvaluacionForm(request.POST, group_level=group)
+        
+        if form.is_valid():
+            # Validar título único en el grupo
+            try:
+                form.validate_unique_name_in_group()
+            except forms.ValidationError as e:
+                messages.error(request, str(e))
+                return redirect('evaluaciones_grupo', group_id=group_id)
+            
+            try:
+                with transaction.atomic():
+                    # Obtener estudiantes del grupo
+                    estudiantes = group.students.filter(is_deleted=False)
+                    
+                    if not estudiantes.exists():
+                        messages.warning(request, 'No hay estudiantes en este grupo. Agregue estudiantes antes de crear evaluaciones.')
+                        return redirect('evaluaciones_grupo', group_id=group_id)
+                    
+                    # Crear evaluación para cada estudiante
+                    evaluaciones_creadas = []
+                    for estudiante in estudiantes:
+                        evaluacion = Testing.objects.create(
+                            name=form.cleaned_data['name'],
+                            description=form.cleaned_data['description'],
+                            date=form.cleaned_data['date'],
+                            percentage_grade=form.cleaned_data['percentage_grade'],
+                            tipo_evaluacion=form.cleaned_data['tipo_evaluacion'],
+                            student=estudiante,
+                            group_level=group
+                        )
+                        evaluaciones_creadas.append(evaluacion)
+                    
+                    messages.success(
+                        request, 
+                        f'Evaluación "{form.cleaned_data["name"]}" creada exitosamente para {len(evaluaciones_creadas)} estudiantes.'
+                    )
+                    
+            except Exception as e:
+                messages.error(request, f'Error al crear la evaluación: {str(e)}')
+        
+        else:
+            # Mostrar errores del formulario
+            error_messages = []
+            for field, errors in form.errors.items():
+                for error in errors:
+                    error_messages.append(f'{form.fields[field].label}: {error}')
+            
+            if error_messages:
+                messages.error(request, 'Errores en el formulario: ' + '; '.join(error_messages))
+        
+        return redirect('evaluaciones_grupo', group_id=group_id)
+
+
+class EditarEvaluacionView(LoginRequiredMixin, View):
+    """
+    Vista para editar una evaluación existente.
+    Actualiza todas las evaluaciones con el mismo nombre en el grupo.
+    """
+    login_url = 'login'
+
+    def post(self, request, group_id, evaluacion_id, *args, **kwargs):
+        group = get_object_or_404(Group_Levels, id=group_id)
+        evaluacion_base = get_object_or_404(Testing, id=evaluacion_id, group_level=group)
+        
+        form = EvaluacionForm(request.POST, instance=evaluacion_base, group_level=group)
+        
+        if form.is_valid():
+            # Validar título único en el grupo (excluyendo las evaluaciones actuales)
+            try:
+                form.validate_unique_name_in_group()
+            except forms.ValidationError as e:
+                messages.error(request, str(e))
+                return redirect('evaluaciones_grupo', group_id=group_id)
+            
+            try:
+                with transaction.atomic():
+                    # Actualizar todas las evaluaciones con el mismo nombre en el grupo
+                    evaluaciones_a_actualizar = Testing.objects.filter(
+                        name=evaluacion_base.name,
+                        group_level=group
+                    )
+                    
+                    count = evaluaciones_a_actualizar.update(
+                        name=form.cleaned_data['name'],
+                        description=form.cleaned_data['description'],
+                        date=form.cleaned_data['date'],
+                        percentage_grade=form.cleaned_data['percentage_grade'],
+                        tipo_evaluacion=form.cleaned_data['tipo_evaluacion']
+                    )
+                    
+                    messages.success(
+                        request, 
+                        f'Evaluación "{form.cleaned_data["name"]}" actualizada exitosamente para {count} estudiantes.'
+                    )
+                    
+            except Exception as e:
+                messages.error(request, f'Error al actualizar la evaluación: {str(e)}')
+        
+        else:
+            # Mostrar errores del formulario
+            error_messages = []
+            for field, errors in form.errors.items():
+                for error in errors:
+                    error_messages.append(f'{form.fields[field].label}: {error}')
+            
+            if error_messages:
+                messages.error(request, 'Errores en el formulario: ' + '; '.join(error_messages))
+        
+        return redirect('evaluaciones_grupo', group_id=group_id)
+
+
+class EliminarEvaluacionView(LoginRequiredMixin, View):
+    """
+    Vista para eliminar una evaluación.
+    Elimina todas las evaluaciones con el mismo nombre en el grupo.
+    """
+    login_url = 'login'
+
+    def post(self, request, group_id, evaluacion_id, *args, **kwargs):
+        group = get_object_or_404(Group_Levels, id=group_id)
+        evaluacion_base = get_object_or_404(Testing, id=evaluacion_id, group_level=group)
+        
+        try:
+            with transaction.atomic():
+                # Eliminar todas las evaluaciones con el mismo nombre en el grupo
+                evaluaciones_a_eliminar = Testing.objects.filter(
+                    name=evaluacion_base.name,
+                    group_level=group
+                )
+                
+                nombre_evaluacion = evaluacion_base.name
+                count = evaluaciones_a_eliminar.count()
+                evaluaciones_a_eliminar.delete()
+                
+                messages.success(
+                    request, 
+                    f'Evaluación "{nombre_evaluacion}" eliminada exitosamente ({count} registros eliminados).'
+                )
+                
+        except Exception as e:
+            messages.error(request, f'Error al eliminar la evaluación: {str(e)}')
+        
+        return redirect('evaluaciones_grupo', group_id=group_id)
+
+
+class EvaluacionApiView(LoginRequiredMixin, View):
+    """API para obtener datos de una evaluación específica"""
+    login_url = 'login'
+
+    def get(self, request, group_id, evaluacion_id, *args, **kwargs):
+        try:
+            group = get_object_or_404(Group_Levels, id=group_id)
+            evaluacion = get_object_or_404(Testing, id=evaluacion_id, group_level=group)
+            
+            fecha_str = ''
+            if evaluacion.date:
+                fecha_str = evaluacion.date.strftime('%Y-%m-%d')
+            
+            porcentaje_str = '0'
+            if evaluacion.percentage_grade:
+                porcentaje_str = str(evaluacion.percentage_grade)
+            
+            data = {
+                'id': evaluacion.id,
+                'name': evaluacion.name or '',
+                'description': evaluacion.description or '',
+                'date': fecha_str,
+                'percentage_grade': porcentaje_str,
+                'tipo_evaluacion': evaluacion.tipo_evaluacion or '',
+                'group_name': group.name_group_levels,
+                'level_name': group.level.level_name,
+                'course_name': group.level.course.course_name,
+                'group_level_id': group.id,
+                'students_count': group.students.filter(is_deleted=False).count()
+            }
+            
+            return JsonResponse(data)
+            
+        except Exception as e:
+            return JsonResponse({
+                'error': 'No se pudo cargar la información de la evaluación',
+                'details': str(e)
+            }, status=500)
+
+
+class PorcentajeTotalApiView(View):
+    """
+    API para obtener el porcentaje total usado en un grupo.
+    """
+    def get(self, request, group_id, *args, **kwargs):
+        group = get_object_or_404(Group_Levels, id=group_id)
+        
+        # Calcular suma de porcentajes únicos por nombre de evaluación
+        evaluaciones_unicas = Testing.objects.filter(
+            group_level=group
+        ).values('name').annotate(
+            porcentaje=Max('percentage_grade')
+        )
+        
+        total_porcentaje = sum(eval['porcentaje'] for eval in evaluaciones_unicas)
+        
+        data = {
+            'total': float(total_porcentaje),
+            'group_id': group_id,
+            'group_name': group.name_group_levels
+        }
+        
+        return JsonResponse(data)
+
+
+# ==============================
+# Vistas para Evaluaciones
+# ==============================
+
+class EvaluacionesListView(LoginRequiredMixin, View):
+    """Vista para listar evaluaciones de un grupo específico"""
+    template_name = 'evaluaciones.html'
+    login_url = 'login'
+
+    def get(self, request, group_id, *args, **kwargs):
+        group = get_object_or_404(Group_Levels, id=group_id)
+        
+        # Obtener evaluaciones del grupo (una por nombre/fecha para evitar duplicados)
+        evaluaciones = Testing.objects.filter(
+            group_level=group
+        ).values(
+            'id', 'name', 'description', 'date', 'percentage_grade', 'tipo_evaluacion'
+        ).distinct('name', 'date').order_by('name', 'date', '-id')
+        
+        # Convertir a lista y agregar información adicional
+        evaluaciones_list = []
+        for eval_data in evaluaciones:
+            # Obtener una instancia para métodos del modelo
+            evaluacion = Testing.objects.filter(
+                id=eval_data['id']
+            ).first()
+            
+            if evaluacion:
+                eval_data['estado'] = 'pendiente'  # Por ahora estado fijo, se puede mejorar después
+                eval_data['get_tipo_evaluacion_display'] = evaluacion.get_tipo_evaluacion_display()
+                evaluaciones_list.append(eval_data)
+
+        # Aplicar filtros de búsqueda
+        query = request.GET.get('q')
+        campo = request.GET.get('campo', 'todos')
+
+        if query:
+            if campo == 'name':
+                evaluaciones_list = [e for e in evaluaciones_list if query.lower() in e['name'].lower()]
+            elif campo == 'tipo':
+                evaluaciones_list = [e for e in evaluaciones_list if query.lower() in e.get('get_tipo_evaluacion_display', '').lower()]
+            else:  # todos los campos
+                evaluaciones_list = [e for e in evaluaciones_list if 
+                    query.lower() in e['name'].lower() or 
+                    query.lower() in e.get('get_tipo_evaluacion_display', '').lower()]
+
+        # Paginación
+        paginator = Paginator(evaluaciones_list, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        context = {
+            'group': group,
+            'evaluaciones': page_obj,
+            'query': query,
+            'campo': campo,
+        }
+        return render(request, self.template_name, context)
+
+
+class CrearEvaluacionView(LoginRequiredMixin, View):
+    """Vista para crear una nueva evaluación"""
+    login_url = 'login'
+
+    def post(self, request, group_id, *args, **kwargs):
+        group = get_object_or_404(Group_Levels, id=group_id)
+        
+        try:
+            with transaction.atomic():
+                # Obtener datos del formulario
+                name = request.POST.get('name', '').strip()
+                description = request.POST.get('description', '').strip()
+                date = request.POST.get('date')
+                percentage_grade = request.POST.get('percentage_grade')
+                tipo_evaluacion = request.POST.get('tipo_evaluacion')
+
+                # Validaciones básicas
+                if not name:
+                    messages.error(request, 'El nombre de la evaluación es obligatorio.')
+                    return redirect('evaluaciones_grupo', group_id=group_id)
+
+                # Verificar que no exista una evaluación con el mismo nombre en el grupo
+                existing_eval = Testing.objects.filter(
+                    name=name,
+                    group_level=group
+                ).first()
+                
+                if existing_eval:
+                    messages.error(request, f'Ya existe una evaluación con el título "{name}" en este grupo.')
+                    return redirect('evaluaciones_grupo', group_id=group_id)
+
+                # Crear UNA SOLA evaluación para el grupo (sin asignar estudiante específico)
+                evaluacion = Testing.objects.create(
+                    name=name,
+                    description=description,
+                    date=date,
+                    percentage_grade=percentage_grade,
+                    tipo_evaluacion=tipo_evaluacion,
+                    student=None,  # No asignar estudiante específico
+                    group_level=group
+                )
+
+                students_count = group.students.filter(is_deleted=False).count()
+                messages.success(request, f'Evaluación "{name}" creada exitosamente para el grupo con {students_count} estudiantes.')
+                return redirect('evaluaciones_grupo', group_id=group_id)
+
+        except Exception as e:
+            messages.error(request, f'Error al crear la evaluación: {str(e)}')
+            return redirect('evaluaciones_grupo', group_id=group_id)
+
+
+class EditarEvaluacionView(LoginRequiredMixin, View):
+    """Vista para editar una evaluación existente"""
+    login_url = 'login'
+
+    def post(self, request, group_id, evaluacion_id, *args, **kwargs):
+        group = get_object_or_404(Group_Levels, id=group_id)
+        
+        try:
+            with transaction.atomic():
+                # Obtener datos del formulario
+                name = request.POST.get('name', '').strip()
+                description = request.POST.get('description', '').strip()
+                date = request.POST.get('date')
+                percentage_grade = request.POST.get('percentage_grade')
+                tipo_evaluacion = request.POST.get('tipo_evaluacion')
+
+                # Validaciones básicas
+                if not name:
+                    messages.error(request, 'El nombre de la evaluación es obligatorio.')
+                    return redirect('evaluaciones_grupo', group_id=group_id)
+
+                # Obtener la evaluación original para comparar el nombre
+                evaluacion_original = Testing.objects.filter(
+                    id=evaluacion_id,
+                    group_level=group
+                ).first()
+
+                if not evaluacion_original:
+                    messages.error(request, 'Evaluación no encontrada.')
+                    return redirect('evaluaciones_grupo', group_id=group_id)
+
+                # Si el nombre cambió, verificar que no exista otra evaluación con el nuevo nombre
+                if name != evaluacion_original.name:
+                    existing_eval = Testing.objects.filter(
+                        name=name,
+                        group_level=group
+                    ).exclude(id=evaluacion_id).first()
+                    
+                    if existing_eval:
+                        messages.error(request, f'Ya existe otra evaluación con el título "{name}" en este grupo.')
+                        return redirect('evaluaciones_grupo', group_id=group_id)
+
+                # Actualizar todas las evaluaciones con el mismo nombre original en el grupo
+                evaluaciones_actualizadas = Testing.objects.filter(
+                    name=evaluacion_original.name,
+                    group_level=group,
+                    date=evaluacion_original.date
+                ).update(
+                    name=name,
+                    description=description,
+                    date=date,
+                    percentage_grade=percentage_grade,
+                    tipo_evaluacion=tipo_evaluacion
+                )
+
+                messages.success(request, f'Evaluación "{name}" actualizada exitosamente para {evaluaciones_actualizadas} estudiantes.')
+                return redirect('evaluaciones_grupo', group_id=group_id)
+
+        except Exception as e:
+            messages.error(request, f'Error al actualizar la evaluación: {str(e)}')
+            return redirect('evaluaciones_grupo', group_id=group_id)
+
+
+class EliminarEvaluacionView(LoginRequiredMixin, View):
+    """Vista para eliminar una evaluación"""
+    login_url = 'login'
+
+    def post(self, request, group_id, evaluacion_id, *args, **kwargs):
+        group = get_object_or_404(Group_Levels, id=group_id)
+        
+        try:
+            with transaction.atomic():
+                # Obtener la evaluación original
+                evaluacion_original = Testing.objects.filter(
+                    id=evaluacion_id,
+                    group_level=group
+                ).first()
+
+                if not evaluacion_original:
+                    messages.error(request, 'Evaluación no encontrada.')
+                    return redirect('evaluaciones_grupo', group_id=group_id)
+
+                # Eliminar todas las evaluaciones con el mismo nombre y fecha en el grupo
+                evaluaciones_eliminadas = Testing.objects.filter(
+                    name=evaluacion_original.name,
+                    group_level=group,
+                    date=evaluacion_original.date
+                ).delete()
+
+                messages.success(request, f'Evaluación "{evaluacion_original.name}" eliminada exitosamente.')
+                return redirect('evaluaciones_grupo', group_id=group_id)
+
+        except Exception as e:
+            messages.error(request, f'Error al eliminar la evaluación: {str(e)}')
+            return redirect('evaluaciones_grupo', group_id=group_id)
+
+
+class EvaluacionApiView(LoginRequiredMixin, View):
+    """API para obtener datos de una evaluación específica"""
+    login_url = 'login'
+
+    def get(self, request, group_id, evaluacion_id, *args, **kwargs):
+        group = get_object_or_404(Group_Levels, id=group_id)
+        evaluacion = get_object_or_404(Testing, id=evaluacion_id, group_level=group)
+
+        data = {
+            'id': evaluacion.id,
+            'name': evaluacion.name,
+            'description': evaluacion.description,
+            'date': evaluacion.date.strftime('%Y-%m-%d'),
+            'percentage_grade': float(evaluacion.percentage_grade),
+            'tipo_evaluacion': evaluacion.tipo_evaluacion,
+            'group_name': group.name_group_levels,
+            'level_name': group.level.level_name,
+            'group_level_id': group.id,
+            'students_count': group.students.filter(is_deleted=False).count(),
+        }
+        return JsonResponse(data)
+
+
+class PorcentajeTotalApiView(LoginRequiredMixin, View):
+    """API para obtener el porcentaje total de evaluaciones de un grupo"""
+    login_url = 'login'
+
+    def get(self, request, group_id, *args, **kwargs):
+        group = get_object_or_404(Group_Levels, id=group_id)
+        
+        # Obtener evaluaciones únicas del grupo
+        evaluaciones = Testing.objects.filter(group_level=group).values(
+            'name', 'percentage_grade'
+        ).distinct()
+        
+        total_percentage = sum(float(eval_data['percentage_grade']) for eval_data in evaluaciones)
+        
+        data = {
+            'total_percentage': total_percentage,
+            'remaining_percentage': max(0, 100 - total_percentage),
+            'evaluaciones_count': len(evaluaciones)
+        }
+        return JsonResponse(data)
+
+
+class GrupoApiView(LoginRequiredMixin, View):
+    """API para obtener información de un grupo"""
+    login_url = 'login'
+
+    def get(self, request, id, *args, **kwargs):
+        group = get_object_or_404(Group_Levels, id=id)
+        
+        data = {
+            'id': group.id,
+            'name_group_levels': group.name_group_levels,
+            'level_name': group.level.level_name,
+            'course_name': group.level.course.course_name,
+            'students_count': group.students.filter(is_deleted=False).count(),
+            'date_begin': group.date_begin.strftime('%Y-%m-%d'),
+            'date_end': group.date_end.strftime('%Y-%m-%d'),
+            'study_modality': group.study_modality,
+        }
+        return JsonResponse(data)

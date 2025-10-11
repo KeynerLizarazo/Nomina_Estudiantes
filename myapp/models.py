@@ -189,35 +189,86 @@ class Students(SoftDeleteModel):
 class Grade_Students(models.Model):
     """
     Modelo que almacena las calificaciones de los estudiantes en un grupo específico.
+    Conecta las notas con evaluaciones específicas.
     """
     grades = models.DecimalField(max_digits=5, decimal_places=2)
-    observations = models.TextField()
+    observations = models.TextField(blank=True, null=True)
     student = models.ForeignKey('Students', on_delete=models.CASCADE)
     group_level = models.ForeignKey('Group_Levels', on_delete=models.CASCADE)
+    evaluacion = models.ForeignKey('Testing', on_delete=models.CASCADE, null=True, blank=True, 
+                                   verbose_name='Evaluación', help_text='Evaluación asociada a esta nota')
 
     class Meta:
         db_table = 'notas_estudiantes'
         verbose_name = 'Nota de estudiante'
         verbose_name_plural = 'Notas de estudiantes'
+        # Constraint: Un estudiante no puede tener dos notas para la misma evaluación
+        unique_together = ['student', 'evaluacion']
 
     def __str__(self):
-        return f"{self.grades} - {self.student.person.name} ({self.student.id})"
+        evaluacion_name = self.evaluacion.name if self.evaluacion else "Sin evaluación"
+        return f"{self.grades} - {self.student.person.name} - {evaluacion_name}"
 
 class Testing(models.Model):
     """
     Modelo que representa una evaluación aplicada a un estudiante en un grupo.
     """
-    name = models.CharField(max_length=100)
+    TIPOS_EVALUACION = [
+        ('examen', 'Examen'),
+        ('quiz', 'Quiz'),
+        ('tarea', 'Tarea'),
+        ('proyecto', 'Proyecto'),
+        ('participacion', 'Participación'),
+        ('personalizada', 'Evaluación Personalizada'),
+    ]
+    
+    name = models.CharField(max_length=200)  # Aumentado de 100 a 200
     description = models.TextField()
     percentage_grade = models.DecimalField(max_digits=5, decimal_places=2)
     date = models.DateField()
+    tipo_evaluacion = models.CharField(
+        max_length=50, 
+        choices=TIPOS_EVALUACION, 
+        default='examen',
+        verbose_name='Tipo de Evaluación'
+    )
     student = models.ForeignKey(Students, on_delete=models.CASCADE)
     group_level = models.ForeignKey('Group_Levels', on_delete=models.CASCADE)
+
+    def get_estado(self):
+        """
+        Calcula el estado de la evaluación basándose en si tiene notas asignadas.
+        """
+        try:
+            # Verificar si existe una nota para esta evaluación
+            grade = Grade_Students.objects.filter(evaluacion=self).first()
+            if grade and grade.grades is not None:
+                return 'completada'
+            else:
+                return 'pendiente'
+        except:
+            return 'pendiente'
+    
+    def get_estado_display(self):
+        """
+        Retorna el estado en formato legible.
+        """
+        estado = self.get_estado()
+        return 'Completada' if estado == 'completada' else 'Pendiente'
+    
+    def get_estado_badge_class(self):
+        """
+        Retorna la clase CSS para el badge del estado.
+        """
+        estado = self.get_estado()
+        return 'bg-success' if estado == 'completada' else 'bg-warning'
 
     class Meta:
         db_table = 'evaluaciones'
         verbose_name = 'Evaluación'
-        verbose_name_plural = 'Evaluaciones'    
+        verbose_name_plural = 'Evaluaciones'
+        # Constraint: Un estudiante no puede tener dos evaluaciones con el mismo nombre en el mismo grupo
+        unique_together = ['name', 'student', 'group_level']    
 
     def __str__(self):
         return f"{self.name} ({self.date}) - {self.student.person.name}"

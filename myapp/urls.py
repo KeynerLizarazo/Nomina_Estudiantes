@@ -47,14 +47,26 @@ urlpatterns = [
 # NUEVO
 
     path('grupos/', views.GrupoView.as_view(), name='grupos'),
-    #path('grupos/editar/<int:id>/', views.UpdateGrupoView.as_view(), name='editar_grupo'),
-    #path('grupos/eliminar/<int:id>/', views.DeleteGrupoView.as_view(), name='eliminar_grupo'),
-    #path('grupos/api/<int:id>/', views.GrupoApiView.as_view(), name='grupo_api'),
+    path('grupos/<int:level_id>/', views.GrupoView.as_view(), name='grupos_level'),
+    path('grupos/editar/<int:id>/', views.UpdateGrupoView.as_view(), name='editar_grupo'),
+    path('grupos/eliminar/<int:id>/', views.DeleteGrupoView.as_view(), name='eliminar_grupo'),
+    path('grupos/api/<int:id>/', views.GrupoApiView.as_view(), name='grupo_api'),
+    path('grupos/api/<int:id>/students/', views.GrupoStudentsApiView.as_view(), name='grupo_students_api'),
+    path('grupos/<int:id>/add-student/', views.AddStudentToGroupView.as_view(), name='add_student_to_group'),
+    path('grupos/<int:id>/remove-student/', views.RemoveStudentFromGroupView.as_view(), name='remove_student_from_group'),
+    path('api/students/search/', views.StudentSearchApiView.as_view(), name='student_search_api'),
 
     path('evaluaciones/', views.EvaluacionesListView.as_view(), name='evaluaciones'),
+    path('grupos/<int:group_id>/evaluaciones/', views.EvaluacionesListView.as_view(), name='evaluaciones_grupo'),
+    path('grupos/<int:group_id>/evaluaciones/crear/', views.CrearEvaluacionView.as_view(), name='crear_evaluacion'),
+    path('grupos/<int:group_id>/evaluaciones/<int:evaluacion_id>/editar/', views.EditarEvaluacionView.as_view(), name='editar_evaluacion'),
+    path('grupos/<int:group_id>/evaluaciones/<int:evaluacion_id>/eliminar/', views.EliminarEvaluacionView.as_view(), name='eliminar_evaluacion'),
+    path('grupos/<int:group_id>/evaluaciones/<int:evaluacion_id>/api/', views.EvaluacionApiView.as_view(), name='evaluacion_api'),
+    path('evaluaciones/api/porcentaje-total/<int:group_id>/', views.PorcentajeTotalApiView.as_view(), name='porcentaje_total_api'),
     
     path('notas/', views.NotasView.as_view(), name='notas'),
     path('addgroup/', views.AñadirGrupoView.as_view(), name='addgroup'),
+    path('addgroup/<int:level_id>/', views.AñadirGrupoView.as_view(), name='addgroup_level'),
     
 
 

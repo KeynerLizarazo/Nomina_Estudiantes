@@ -122,8 +122,17 @@ def get_database_config():
     """
     USE_SQLITE = os.getenv('USE_SQLITE', 'False') == 'True'
     
+    # Separador visual para mejor legibilidad
+    print("\n" + "="*60)
+    print("🗄️  CONFIGURACIÓN DE BASE DE DATOS")
+    print("="*60)
+    
     if USE_SQLITE:
-        print("🔄 Usando SQLite por configuración manual")
+        print("🔧 MODO: Configuración manual")
+        print("📍 BASE DE DATOS: SQLite Local")
+        print("📁 ARCHIVO: db.sqlite3")
+        print("🔄 Estado: Usando SQLite por configuración manual")
+        print("="*60 + "\n")
         return {
             'default': {
                 'ENGINE': 'django.db.backends.sqlite3',
@@ -136,6 +145,12 @@ def get_database_config():
         database_url = config('DATABASE_URL')
         railway_config = dj_database_url.parse(database_url)
         
+        print("🔧 MODO: Detección automática")
+        print("🌐 INTENTANDO: Conexión a Railway PostgreSQL")
+        print(f"🏠 HOST: {railway_config['HOST']}")
+        print(f"🚪 PUERTO: {railway_config['PORT']}")
+        print("⏱️  TIMEOUT: 5 segundos")
+        
         # Probar la conexión a Railway
         test_conn = psycopg2.connect(
             host=railway_config['HOST'],
@@ -147,7 +162,12 @@ def get_database_config():
         )
         test_conn.close()
         
-        print("✅ Conectado exitosamente a Railway PostgreSQL")
+        print("✅ ESTADO: ¡Conectado exitosamente!")
+        print("📍 BASE DE DATOS: Railway PostgreSQL")
+        print("🚀 RENDIMIENTO: Óptimo (Servidor en la nube)")
+        print("💾 BACKUP LOCAL: SQLite disponible como respaldo")
+        print("="*60 + "\n")
+        
         return {
             'default': railway_config,
             'local_db': {
@@ -157,8 +177,14 @@ def get_database_config():
         }
         
     except (psycopg2.OperationalError, Exception) as e:
-        print(f"❌ Error conectando a Railway: {e}")
-        print("🔄 Cambiando automáticamente a SQLite local")
+        print("❌ ESTADO: Error de conexión")
+        print(f"🔍 DETALLE: {str(e)[:100]}...")
+        print("🔄 ACCIÓN: Cambiando automáticamente a SQLite local")
+        print("📍 BASE DE DATOS: SQLite Local (Modo Offline)")
+        print("📁 ARCHIVO: db.sqlite3")
+        print("⚠️  NOTA: Trabajando con datos locales")
+        print("="*60 + "\n")
+        
         return {
             'default': {
                 'ENGINE': 'django.db.backends.sqlite3',
