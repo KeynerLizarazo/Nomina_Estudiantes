@@ -1302,8 +1302,8 @@ class GrupoApiView(View):
 
 
 #usar esta plantilla
-class EvaluacionesListView(LoginRequiredMixin, View):
-    template_name = 'evaluaciones.html'
+class MisNotasView(LoginRequiredMixin, View):
+    template_name = 'mis_notas.html'
     login_url = 'login'
 
     def get(self, request, *args, **kwargs):

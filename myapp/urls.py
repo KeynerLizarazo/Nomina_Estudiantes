@@ -69,6 +69,7 @@ urlpatterns = [
     path('addgroup/<int:level_id>/', views.AñadirGrupoView.as_view(), name='addgroup_level'),
     
 
+    path('misnotas/', views.MisNotasView.as_view(), name='mis_notas'),
 
     # Subir imagen para tinyMCE
     path('upload-image/', views.upload_image, name='upload_image'),

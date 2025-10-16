@@ -26,6 +26,7 @@
 
     <!-- Contenido principal -->
     <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto pt-4">
+        
       <!-- Breadcrumb de navegación -->
       <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb p-2 mb-2 bg-light rounded">
@@ -65,30 +66,25 @@
 
       <div class="card shadow">
         <div class="card-header">Gestión de Evaluaciones</div>
-          <div class="card-body">
+        <div class="card-body">
+          
+          <!-- Formulario de Búsqueda -->
+          <form class="d-flex align-items-center gap-2 mb-3" >
+            <div class="input-group me-2" >
+              <input type="text" name="q" class="form-control" placeholder="Buscar evaluación..."
+                value="{{ query|default_if_none:'' }}">
+            </div>
+            <select name="campo" class="form-select w-25" >
+              <option value="todos" {% if campo == "todos" %}selected{% endif %}>Todos los campos</option>
+              <option value="name" {% if campo == "name" %}selected{% endif %}>Nombre</option>
+              <option value="tipo" {% if campo == "tipo" %}selected{% endif %}>Tipo</option>
+            </select>
+            <button class="btn btn-secondary" type="submit">Buscar</button>
+            <a href="{% url 'mis_notas' %}" class="btn btn-secondary ">Refrescar</a>
             
-            <!-- Formulario de Búsqueda -->
-            <form class="d-flex align-items-center gap-2 mb-3" method="get" action="{% url 'evaluaciones_grupo' group.id %}">
-              <div class="input-group ">
-                <input type="text" name="q" class="form-control" placeholder="Buscar evaluación..."
-                  value="{{ query|default_if_none:'' }}">
-              </div>
-              <select name="campo" class="form-select w-25 ">
-                <option value="todos" {% if campo == "todos" %}selected{% endif %}>Todos los campos</option>
-                <option value="name" {% if campo == "name" %}selected{% endif %}>Nombre</option>
-                <option value="tipo" {% if campo == "tipo" %}selected{% endif %}>Tipo</option>
-              </select>
-              <button class="btn btn-secondary" type="submit">Buscar</button>
-              <a href="{% url 'evaluaciones_grupo' group.id %}" class="btn btn-secondary">Refrescar</a>
-              <a href="{% url 'notas' %}" class="btn btn-success">
-                <i class="fas fa-clipboard-check"></i> Ver Notas
-              </a>
-              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#evaluacionModal">
-                <i class="fas fa-plus"></i> Crear Evaluación
-              </button>
-            </form>
+          </form>
 
-        <!-- Tabla de Resultados -->
+<!-- Tabla de Resultados -->
         <div class="table-responsive">
           <table class="table table-bordered">
             <thead>
@@ -98,7 +94,8 @@
                 <th>Tipo</th>
                 <th>Fecha</th>
                 <th>Porcentaje</th>
-                <th>Estado</th>
+                <th>Nota</th>
+                
               </tr>
             </thead>
             <tbody id="tabla-resultados">
@@ -131,38 +128,18 @@
                 </td>
                 <td>{{ evaluacion.date|date:"d/m/Y" }}</td>
                 <td>{{ evaluacion.percentage_grade }}%</td>
-                <td>
-                  {% if evaluacion.estado == 'completada' %}
-                  <span class="badge bg-success">Completada</span>
-                  {% elif evaluacion.estado == 'en_progreso' %}
-                  <span class="badge bg-warning">En Progreso</span>
-                  <small class="text-muted d-block">{{ evaluacion.estudiantes_con_notas }}/{{
-                    evaluacion.total_estudiantes }}</small>
-                  {% else %}
-                  <span class="badge bg-secondary">Pendiente</span>
-                  {% endif %}
-                </td>
+
+                <td>{{ person.nota|default:"Sin Nota" }}</td>
               </tr>
               {% endfor %}
-              {% else %}
-              <tr>
-                <td colspan="6" class="text-center text-muted">
-                  <div class="py-4">
-                    <i class="fas fa-clipboard-list fa-3x mb-3 text-muted"></i><br>
-                    No se encontraron evaluaciones.<br>
-                    <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal"
-                      data-bs-target="#evaluacionModal">
-                      <i class="fas fa-plus"></i> Crear primera evaluación
-                    </button>
-                  </div>
-                </td>
-              </tr>
+              
               {% endif %}
             </tbody>
           </table>
         </div>
 
-          </div>
+
+        </div>
 
         
 
@@ -184,107 +161,11 @@
   </main>
   </div>
 
-  <!-- Modal para Crear/Editar Evaluación -->
-  <div class="modal fade" id="evaluacionModal" tabindex="-1" aria-labelledby="evaluacionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title text-center w-100" id="modalTitle">Crear Evaluación</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form id="evaluacionForm" method="POST">
-            {% csrf_token %}
-
-            <!-- Título de la evaluación -->
-            <div class="mb-3">
-              <label for="id_name" class="form-label">
-                <i class="fas fa-clipboard-list"></i> Título de la Evaluación
-              </label>
-              <input type="text" name="name" id="id_name" class="form-control" required
-                placeholder="Ej: Prueba de Unidad 1 y 2" maxlength="200">
-              <div class="form-text">Título descriptivo de la evaluación (máximo 200 caracteres)</div>
-            </div>
-
-            <!-- Descripción -->
-            <div class="mb-3">
-              <label for="id_description" class="form-label">
-                <i class="fas fa-align-left"></i> Descripción
-              </label>
-              <textarea name="description" id="id_description" class="form-control" rows="3"
-                placeholder="Descripción detallada de la evaluación..."></textarea>
-              <div class="form-text">Descripción opcional con detalles sobre la evaluación</div>
-            </div>
-
-            <!-- Fecha y Porcentaje -->
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <label for="id_date" class="form-label">
-                  <i class="fas fa-calendar-alt"></i> Fecha de Evaluación
-                </label>
-                <input type="date" name="date" id="id_date" class="form-control" required>
-                <div class="form-text">Fecha en que se realizará la evaluación</div>
-              </div>
-              <div class="col-md-6">
-                <label for="id_percentage_grade" class="form-label">
-                  <i class="fas fa-percentage"></i> Porcentaje de Calificación
-                </label>
-                <input type="number" name="percentage_grade" id="id_percentage_grade" class="form-control" step="0.01"
-                  min="0" max="100" required placeholder="Ej: 25.00">
-                <div class="form-text">Peso de esta evaluación en la nota final (0-100%)</div>
-              </div>
-            </div>
-
-            <!-- Tipo de evaluación -->
-            <div class="mb-3">
-              <label for="id_tipo_evaluacion" class="form-label">
-                <i class="fas fa-tags"></i> Tipo de Evaluación
-              </label>
-              <select name="tipo_evaluacion" id="id_tipo_evaluacion" class="form-control" required>
-                <option value="">Seleccione un tipo</option>
-                <option value="examen">Examen</option>
-                <option value="quiz">Quiz</option>
-                <option value="tarea">Tarea</option>
-                <option value="proyecto">Proyecto</option>
-                <option value="participacion">Participación</option>
-                <option value="personalizada">Evaluación Personalizada</option>
-              </select>
-              <div class="form-text">Seleccione el tipo de evaluación</div>
-            </div>
-
-            <!-- Información del grupo -->
-            <div class="alert alert-info">
-              <i class="fas fa-info-circle"></i>
-              <strong>Grupo:</strong> <span id="grupo_info">Cargando...</span><br>
-              <strong>Estudiantes:</strong> <span id="estudiantes_count">0</span> estudiantes recibirán esta evaluación
-            </div>
-
-            <!-- Advertencia de porcentajes -->
-            <div id="porcentaje_warning" class="alert alert-warning" style="display: none;">
-              <i class="fas fa-exclamation-triangle"></i>
-              <strong>Advertencia:</strong> <span id="porcentaje_message"></span>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <div class="row w-100">
-            <div class="col">
-              <button type="submit" form="evaluacionForm" class="btn btn-primary w-100">
-                <i class="fas fa-save"></i> Guardar Evaluación
-              </button>
-            </div>
-            <div class="col">
-              <button type="button" class="btn btn-danger w-100" data-bs-dismiss="modal">
-                <i class="fas fa-times"></i> Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+  
   </div>
 
-  <!-- Scripts -->span></div></i>""
+  </div></i>
+  <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.all.min.js"></script>
