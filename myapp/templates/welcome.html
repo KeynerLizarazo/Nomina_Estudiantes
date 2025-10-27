@@ -21,7 +21,7 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
 
   <style>
-    
+
   </style>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -35,57 +35,60 @@
 
     <!-- Contenido principal -->
     <main class="main-content vh-100 d-flex flex-grow-1 p-3 align-items-center justify-content-center">
-      <div class="container-fluid">
+      <div class="container-fluid position-relative">
         <div class="row justify-content-center align-items-center ">
           <img src="../../static/assets/images/aguila.png" alt="Imagen transparente"
             class="aguila-trans img-fluid mx-auto z-0 position-absolute pe-none">
           <!-- Columna izquierda - Logo y texto -->
-          <div class="col-md-6 text-center z-1">
+          <div class="col-12 col-md-6 text-center z-1">
             <img src="../../static/assets/images/minilogowhite.png" alt="Logo" class="img-fluid pe-none"
               style="max-height: 100px;">
-            <h1 class="display-5 fw-bold"><b>Bienvenid@</b></h1>
-            <p class="fs-2">Aprende con nosotros</p>
+            <h1 class="display-5 fw-bold fs-3 fs-md-5"><b>Bienvenid@</b></h1>
+            <p class="fs-2 fs-4">Aprende con nosotros</p>
 
           </div>
         </div>
       </div>
     </main>
   </div>
-      <!-- Modal de cambio de contraseña obligatorio -->
-      <div class="modal fade" id="forceChangePasswordModal" tabindex="-1" aria-labelledby="forceChangePasswordLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="forceChangePasswordLabel">Cambio de contraseña requerido</h5>
+  <!-- Modal de cambio de contraseña obligatorio -->
+  <div class="modal fade" id="forceChangePasswordModal" tabindex="-1" aria-labelledby="forceChangePasswordLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="forceChangePasswordLabel">Cambio de contraseña requerido</h5>
+        </div>
+        <div class="modal-body">
+          <form id="forceChangePasswordForm">
+            <div class="mb-3">
+              <label for="newPassword" class="form-label">Nueva contraseña</label>
+              <input type="password" class="form-control" id="newPassword" name="new_password" minlength="8" required
+                autocomplete="new-password">
             </div>
-            <div class="modal-body">
-              <form id="forceChangePasswordForm">
-                <div class="mb-3">
-                  <label for="newPassword" class="form-label">Nueva contraseña</label>
-                  <input type="password" class="form-control" id="newPassword" name="new_password" minlength="8" required autocomplete="new-password">
-                </div>
-                <div class="mb-3">
-                  <label for="confirmPassword" class="form-label">Confirmar nueva contraseña</label>
-                  <input type="password" class="form-control" id="confirmPassword" name="confirm_password" minlength="8" required autocomplete="new-password">
-                </div>
-                <div id="forceChangePasswordError" class="text-danger mb-2" style="display:none;"></div>
-                <button type="submit" class="btn btn-primary w-100">Cambiar contraseña</button>
-              </form>
+            <div class="mb-3">
+              <label for="confirmPassword" class="form-label">Confirmar nueva contraseña</label>
+              <input type="password" class="form-control" id="confirmPassword" name="confirm_password" minlength="8"
+                required autocomplete="new-password">
             </div>
-          </div>
+            <div id="forceChangePasswordError" class="text-danger mb-2" style="display:none;"></div>
+            <button type="submit" class="btn btn-primary w-100">Cambiar contraseña</button>
+          </form>
         </div>
       </div>
+    </div>
+  </div>
   <!-- Bootstrap JS Bundle -->
   <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{% static 'assets/js/inactivity-timer.js' %}"></script>
 
   {% if must_change_password %}
-    <script id="mustChangePasswordData" type="application/json">true</script>
+  <script id="mustChangePasswordData" type="application/json">true</script>
   {% else %}
-    <script id="mustChangePasswordData" type="application/json">false</script>
+  <script id="mustChangePasswordData" type="application/json">false</script>
   {% endif %}
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       var mustChange = JSON.parse(document.getElementById('mustChangePasswordData').textContent);
       if (mustChange) {
         var modal = new bootstrap.Modal(document.getElementById('forceChangePasswordModal'), {
@@ -95,7 +98,7 @@
         modal.show();
       }
 
-      document.getElementById('forceChangePasswordForm').addEventListener('submit', async function(e) {
+      document.getElementById('forceChangePasswordForm').addEventListener('submit', async function (e) {
         e.preventDefault();
         var newPassword = document.getElementById('newPassword').value;
         var confirmPassword = document.getElementById('confirmPassword').value;
