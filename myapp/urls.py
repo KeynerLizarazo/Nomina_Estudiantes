@@ -67,7 +67,8 @@ urlpatterns = [
     path('notas/', views.NotasView.as_view(), name='notas'),
     path('addgroup/', views.AñadirGrupoView.as_view(), name='addgroup'),
     path('addgroup/<int:level_id>/', views.AñadirGrupoView.as_view(), name='addgroup_level'),
-    
+
+    path('perfil/', views.Perfil.as_view(), name='perfil'),
 
     path('misnotas/', views.MisNotasView.as_view(), name='mis_notas'),
 

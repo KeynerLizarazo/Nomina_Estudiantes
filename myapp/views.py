@@ -1314,6 +1314,19 @@ class MisNotasView(LoginRequiredMixin, View):
 
         
         return render(request, self.template_name)
+    
+class Perfil(LoginRequiredMixin, View):
+    template_name = 'perfil.html'
+    login_url = 'login'
+
+    def get(self, request, *args, **kwargs):
+        
+        
+        
+        
+
+        
+        return render(request, self.template_name)
 
 # INTENTO DE BACKEND DE GABO !!!!
 class DocenteApiView(View):

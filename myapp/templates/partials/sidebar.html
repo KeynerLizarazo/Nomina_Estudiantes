@@ -1,11 +1,14 @@
 {% load static %}
 
+ <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
 <!-- Barra lateral izquierda -->
  <div class="z-3"> <!-- div magico -->
     <div class="sidebar degradado-sidebar d-flex flex-column text-white min-vh-100 overflow-hidden">
       <!-- Sidebar -->
       <a class="mt-3 nav-link " href="{% url 'welcome' %}" id="welcome-btn">
-        <img src="{% static 'assets/images/main.png' %}" height="26" width="30">
+        <i class="fa fa-home" aria-hidden="true" style="height: 26px; width: 30px; font-size: 1.7rem;"></i> 
         <span class="nav-text">Inicio</span>
       </a>
       <hr class="">
@@ -29,7 +32,7 @@
         <img src="{% static 'assets/images/cursos.png' %}" width="28" height="28">
         <span class="nav-text">Cursos</span>
       </a>
-      <a class="nav-link" href="#"
+      <a class="nav-link" href="{% url 'perfil' %}"
       {% if request.resolver_match.url_name == 'mi_perfil' %}style="background-color: #922323"{% endif %}>
         <img src="{% static 'assets/images/mipefil.png' %}" width="28" height="28">
         <span class="nav-text">Mi Perfil</span>

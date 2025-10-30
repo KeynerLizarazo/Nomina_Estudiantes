@@ -18,6 +18,9 @@
   <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
 
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -52,11 +55,11 @@
                   <option value="pais_origen" {% if campo == "pais_origen" %}selected{% endif %}>País de origen</option>
                 </select>
 
-                <button class="btn btn-secondary" type="submit">Buscar</button>
-                <a href="{% url 'docentes' %}" class="btn btn-secondary ms-2 me-2">Refrescar</a>
+                <button class="btn btn-secondary" type="submit" style="white-space: nowrap;"><i class="fa fa-search me-1" aria-hidden="true"></i>Buscar</button>
+                <a href="{% url 'docentes' %}" class="btn btn-secondary ms-2 me-2" style="white-space: nowrap;"><i class="fa fa-undo me-1" aria-hidden="true"></i>Refrescar</a>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                  data-bs-target="#controlNominaModal">
-                  Añadir
+                  data-bs-target="#controlNominaModal" style="white-space: nowrap;">
+                  <i class="fas fa-plus me-1"></i>Añadir
                 </button>
               </form>
             </div>
@@ -67,7 +70,7 @@
                 <option value="xlsx">Excel (.xlsx)</option>
                 <option value="csv">CSV</option>
               </select>
-              <button type="submit" class="btn btn-success">Descargar Reporte</button>
+              <button type="submit" class="btn btn-success"><i class="fa fa-download me-1" aria-hidden="true"></i>Descargar Reporte</button>
             </form>
 
             <!-- Tabla de Resultados -->
@@ -75,7 +78,7 @@
             <table class="table table-bordered">
               <thead>
                 <tr class="align-top">
-                  <th>Acciones</th>
+                  <th style="min-width: 101px; width: 101px;">Acciones</th>
                   <th>Tipo de Documento</th>
                   <th>Número de Documento</th>
                   <th>Nombres</th>
@@ -95,10 +98,10 @@
                 <tr>
                   <td>
                     <button type="button" class="btn btn-warning btn-sm mb-2" data-bs-toggle="modal"
-                      data-bs-target="#controlNominaModal" data-tutor-id="{{ tutor.id }}">Editar</button>
+                      data-bs-target="#controlNominaModal" data-tutor-id="{{ tutor.id }}"><i class="fas fa-edit me-1"></i>Editar</button>
                     <form action="{% url 'eliminar_docente' tutor.id %}" method="post" style="display:inline;">
                       {% csrf_token %}
-                      <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                      <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash me-1"></i>Eliminar</button>
                     </form>
                   </td>
                   <td>{{ tutor.person.get_type_document_display }}</td>

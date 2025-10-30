@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Nómina - The Professor</title>
+    <!-- Bootstrap CSS -->
+    <link href="{% static 'assets/styles/custom.css' %}" rel="stylesheet" />
+    <link href="{% static 'assets/styles/main-style.css' %}" rel="stylesheet" />
+
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.min.css" rel="stylesheet">
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+
+
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+
+</head>
+
+<body class="m-0 p-0">
+    <div class="bg-my-background-color d-flex text-white ">
+        <!-- SIDEBAR -->
+        {% include 'partials/sidebar.html' %}
+
+
+
+        <!-- aguila -->
+        <div class="container-fluid position-relative">
+            <div class="row justify-content-center align-items-center ">
+                <img src="{% static 'assets/images/aguila.png' %}" alt="Imagen transparente"
+                    class="aguila-trans img-fluid mx-auto z-0 position-absolute top-50 start-50 translate-middle pe-none">
+
+
+                <!-- Contenido principal -->
+                <div class="container-fluid ms-2 me-2 mt-4 mb-4 p-4 rounded-3 z-1">
+
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="mb-3">Informacion de la Cuenta</h5>
+
+                            <!-- username -->
+                            <div class="d-flex align-items-center mb-3">
+                                <div>
+                                    <strong>Nombre de Usuario:</strong> <span>gapito64</span>
+                                </div>
+
+                            </div>
+
+                            <!-- password -->
+                            <div class="d-flex align-items-center mb-3">
+                                <div>
+                                    <strong>Contraseña:</strong> <span>********</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-warning ms-3" data-bs-toggle="modal"
+                                    data-bs-target="#editPasswordModal">
+                                    <i class="fa fa-pencil"></i>
+                                </button>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="d-flex align-items-center  mb-3">
+                                <div>
+                                    <strong>Correo:</strong> <span>g********@gmail.com</span>
+
+                                </div>
+
+                            </div>
+                            <!-- Document -->
+                            <div class="d-flex align-items-center  mb-3">
+                                <div>
+                                    <strong>Numero de Documento:</strong> <span>123456789</span>
+                                </div>
+
+                            </div>
+                            <!-- rol -->
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div>
+                                    <strong>Rol:</strong> <span>Administrador</span>
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Modal -->
+            <div class="modal fade" id="editPasswordModal" tabindex="-1" aria-labelledby="editUserModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title text-center w-100">Editar Usuario</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editUserForm" method="POST">
+                                {% csrf_token %}
+
+                                <div class="mb-3">
+                                    <label for="edit_password" class="form-label">Contraseña actual</label>
+                                    <input type="password" class="form-control" id="edit_password" name="password">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit_password" class="form-label">Nueva contraseña</label>
+                                    <input type="password" class="form-control" id="edit_password" name="password">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit_password" class="form-label">Confirmar contraseña</label>
+                                    <input type="password" class="form-control" id="edit_password" name="password">
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" form="editUserForm" class="btn btn-primary">Guardar
+                                Cambios</button>
+                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+            <!-- no borrar a partir de aquí -->
+        </div>
+
+        <!-- Importar Bootstrap Icons -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+
+        <!-- Importar Bootstrap JS (opcional) -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+        <!-- Bootstrap JS Bundle -->
+        <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+
+</body>
+
+</html>
