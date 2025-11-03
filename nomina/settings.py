@@ -5,7 +5,7 @@ import psycopg2
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent  # Ruta base del proyecto
 SECRET_KEY = config('SECRET_KEY')  # Clave secreta para cifrado (cámbiala en producción)
-DEBUG = config('DEBUG', default=True, cast=bool)  # Modo de depuración (cambia a False en producción)
+DEBUG = config('DEBUG', default=False, cast=bool)  # Modo de depuración (cambia a False en producción)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())  # Lista de dominios permitidos (agrega aquí tu dominio si es necesario)
 
 LOGIN_URL = '/login/'
