@@ -1,68 +1,70 @@
 import logging
+import os
 from django.db import connections, OperationalError
 
 class AuthRouter:
     """
-    AuthRouter es un router de bases de datos personalizado para Django.
-    Su objetivo es dirigir las operaciones de lectura, escritura, relaciones y migraciones
-    de las aplicaciones internas de Django (como auth, admin, sessions, etc.) a una base de datos específica ('local_db').
+    Router de bases de datos personalizado para Django que maneja múltiples bases de datos:
+    - Apps internas de Django (auth, admin, sessions) van a 'local_db' (SQLite)
+    - Apps personalizadas (myapp) van a 'default' (PostgreSQL Railway) o 'local_db' según disponibilidad
     """
 
-    # Conjunto de etiquetas de aplicaciones que serán dirigidas a 'local_db'
-    route_app_labels = {'admin', 'contenttypes', 'sessions', 'auth', 'messages', 'staticfiles'}
-
-    # Puedes definir una lista de preferencia de bases de datos
-    preferred_dbs = ['default', 'local_db']
+    # Apps internas de Django que siempre van a local_db
+    internal_app_labels = {'admin', 'contenttypes', 'sessions', 'auth', 'messages', 'staticfiles'}
     
-    def _get_available_db(self):
+    # Apps personalizadas que pueden ir a cualquier base de datos
+    custom_app_labels = {'myapp'}
+    
+    def _get_available_db_for_custom_apps(self):
         """
-        Devuelve la primera base de datos disponible según el orden de preferred_dbs.
+        Determina qué base de datos usar para apps personalizadas.
+        Prioridad: default (PostgreSQL) -> local_db (SQLite)
         """
-        for db in self.preferred_dbs:
-            try:
-                # Intenta abrir una conexión (no ejecuta queries)
-                connections[db].ensure_connection()
-                return db
-            except OperationalError:
-                logging.warning(f"Base de datos '{db}' no disponible.")
-        # Si ninguna está disponible, retorna None
-        return None
+        # Verificar si se fuerza el uso de SQLite
+        if os.getenv('USE_SQLITE', 'False').lower() == 'true':
+            return 'local_db'
+            
+        # Intentar usar PostgreSQL primero
+        try:
+            connections['default'].ensure_connection()
+            return 'default'
+        except (OperationalError, Exception):
+            logging.warning("PostgreSQL no disponible, usando SQLite local")
+            return 'local_db'
     
     def db_for_read(self, model, **hints):
-        """
-        Indica a Django que las operaciones de lectura (SELECT) para los modelos de las apps internas
-        deben hacerse en la base de datos 'local_db'.
-        """
-        if model._meta.app_label in self.route_app_labels:
+        """Determina qué base de datos usar para operaciones de lectura"""
+        if model._meta.app_label in self.internal_app_labels:
             return 'local_db'
+        elif model._meta.app_label in self.custom_app_labels:
+            return self._get_available_db_for_custom_apps()
         return None
 
     def db_for_write(self, model, **hints):
-        """
-        Indica a Django que las operaciones de escritura (INSERT, UPDATE, DELETE) para los modelos de las apps internas
-        deben hacerse en la base de datos 'local_db'.
-        """
-        if model._meta.app_label in self.route_app_labels:
+        """Determina qué base de datos usar para operaciones de escritura"""
+        if model._meta.app_label in self.internal_app_labels:
             return 'local_db'
+        elif model._meta.app_label in self.custom_app_labels:
+            return self._get_available_db_for_custom_apps()
         return None
 
     def allow_relation(self, obj1, obj2, **hints):
         """
-        Permite relaciones entre modelos si al menos uno de ellos pertenece a las apps internas de Django.
-        Esto es útil para permitir relaciones entre usuarios, permisos, sesiones, etc.
+        Permite relaciones entre objetos de la misma base de datos
         """
-        if (
-            obj1._meta.app_label in self.route_app_labels or
-            obj2._meta.app_label in self.route_app_labels
-        ):
+        db_set = {'default', 'local_db'}
+        if obj1._state.db in db_set and obj2._state.db in db_set:
             return True
-        return False
+        return None
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
         """
-        Indica a Django que las migraciones (creación/modificación de tablas) de las apps internas
-        solo deben aplicarse en la base de datos 'local_db'.
+        Controla en qué base de datos se aplican las migraciones
         """
-        if app_label in self.route_app_labels:
+        if app_label in self.internal_app_labels:
+            # Apps internas solo en local_db
             return db == 'local_db'
+        elif app_label in self.custom_app_labels:
+            # Apps personalizadas pueden ir a cualquier base de datos
+            return True
         return None

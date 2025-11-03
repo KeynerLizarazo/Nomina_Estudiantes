@@ -11,6 +11,7 @@ CHANGELOG.md
 views_refactor.py
 migrate_all_data.py
 railway_data.sql
+.env
 
 # Distribution / packaging
 .Python

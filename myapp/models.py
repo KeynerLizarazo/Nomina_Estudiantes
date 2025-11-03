@@ -131,6 +131,7 @@ class Calendario(models.Model):
     fecha_inicio = models.DateTimeField(verbose_name="Fecha de Inicio")
     fecha_fin = models.DateTimeField(null=True, blank=True, verbose_name="Fecha de Fin")
     creador = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
+    activo = models.BooleanField(default=True, verbose_name="Evento Activo")
 
     def __str__(self):
         return self.titulo
@@ -386,6 +387,7 @@ class TodoItem(models.Model):
     completed = models.BooleanField(default=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     due_date = models.DateField(null=True, blank=True)
+    priority = models.CharField(max_length=20, choices=[('low', 'Baja'), ('medium', 'Media'), ('high', 'Alta')], default='medium', verbose_name="Prioridad")
     class Meta:
         db_table = 'tareas'
         verbose_name = 'Tarea'
