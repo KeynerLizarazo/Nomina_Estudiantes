@@ -19,14 +19,11 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
   <!-- Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
-  
   <style>
 
   </style>
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
+  <!-- Control de sesión por inactividad -->
+  {% include 'partials/session_timeout.html' %}
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="{% static 'assets/images/aguila.ico' %}">
 </head>
@@ -47,7 +44,8 @@
               <!-- Formulario de Búsqueda -->
               <form class="d-flex" method="get" action="{% url 'cedulas' %}">
                 <div class="input-group me-2">
-                  <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ query|default_if_none:''  }}">
+                  <input type="text" name="q" class="form-control" placeholder="Buscar..."
+                    value="{{ query|default_if_none:''  }}">
                 </div>
                 <select name="campo" class="form-select w-25 me-2">
                   <option value="todos" {% if campo == "todos" %}selected{% endif %}>Todos los campos</option>
@@ -56,16 +54,21 @@
                   </option>
                   <option value="name" {% if campo == "name" %}selected{% endif %}>Nombre</option>
                   <option value="surname" {% if campo == "surname" %}selected{% endif %}>Apellido</option>
-                  <option value="telephone_number" {% if campo == "telephone_number" %}selected{% endif %}>Teléfono</option>
+                  <option value="telephone_number" {% if campo == "telephone_number" %}selected{% endif %}>Teléfono
+                  </option>
                   <option value="email" {% if campo == "email" %}selected{% endif %}>Email</option>
-                  <option value="date_of_birth" {% if campo == "date_of_birth" %}selected{% endif %}>Fecha de Nacimiento</option>
+                  <option value="date_of_birth" {% if campo == "date_of_birth" %}selected{% endif %}>Fecha de Nacimiento
+                  </option>
                   <option value="pais_origen" {% if campo == "pais_origen" %}selected{% endif %}>País de origen</option>
-                  <option value="progenitor_document_number" {% if campo == "progenitor_document_number" %}selected{% endif %}>C.Represe</option>
-                  <option value="progenitor_name" {% if campo == "progenitor_name" %}selected{% endif %}>Representante</option>
+                  <option value="progenitor_document_number" {% if campo == "progenitor_document_number" %}selected {% endif %}>C.Represe</option>
+                  <option value="progenitor_name" {% if campo == "progenitor_name" %}selected{% endif %}>Representante
+                  </option>
                 </select>
 
-                <button class="btn btn-secondary" type="submit" style="white-space: nowrap;"><i class="fa fa-search me-1" aria-hidden="true"></i>Buscar</button>
-                <a href="{% url 'cedulas' %}" class="btn btn-secondary ms-2 me-2" style="white-space: nowrap;"><i class="fa fa-undo me-1" aria-hidden="true"></i>Refrescar</a>
+                <button class="btn btn-secondary" type="submit" style="white-space: nowrap;"><i
+                    class="fa fa-search me-1" aria-hidden="true"></i>Buscar</button>
+                <a href="{% url 'cedulas' %}" class="btn btn-secondary ms-2 me-2" style="white-space: nowrap;"><i
+                    class="fa fa-undo me-1" aria-hidden="true"></i>Refrescar</a>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                   data-bs-target="#controlNominaModal" style="white-space: nowrap;">
                   <i class="fas fa-plus me-1"></i>Añadir
@@ -79,85 +82,80 @@
                 <option value="xlsx">Excel (.xlsx)</option>
                 <option value="csv">CSV</option>
               </select>
-              <button type="submit" class="btn btn-success" style="white-space: nowrap;"><i class="fa fa-download me-1" aria-hidden="true"></i>Descargar Reporte</button>
+              <button type="submit" class="btn btn-success" style="white-space: nowrap;"><i class="fa fa-download me-1"
+                  aria-hidden="true"></i>Descargar Reporte</button>
             </form>
 
             <!-- Tabla de Resultados -->
             <div class="table-responsive">
-            <table class="table table-bordered">
-              <thead>
-                <tr class="align-top">
-                  <th style="min-width: 101px; width: 101px;">Acciones</th>
-                  <th>Tipo de Documento</th>
-                  <th>Número de Documento</th>
-                  <th>Nombres</th>
-                  <th>Apellidos</th>
-                  <th>Teléfono</th>
-                  <th>Email</th>
-                  <th>Fecha Nac.</th>
-                  <th>Sexo</th>
-                  <th>País de origen</th>
-                  <th>Cedula Representante</th>
-                  <th>Representante</th>
-                  
-                </tr>
-              </thead>
-              <tbody id="tabla-resultados">
-                {% if persons %}
-                {% for person in persons %}
-                <tr>
-                  <td>
-                    <button type="button" class="btn btn-warning btn-sm mb-2 text-center" data-bs-toggle="modal"
-                      data-bs-target="#controlNominaModal" data-person-id="{{ person.id }}" style="padding-inline: 0.87rem;"><i class="fas fa-edit me-1"></i>Editar</button>
-                    <form action="{% url 'eliminar_persona' person.id %}" method="post" style="display:inline;">
-                      {% csrf_token %}
-                      <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash me-1"></i>Eliminar</button>
-                    </form>
-                  </td>
-                  <td>{{ person.get_type_document_display }}</td>
-                  <td>{{ person.document_number }}</td>
-                  <td>{{ person.name }}</td>
-                  <td>{{ person.surname }}</td>
-                  <td>{{ person.telephone_number }}</td>
-                  <td>{{ person.email }}</td>
-                  <td>{{ person.date_of_birth }}</td>
-                  <td>{{ person.get_gender_display }}</td>
-                  <td>{{ person.pais_origen|default_if_none:"" }}</td>
-                  <td>{{ person.progenitor_document_number|default_if_none:"" }}</td>
-                  <td>{{ person.progenitor_name|default_if_none:"" }}</td>
-                  
-                </tr>
-                {% endfor %}
-                {% else %}
-                <tr>
-                  <td colspan="12" class="text-center text-muted">No se encontraron registros.</td>
-                </tr>
-                {% endif %}
-              </tbody>
-            </table>
+              <table class="table table-bordered">
+                <thead>
+                  <tr class="align-top">
+                    <th style="min-width: 101px; width: 101px;">Acciones</th>
+                    <th>Tipo de Documento</th>
+                    <th>Número de Documento</th>
+                    <th>Nombres</th>
+                    <th>Apellidos</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Fecha Nac.</th>
+                    <th>Sexo</th>
+                    <th>País de origen</th>
+                    <th>Cedula Representante</th>
+                    <th>Representante</th>
+
+                  </tr>
+                </thead>
+                <tbody id="tabla-resultados">
+                  {% if persons %}
+                  {% for person in persons %}
+                  <tr>
+                    <td>
+                      <button type="button" class="btn btn-warning btn-sm mb-2 text-center" data-bs-toggle="modal"
+                        data-bs-target="#controlNominaModal" data-person-id="{{ person.id }}"
+                        style="padding-inline: 0.87rem;"><i class="fas fa-edit me-1"></i>Editar</button>
+                      <form action="{% url 'eliminar_persona' person.id %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm"><i
+                            class="fas fa-trash me-1"></i>Eliminar</button>
+                      </form>
+                    </td>
+                    <td>{{ person.get_type_document_display }}</td>
+                    <td>{{ person.document_number }}</td>
+                    <td>{{ person.name }}</td>
+                    <td>{{ person.surname }}</td>
+                    <td>{{ person.telephone_number }}</td>
+                    <td>{{ person.email }}</td>
+                    <td>{{ person.date_of_birth }}</td>
+                    <td>{{ person.get_gender_display }}</td>
+                    <td>{{ person.pais_origen|default_if_none:"" }}</td>
+                    <td>{{ person.progenitor_document_number|default_if_none:"" }}</td>
+                    <td>{{ person.progenitor_name|default_if_none:"" }}</td>
+
+                  </tr>
+                  {% endfor %}
+                  {% else %}
+                  <tr>
+                    <td colspan="12" class="text-center text-muted">No se encontraron registros.</td>
+                  </tr>
+                  {% endif %}
+                </tbody>
+              </table>
             </div>
           </div>
-          
+
         </div>
-        
+
       </div>
       <!-- Paginación -->
       <div class="pagination-container d-flex justify-content-center align-items-center my-4">
-        <button 
-          id="prev-page" 
-          class="btn pagination-btn" 
-          {% if not persons.has_previous %}disabled{% endif %}
-        >
+        <button id="prev-page" class="btn pagination-btn" {% if not persons.has_previous %}disabled{% endif %}>
           <img src="{% static 'assets/images/flecha_izq.png' %}" alt="Anterior" width="40" height="30">
         </button>
         <span id="page-info" class="page-info text-white mx-3">
           {{ persons.number }} / {{ persons.paginator.num_pages|default:1 }}
         </span>
-        <button 
-          id="next-page" 
-          class="btn pagination-btn" 
-          {% if not persons.has_next %}disabled{% endif %}
-        >
+        <button id="next-page" class="btn pagination-btn" {% if not persons.has_next %}disabled{% endif %}>
           <img src="{% static 'assets/images/flecha_der.png' %}" alt="Siguiente" width="40" height="30">
         </button>
       </div>
@@ -175,13 +173,14 @@
             <!-- Cuerpo del Modal -->
             <div class="modal-body">
               <!-- Formulario -->
-              <form id="nominaForm" method="POST" action="{% if person_to_edit %}{% url 'editar_persona' person_to_edit.id %}{% else %}{% url 'cedulas' %}{% endif %}">
+              <form id="nominaForm" method="POST"
+                action="{% if person_to_edit %}{% url 'editar_persona' person_to_edit.id %}{% else %}{% url 'cedulas' %}{% endif %}">
                 {% csrf_token %}
                 {% if person_to_edit %}
-                    <input type="hidden" name="id" value="{{ person_to_edit.id }}">
-                    {{ form.as_p }}
+                <input type="hidden" name="id" value="{{ person_to_edit.id }}">
+                {{ form.as_p }}
                 {% else %}
-                    {{ form.as_p }}
+                {{ form.as_p }}
                 {% endif %}
               </form>
             </div>
@@ -257,46 +256,46 @@
   </script>
 
   <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const prevButton = document.getElementById('prev-page');
-    const nextButton = document.getElementById('next-page');
-    const currentPage = JSON.parse('{{ persons.number|default:1 }}');
-    const totalPages = JSON.parse('{{ persons.paginator.num_pages|default:1 }}');
-    const query = "{{ query|default:'' }}";
-    const campo = "{{ campo|default:'' }}";
+    document.addEventListener('DOMContentLoaded', function () {
+      const prevButton = document.getElementById('prev-page');
+      const nextButton = document.getElementById('next-page');
+      const currentPage = JSON.parse('{{ persons.number|default:1 }}');
+      const totalPages = JSON.parse('{{ persons.paginator.num_pages|default:1 }}');
+      const query = "{{ query|default:'' }}";
+      const campo = "{{ campo|default:'' }}";
 
-    function buildURL(page) {
-      const url = new URL(window.location.href.split('?')[0], window.location.origin);
-      if (page > 1) {
-        url.searchParams.append('page', page);
-      }
-      if (query && query !== 'None' && query.trim() !== '') {
-        url.searchParams.append('q', query);
-      }
-      if (campo && campo !== 'None' && campo !== 'todos' && campo.trim() !== '') {
-        url.searchParams.append('campo', campo);
-      }
-      return url.toString();
-    }
-
-    // Botón Anterior
-    if (prevButton && !prevButton.disabled) {
-      prevButton.addEventListener('click', function () {
-        if (currentPage > 1) {
-          window.location.href = buildURL(currentPage - 1);
+      function buildURL(page) {
+        const url = new URL(window.location.href.split('?')[0], window.location.origin);
+        if (page > 1) {
+          url.searchParams.append('page', page);
         }
-      });
-    }
-
-    // Botón Siguiente
-    if (nextButton && !nextButton.disabled) {
-      nextButton.addEventListener('click', function () {
-        if (currentPage < totalPages) {
-          window.location.href = buildURL(currentPage + 1);
+        if (query && query !== 'None' && query.trim() !== '') {
+          url.searchParams.append('q', query);
         }
-      });
-    }
-  });
+        if (campo && campo !== 'None' && campo !== 'todos' && campo.trim() !== '') {
+          url.searchParams.append('campo', campo);
+        }
+        return url.toString();
+      }
+
+      // Botón Anterior
+      if (prevButton && !prevButton.disabled) {
+        prevButton.addEventListener('click', function () {
+          if (currentPage > 1) {
+            window.location.href = buildURL(currentPage - 1);
+          }
+        });
+      }
+
+      // Botón Siguiente
+      if (nextButton && !nextButton.disabled) {
+        nextButton.addEventListener('click', function () {
+          if (currentPage < totalPages) {
+            window.location.href = buildURL(currentPage + 1);
+          }
+        });
+      }
+    });
   </script>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -351,7 +350,7 @@
       {% endif %}
     });
   </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

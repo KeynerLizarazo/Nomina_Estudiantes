@@ -17,9 +17,8 @@
 
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="{% static 'assets/images/aguila.ico' %}">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
+  <!-- Control de sesión por inactividad -->
+  {% include \'partials/session_timeout.html\' %}
 </head>
 
 <body class="m-0 p-0">
