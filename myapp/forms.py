@@ -125,10 +125,9 @@ class UserForm(BasePersonValidationForm):
     password = forms.CharField(label='Contraseña', widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña'}))
     email = forms.EmailField(label='Correo Electrónico', widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo Electrónico'}))
     documento = forms.CharField(label='Documento', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Documento'}))
-    person = forms.ModelChoiceField(queryset=Person.objects.all(), label='Persona', widget=forms.Select(attrs={'class': 'form-control'}))
     class Meta:
         model = User
-        fields = ['username', 'password', 'email', 'documento', 'role', 'person']
+        fields = ['username', 'password', 'email', 'documento', 'role']
         
         labels = {
             'role': 'Rol'
@@ -148,11 +147,10 @@ class UserUpdateForm(BasePersonValidationForm):
     username = forms.CharField(label='Nombre de Usuario', max_length=150)
     email = forms.EmailField(label='Email', widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}))
     documento = forms.CharField(label='Documento', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Documento'}))
-    person = forms.ModelChoiceField(queryset=Person.objects.all(), label='Persona', widget=forms.Select(attrs={'class': 'form-control'}))
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'documento', 'role', 'person']
+        fields = ['username', 'email', 'documento', 'role']
 
     def clean_documento(self):
         documento = self.cleaned_data.get('documento')

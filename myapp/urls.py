@@ -28,6 +28,8 @@ urlpatterns = [
     path('usuarios/', views.UserView.as_view(), name='usuarios'),
     path('usuarios/editar/<int:id>/', views.UpdateUserView.as_view(), name='editar_usuario'),
     path('usuarios/eliminar/<int:id>/', views.DeleteUserView.as_view(), name='eliminar_usuario'),
+    
+    # Perfil de usuario
     path('todolist/', views.TodoListView.as_view(), name='todolist'),
     path('todolist/update/<int:id>/', views.UpdateTodoView.as_view(), name='update_todo'),
     path('todolist/delete/<int:id>/', views.DeleteTodoView.as_view(), name='delete_todo'),
@@ -67,8 +69,7 @@ urlpatterns = [
     path('notas/', views.NotasView.as_view(), name='notas'),
     path('addgroup/', views.AñadirGrupoView.as_view(), name='addgroup'),
     path('addgroup/<int:level_id>/', views.AñadirGrupoView.as_view(), name='addgroup_level'),
-
-    path('perfil/', views.Perfil.as_view(), name='perfil'),
+    path('perfil/', views.perfil_view, name='perfil'),
 
     path('misnotas/', views.MisNotasView.as_view(), name='mis_notas'),
 

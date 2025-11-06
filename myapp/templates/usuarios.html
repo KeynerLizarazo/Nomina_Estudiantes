@@ -15,9 +15,8 @@
   <!-- Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
+  <!-- Control de sesión por inactividad -->
+  {% include 'partials/session_timeout.html' %}
 
 </head>
 
@@ -35,17 +34,21 @@
           <!-- Formulario de Búsqueda y Filtro -->
           <form class="d-flex mb-3" method="get" action="{% url 'usuarios' %}">
             <div class="input-group me-2">
-              <input type="text" name="q" class="form-control" placeholder="Buscar por nombre de usuario o email..." value="{{ query|default_if_none:'' }}">
+              <input type="text" name="q" class="form-control" placeholder="Buscar por nombre de usuario o email..."
+                value="{{ query|default_if_none:'' }}">
             </div>
             <select name="role" class="form-select w-25 me-2">
               <option value="">Todos los Roles</option>
               {% for role_value, role_display in form.fields.role.choices %}
-                <option value="{{ role_value }}" {% if role == role_value %}selected{% endif %}>{{ role_display }}</option>
+              <option value="{{ role_value }}" {% if role == role_value %}selected{% endif %}>{{ role_display }}</option>
               {% endfor %}
             </select>
-            <button class="btn btn-secondary" type="submit" style="white-space: nowrap;"><i class="fa fa-search me-1" aria-hidden="true"></i>Buscar</button>
-            <a href="{% url 'usuarios' %}" class="btn btn-secondary ms-2 me-2" style="white-space: nowrap;"><i class="fa fa-undo me-1" aria-hidden="true"></i>Refrescar</a>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal" style="white-space: nowrap;">
+            <button class="btn btn-secondary" type="submit" style="white-space: nowrap;"><i class="fa fa-search me-1"
+                aria-hidden="true"></i>Buscar</button>
+            <a href="{% url 'usuarios' %}" class="btn btn-secondary ms-2 me-2" style="white-space: nowrap;"><i
+                class="fa fa-undo me-1" aria-hidden="true"></i>Refrescar</a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal"
+              style="white-space: nowrap;">
               <i class="fas fa-plus me-1"></i>Añadir
             </button>
           </form>
@@ -59,7 +62,7 @@
                 <th>Correo</th>
                 <th>Documento</th>
                 <th>Rol</th>
-                
+
               </tr>
             </thead>
             <tbody>
@@ -67,14 +70,12 @@
               <tr>
 
                 <td>
-                  
 
-                  <button class="btn btn-warning btn-sm d-block mb-1" data-bs-toggle="modal" data-bs-target="#editUserModal"
-                    data-user-id="{{ user.id }}"
-                    data-user-username="{{ user.username }}"
-                    data-user-email="{{ user.email }}"
-                    data-user-documento="{{ user.documento }}"
-                    data-user-role="{{ user.role }}"
+
+                  <button class="btn btn-warning btn-sm d-block mb-1" data-bs-toggle="modal"
+                    data-bs-target="#editUserModal" data-user-id="{{ user.id }}"
+                    data-user-username="{{ user.username }}" data-user-email="{{ user.email }}"
+                    data-user-documento="{{ user.documento }}" data-user-role="{{ user.role }}"
                     data-user-action="{% url 'editar_usuario' user.id %}">
                     <i class="fas fa-edit me-1"></i>Editar
                   </button>
@@ -83,12 +84,12 @@
                     <i class="fas fa-trash me-1"></i>Eliminar
                   </button>
                 </td>
-                
+
                 <td>{{ user.username }}</td>
                 <td>{{ user.email }}</td>
                 <td>{{ user.documento }}</td>
                 <td>{{ user.get_role_display }}</td>
-                
+
               </tr>
               {% empty %}
               <tr>
@@ -99,26 +100,18 @@
           </table>
         </div>
       </div>
-          <!-- Paginación visual -->
-          <div class="pagination-container d-flex justify-content-center align-items-center my-4">
-            <button 
-              id="prev-page" 
-              class="btn pagination-btn" 
-              {% if not users.has_previous %}disabled{% endif %}
-            >
-              <img src="{% static 'assets/images/flecha_izq.png' %}" alt="Anterior" width="40" height="30">
-            </button>
-            <span id="page-info" class="page-info text-white mx-3">
-              {{ users.number }} / {{ users.paginator.num_pages }}
-            </span>
-            <button 
-              id="next-page" 
-              class="btn pagination-btn" 
-              {% if not users.has_next %}disabled{% endif %}
-            >
-              <img src="{% static 'assets/images/flecha_der.png' %}" alt="Siguiente" width="40" height="30">
-            </button>
-          </div>
+      <!-- Paginación visual -->
+      <div class="pagination-container d-flex justify-content-center align-items-center my-4">
+        <button id="prev-page" class="btn pagination-btn" {% if not users.has_previous %}disabled{% endif %}>
+          <img src="{% static 'assets/images/flecha_izq.png' %}" alt="Anterior" width="40" height="30">
+        </button>
+        <span id="page-info" class="page-info text-white mx-3">
+          {{ users.number }} / {{ users.paginator.num_pages }}
+        </span>
+        <button id="next-page" class="btn pagination-btn" {% if not users.has_next %}disabled{% endif %}>
+          <img src="{% static 'assets/images/flecha_der.png' %}" alt="Siguiente" width="40" height="30">
+        </button>
+      </div>
       <!-- Modal para Agregar Usuario -->
       <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -135,13 +128,6 @@
                 {{ form.email.label_tag }} {{ form.email }}
                 {{ form.documento.label_tag }} {{ form.documento }}
                 {{ form.role.label_tag }} {{ form.role }}
-                <div class="mb-3">
-                  <label for="add_person_search" class="form-label">Buscar Persona:</label>
-                  <input type="text" id="add_person_search" class="form-control" placeholder="Buscar por nombre o documento...">
-                  <small class="form-text text-muted">Escriba aquí para filtrar la lista de personas en la casilla de abajo.</small>
-                </div>
-                <label for="{{ form.person.id_for_label }}">Persona que se asignará el Usuario:</label>
-                {{ form.person }}
               </form>
             </div>
             <div class="modal-footer">
@@ -183,7 +169,7 @@
                   <label for="edit_role" class="form-label">Rol:</label>
                   <select class="form-control" id="edit_role" name="role">
                     {% for role_value, role_display in form.fields.role.choices %}
-                      <option value="{{ role_value }}">{{ role_display }}</option>
+                    <option value="{{ role_value }}">{{ role_display }}</option>
                     {% endfor %}
                   </select>
                 </div>
@@ -198,7 +184,8 @@
       </div>
 
       <!-- Modal para Eliminar Usuario -->
-      <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+      <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
@@ -226,90 +213,96 @@
     document.addEventListener('DOMContentLoaded', function () {
       const prevButton = document.getElementById('prev-page');
       const nextButton = document.getElementById('next-page');
-      const currentPage = {{ users.number }};
-      const totalPages = {{ users.paginator.num_pages }};
-      const query = "{{ query|default:'' }}";
-      const role = "{{ role|default:'' }}";
+      const currentPage = {{ users.number }
+    };
+    const totalPages = {{ users.paginator.num_pages }};
+    const query = "{{ query|default:'' }}";
+    const role = "{{ role|default:'' }}";
 
-      function buildURL(page) {
-        const url = new URL(window.location.href.split('?')[0], window.location.origin);
-        if (page > 1) {
-          url.searchParams.append('page', page);
-        }
-        if (query && query !== 'None' && query.trim() !== '') {
-          url.searchParams.append('q', query);
-        }
-        if (role && role !== 'None' && role.trim() !== '') {
-          url.searchParams.append('role', role);
-        }
-        return url.toString();
+    function buildURL(page) {
+      const url = new URL(window.location.href.split('?')[0], window.location.origin);
+      if (page > 1) {
+        url.searchParams.append('page', page);
       }
+      if (query && query !== 'None' && query.trim() !== '') {
+        url.searchParams.append('q', query);
+      }
+      if (role && role !== 'None' && role.trim() !== '') {
+        url.searchParams.append('role', role);
+      }
+      return url.toString();
+    }
 
-      // Botón Anterior
-      if (prevButton && !prevButton.disabled) {
-        prevButton.addEventListener('click', function () {
-          if (currentPage > 1) {
-            window.location.href = buildURL(currentPage - 1);
-          }
-        });
-      }
+    // Botón Anterior
+    if (prevButton && !prevButton.disabled) {
+      prevButton.addEventListener('click', function () {
+        if (currentPage > 1) {
+          window.location.href = buildURL(currentPage - 1);
+        }
+      });
+    }
 
-      // Botón Siguiente
-      if (nextButton && !nextButton.disabled) {
-        nextButton.addEventListener('click', function () {
-          if (currentPage < totalPages) {
-            window.location.href = buildURL(currentPage + 1);
-          }
-        });
-      }
+    // Botón Siguiente
+    if (nextButton && !nextButton.disabled) {
+      nextButton.addEventListener('click', function () {
+        if (currentPage < totalPages) {
+          window.location.href = buildURL(currentPage + 1);
+        }
+      });
+    }
     });
   </script>
   <script>
-    function filterPeople(searchInputId, selectElementId) {
-      const searchInput = document.getElementById(searchInputId);
-      const selectElement = document.getElementById(selectElementId);
-      const options = selectElement.options;
-      const filterValue = searchInput.value.toLowerCase();
-
-      for (let i = 0; i < options.length; i++) {
-        const optionText = options[i].text.toLowerCase();
-        if (optionText.includes(filterValue)) {
-          options[i].style.display = '';
-        } else {
-          options[i].style.display = 'none';
-        }
-      }
-    }
 
     document.addEventListener('DOMContentLoaded', function () {
-      document.getElementById('add_person_search').addEventListener('keyup', function () {
-        filterPeople('add_person_search', '{{ form.person.id_for_label }}');
-      });
-
       var editModal = document.getElementById('editUserModal');
-      editModal.addEventListener('show.bs.modal', function (event) {
-        var button = event.relatedTarget;
-        var action = button.getAttribute('data-user-action');
-        var username = button.getAttribute('data-user-username');
-        var email = button.getAttribute('data-user-email');
-        var documento = button.getAttribute('data-user-documento');
-        var role = button.getAttribute('data-user-role');
+      if (editModal) {
+        editModal.addEventListener('show.bs.modal', function (event) {
+          var button = event.relatedTarget;
 
-        var form = editModal.querySelector('#editUserForm');
-        form.action = action;
-        form.querySelector('#edit_username').value = username;
-        form.querySelector('#edit_email').value = email;
-        form.querySelector('#edit_documento').value = documento;
-        form.querySelector('#edit_role').value = role;
-      });
+          // Obtener datos del botón
+          var action = button.getAttribute('data-user-action');
+          var username = button.getAttribute('data-user-username');
+          var email = button.getAttribute('data-user-email');
+          var documento = button.getAttribute('data-user-documento');
+          var role = button.getAttribute('data-user-role');
+
+          console.log('Datos del usuario:', { username, email, documento, role, action });
+
+          // Llenar el formulario
+          var form = editModal.querySelector('#editUserForm');
+          if (form && action) {
+            form.action = action;
+          }
+
+          // Llenar campos
+          var usernameField = form.querySelector('#edit_username');
+          var emailField = form.querySelector('#edit_email');
+          var documentoField = form.querySelector('#edit_documento');
+          var roleField = form.querySelector('#edit_role');
+
+          if (usernameField) usernameField.value = username || '';
+          if (emailField) emailField.value = email || '';
+          if (documentoField) documentoField.value = documento || '';
+          if (roleField) roleField.value = role || '';
+
+          console.log('Campos llenados correctamente');
+        });
+      } else {
+        console.error('Modal editUserModal no encontrado');
+      }
 
       var deleteModal = document.getElementById('deleteUserModal');
-      deleteModal.addEventListener('show.bs.modal', function (event) {
-        var button = event.relatedTarget;
-        var url = button.getAttribute('data-delete-url');
-        var form = deleteModal.querySelector('#deleteUserForm');
-        form.action = url;
-      });
+      if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+          var button = event.relatedTarget;
+          var url = button.getAttribute('data-delete-url');
+          var form = deleteModal.querySelector('#deleteUserForm');
+          if (form && url) {
+            form.action = url;
+          }
+        });
+      }
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.2/dist/sweetalert2.all.min.js"></script>
@@ -327,5 +320,48 @@
       {% endif %}
     });
   </script>
+
+  <!-- JavaScript para Paginación -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const prevButton = document.getElementById('prev-page');
+      const nextButton = document.getElementById('next-page');
+
+      if (prevButton) {
+        prevButton.addEventListener('click', function () {
+          if (!this.disabled) {
+            const currentUrl = new URL(window.location);
+            const currentPage = parseInt(currentUrl.searchParams.get('page') || '1');
+            const prevPage = currentPage - 1;
+
+            if (prevPage >= 1) {
+              currentUrl.searchParams.set('page', prevPage);
+              window.location.href = currentUrl.toString();
+            }
+          }
+        });
+      }
+
+      if (nextButton) {
+        nextButton.addEventListener('click', function () {
+          if (!this.disabled) {
+            const currentUrl = new URL(window.location);
+            const currentPage = parseInt(currentUrl.searchParams.get('page') || '1');
+            const nextPage = currentPage + 1;
+
+            // Obtener el número total de páginas del span
+            const pageInfo = document.getElementById('page-info').textContent;
+            const totalPages = parseInt(pageInfo.split(' / ')[1]);
+
+            if (nextPage <= totalPages) {
+              currentUrl.searchParams.set('page', nextPage);
+              window.location.href = currentUrl.toString();
+            }
+          }
+        });
+      }
+    });
+  </script>
 </body>
+
 </html>

@@ -9,7 +9,7 @@ import psycopg2
 # ==============================
 BASE_DIR = Path(__file__).resolve().parent.parent  # Ruta base del proyecto
 SECRET_KEY = config('SECRET_KEY')  # Clave secreta para cifrado (cámbiala en producción)
-DEBUG = config('DEBUG', default=True, cast=bool)  # Modo de depuración (cambia a False en producción)
+DEBUG = config('DEBUG', default=False, cast=bool)  # Modo de depuración (cambia a False en producción)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())  # Lista de dominios permitidos (agrega aquí tu dominio si es necesario)
 LOGIN_URL = '/login/'
 # ==============================
@@ -113,84 +113,19 @@ WSGI_APPLICATION = 'nomina_estudiantes.wsgi.application'  # Configuración WSGI
 # ==============================
 # BASE DE DATOS
 # ==============================
+# Base de datos: usa DATABASE_URL si existe, sino SQLite (solo en local)
+if 'DATABASE_URL' in os.environ:
+    DATABASES = {
+        'default': dj_database_url.parse(os.environ['DATABASE_URL'])
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
-def get_database_config():
-    """
-    Intenta conectarse a Railway, si falla usa SQLite como fallback
-    """
-    USE_SQLITE = os.getenv('USE_SQLITE', 'False') == 'True'
-    
-    # Separador visual para mejor legibilidad
-    print("\n" + "="*60)
-    print("🗄️  CONFIGURACIÓN DE BASE DE DATOS")
-    print("="*60)
-    
-    if USE_SQLITE:
-        print("🔧 MODO: Configuración manual")
-        print("📍 BASE DE DATOS: SQLite Local")
-        print("📁 ARCHIVO: db.sqlite3")
-        print("🔄 Estado: Usando SQLite por configuración manual")
-        print("="*60 + "\n")
-        return {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': BASE_DIR / "db.sqlite3",
-            }
-        }
-    
-    try:
-        # Intentar obtener la configuración de Railway
-        database_url = config('DATABASE_URL')
-        railway_config = dj_database_url.parse(database_url)
-        
-        print("🔧 MODO: Detección automática")
-        print("🌐 INTENTANDO: Conexión a Railway PostgreSQL")
-        print(f"🏠 HOST: {railway_config['HOST']}")
-        print(f"🚪 PUERTO: {railway_config['PORT']}")
-        print("⏱️  TIMEOUT: 5 segundos")
-        
-        # Probar la conexión a Railway
-        test_conn = psycopg2.connect(
-            host=railway_config['HOST'],
-            port=railway_config['PORT'],
-            user=railway_config['USER'],
-            password=railway_config['PASSWORD'],
-            database=railway_config['NAME'],
-            connect_timeout=5  # Timeout de 5 segundos
-        )
-        test_conn.close()
-        
-        print("✅ ESTADO: ¡Conectado exitosamente!")
-        print("📍 BASE DE DATOS: Railway PostgreSQL")
-        print("🚀 RENDIMIENTO: Óptimo (Servidor en la nube)")
-        print("💾 BACKUP LOCAL: SQLite disponible como respaldo")
-        print("="*60 + "\n")
-        
-        return {
-            'default': railway_config,
-            'local_db': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': BASE_DIR / "db.sqlite3",
-            }
-        }
-        
-    except (psycopg2.OperationalError, Exception) as e:
-        print("❌ ESTADO: Error de conexión")
-        print(f"🔍 DETALLE: {str(e)[:100]}...")
-        print("🔄 ACCIÓN: Cambiando automáticamente a SQLite local")
-        print("📍 BASE DE DATOS: SQLite Local (Modo Offline)")
-        print("📁 ARCHIVO: db.sqlite3")
-        print("⚠️  NOTA: Trabajando con datos locales")
-        print("="*60 + "\n")
-        
-        return {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': BASE_DIR / "db.sqlite3",
-            }
-        }
-
-DATABASES = get_database_config()
 # ==============================
 # VALIDACIÓN DE CONTRASEÑAS (OPCIONAL)
 # ==============================

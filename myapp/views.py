@@ -323,22 +323,55 @@ class UserView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         form = UserForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])
-            user.save()
-            messages.success(request, 'Usuario agregado exitosamente.')
-
-            return redirect('usuarios')
+            try:
+                with transaction.atomic():
+                    # Crear automáticamente el registro Person con los datos disponibles
+                    person = Person.objects.create(
+                        document_number=form.cleaned_data['documento'],
+                        name=form.cleaned_data.get('username', ''),  # Temporal, se puede mejorar
+                        surname='',  # Campo vacío por ahora
+                        email=form.cleaned_data['email'],
+                        # Los demás campos quedan vacíos/por defecto hasta que se mejore la interfaz
+                    )
+                    
+                    # Crear el usuario y vincularlo con la persona
+                    user = form.save(commit=False)
+                    user.set_password(form.cleaned_data['password'])
+                    user.person = person
+                    user.save()
+                    
+                    messages.success(request, 'Usuario y persona creados exitosamente.')
+                    return redirect('usuarios')
+                    
+            except Exception as e:
+                messages.error(request, f'Error al crear usuario: {str(e)}')
+                users = User.objects.all()
+                context = {
+                    'form': form,
+                    'users': users
+                }
+                return render(request, self.template_name, context)
         else:
-            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
-            error_string = f"<ul>{error_list_html}</ul>"
-            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
+            # Crear mensaje de error detallado
+            error_details = []
+            for field_name, errors in form.errors.items():
+                field_label = form.fields[field_name].label if field_name in form.fields else field_name
+                for error in errors:
+                    error_details.append(f"<strong>{field_label}:</strong> {error}")
+            
+            error_message = "<br>".join(error_details)
+            messages.error(request, f"Errores en el formulario:<br>{error_message}")
+            
+            # También imprimir en consola para debugging
+            print("=== ERRORES DEL FORMULARIO ===")
+            for field_name, errors in form.errors.items():
+                print(f"Campo '{field_name}': {errors}")
+            print("=== FIN ERRORES ===")
+            
             users = User.objects.all()
-            persons = Person.objects.all()
             context = {
                 'form': form,
-                'users': users,
-                'persons': persons
+                'users': users
             }
             return render(request, self.template_name, context)
 
@@ -350,11 +383,9 @@ class UpdateUserView(LoginRequiredMixin, View):
         user = get_object_or_404(User, id=id)
         form = UserUpdateForm(instance=user)
         users = User.objects.all()
-        persons = Person.objects.all()
         context = {
             'form': form,
             'users': users,
-            'persons': persons,
             'user_to_edit': user
         }
         return render(request, self.template_name, context)
@@ -363,23 +394,46 @@ class UpdateUserView(LoginRequiredMixin, View):
         user = get_object_or_404(User, id=id)
         form = UserUpdateForm(request.POST, instance=user)
         if form.is_valid():
-            user = form.save(commit=False)
-            password = request.POST.get('password')
-            if password:
-                user.set_password(password)
-            user.save()
-            messages.success(request, 'Usuario actualizado exitosamente.')
-            return redirect('usuarios')
+            try:
+                with transaction.atomic():
+                    # Actualizar usuario
+                    user = form.save(commit=False)
+                    password = request.POST.get('password')
+                    if password:
+                        user.set_password(password)
+                    user.save()
+                    
+                    # SINCRONIZACIÓN: Actualizar también la tabla Person si existe
+                    if user.person:
+                        person = user.person
+                        person.email = user.email  # Sincronizar email
+                        person.document_number = user.documento  # Sincronizar documento
+                        person.save()
+                        print(f"✅ Sincronizado Person ID {person.id}: email={person.email}, documento={person.document_number}")
+                    else:
+                        print(f"⚠️ Usuario {user.username} no tiene Person asociado")
+                    
+                    messages.success(request, 'Usuario actualizado exitosamente (datos sincronizados).')
+                    return redirect('usuarios')
+                    
+            except Exception as e:
+                messages.error(request, f'Error al actualizar usuario: {str(e)}')
+                print(f"❌ Error en sincronización: {e}")
         else:
-            error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
-            error_string = f"<ul>{error_list_html}</ul>"
-            messages.error(request, f"Por favor corrija los siguientes errores:{error_string}")
+            # Crear mensaje de error detallado
+            error_details = []
+            for field_name, errors in form.errors.items():
+                field_label = form.fields[field_name].label if field_name in form.fields else field_name
+                for error in errors:
+                    error_details.append(f"<strong>{field_label}:</strong> {error}")
+            
+            error_message = "<br>".join(error_details)
+            messages.error(request, f"Errores en el formulario:<br>{error_message}")
+            
             users = User.objects.all()
-            persons = Person.objects.all()
             context = {
                 'form': form,
                 'users': users,
-                'persons': persons,
                 'user_to_edit': user
             }
             return render(request, self.template_name, context)
@@ -888,19 +942,29 @@ class UpdatePersonView(LoginRequiredMixin, View):
         person = get_object_or_404(Person, id=id)
         form = PersonForm(request.POST, instance=person)
         if form.is_valid():
-            person = form.save()
-            # Sincronizar datos con el usuario relacionado (si existe)
-            from .models import User
             try:
-                user = User.objects.get(person=person)
-                user.email = person.email or ''
-                user.first_name = person.name or ''
-                user.last_name = person.surname or ''
-                user.save()
-            except User.DoesNotExist:
-                pass
-            messages.success(request, 'Estudiante actualizado exitosamente.')
-            return redirect('cedulas')
+                with transaction.atomic():
+                    person = form.save()
+                    
+                    # SINCRONIZACIÓN: Actualizar también la tabla User si existe
+                    from .models import User
+                    try:
+                        user = User.objects.get(person=person)
+                        user.email = person.email or ''
+                        user.first_name = person.name or ''
+                        user.last_name = person.surname or ''
+                        user.documento = person.document_number or ''  # ¡AGREGAR SINCRONIZACIÓN DE DOCUMENTO!
+                        user.save()
+                        print(f"✅ Sincronizado User ID {user.id}: email={user.email}, documento={user.documento}")
+                    except User.DoesNotExist:
+                        print(f"⚠️ Person {person.name} no tiene User asociado")
+                    
+                    messages.success(request, 'Estudiante actualizado exitosamente (datos sincronizados).')
+                    return redirect('cedulas')
+                    
+            except Exception as e:
+                messages.error(request, f'Error al actualizar estudiante: {str(e)}')
+                print(f"❌ Error en sincronización: {e}")
         else:
             error_list_html = ''.join([f'<li>{error}</li>' for error_list in form.errors.values() for error in error_list])
             error_string = f"<ul>{error_list_html}</ul>"
@@ -1320,12 +1384,7 @@ class Perfil(LoginRequiredMixin, View):
     login_url = 'login'
 
     def get(self, request, *args, **kwargs):
-        
-        
-        
-        
 
-        
         return render(request, self.template_name)
 
 # INTENTO DE BACKEND DE GABO !!!!
@@ -2425,3 +2484,70 @@ class GrupoApiView(LoginRequiredMixin, View):
             'study_modality': group.study_modality,
         }
         return JsonResponse(data)
+# ===
+# ===========================
+# VISTA DE PERFIL DE USUARIO
+# ==============================
+
+@login_required
+def perfil_view(request):
+    """
+    Vista para mostrar y editar el perfil del usuario (solo correo y contraseña)
+    """
+    user = request.user
+    
+    if request.method == 'POST':
+        # Obtener datos del formulario
+        email = request.POST.get('email', '').strip()
+        current_password = request.POST.get('current_password', '').strip()
+        new_password = request.POST.get('new_password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+        
+        try:
+            with transaction.atomic():
+                # Actualizar email si se proporcionó
+                if email and email != user.email:
+                    user.email = email
+                    user.save()
+                    
+                    # También actualizar en la tabla Person si existe
+                    if user.person:
+                        user.person.email = email
+                        user.person.save()
+                
+                # Cambiar contraseña si se proporcionó
+                if current_password and new_password:
+                    # Verificar contraseña actual
+                    if not user.check_password(current_password):
+                        messages.error(request, 'La contraseña actual es incorrecta.')
+                        return redirect('perfil')
+                    
+                    # Verificar que las nuevas contraseñas coincidan
+                    if new_password != confirm_password:
+                        messages.error(request, 'Las nuevas contraseñas no coinciden.')
+                        return redirect('perfil')
+                    
+                    # Verificar longitud mínima
+                    if len(new_password) < 8:
+                        messages.error(request, 'La nueva contraseña debe tener al menos 8 caracteres.')
+                        return redirect('perfil')
+                    
+                    # Cambiar contraseña
+                    user.set_password(new_password)
+                    user.save()
+                    
+                    # Mantener sesión activa
+                    update_session_auth_hash(request, user)
+                
+                messages.success(request, 'Perfil actualizado exitosamente.')
+                
+        except Exception as e:
+            messages.error(request, f'Error al actualizar el perfil: {str(e)}')
+    
+    # Renderizar template con datos del usuario
+    context = {
+        'user': user,
+        'person': user.person if hasattr(user, 'person') else None
+    }
+    
+    return render(request, 'perfil.html', context)
