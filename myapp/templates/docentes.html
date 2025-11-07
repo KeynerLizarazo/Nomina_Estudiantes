@@ -39,118 +39,154 @@
     <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto pt-4">
       <div class="card shadow">
         <div class="card-header">Lista de Docentes</div>
-        <div class="card-body ">
+        
           <div class="card-body">
             <div class="mb-3">
-              <!-- Formulario de Búsqueda -->
-              <form class="d-flex" method="get" action="{% url 'docentes' %}">
-                <div class="input-group me-2">
-                  <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ query|default_if_none:''  }}">
-                </div>
-                <select name="campo" class="form-select w-25 me-2">
-                  <option value="todos" {% if campo == "todos" %}selected{% endif %}>Todos los campos</option>
-                  <option value="document_number" {% if campo == "document_number" %}selected{% endif %}>Nro de documento</option>
-                  <option value="name" {% if campo == "name" %}selected{% endif %}>Nombre</option>
-                  <option value="surname" {% if campo == "surname" %}selected{% endif %}>Apellido</option>
-                  <option value="telephone_number" {% if campo == "telephone_number" %}selected{% endif %}>Teléfono</option>
-                  <option value="email" {% if campo == "email" %}selected{% endif %}>Email</option>
-                  <option value="date_of_birth" {% if campo == "date_of_birth" %}selected{% endif %}>Fecha de Nacimiento</option>
-                  <option value="pais_origen" {% if campo == "pais_origen" %}selected{% endif %}>País de origen</option>
-                </select>
 
-                <button class="btn btn-secondary" type="submit" style="white-space: nowrap;"><i class="fa fa-search me-1" aria-hidden="true"></i>Buscar</button>
-                <a href="{% url 'docentes' %}" class="btn btn-secondary ms-2 me-2" style="white-space: nowrap;"><i class="fa fa-undo me-1" aria-hidden="true"></i>Refrescar</a>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                  data-bs-target="#controlNominaModal" style="white-space: nowrap;">
-                  <i class="fas fa-plus me-1"></i>Añadir
-                </button>
+              <!-- Formulario de Búsqueda (Docentes - versión responsive) -->
+              <form method="get" action="{% url 'docentes' %}" class="mb-3">
+                <div class="row g-2 align-items-end">
+
+                  <!-- Campo de búsqueda -->
+                  <div class="col-12 col-md">
+                    <label class="visually-hidden" for="q">Buscar</label>
+                    
+                    <div class="input-group">
+                      <input type="text" name="q" id="q" class="form-control"
+                        placeholder="Buscar..." value="{{ query|default_if_none:'' }}">
+                    </div>
+                  </div>
+
+                  <!-- Selector de campo -->
+                  <div class="col-12 col-md-auto">
+                    <label class="visually-hidden" for="campo">Campo</label>
+                    <select name="campo" id="campo" class="form-select">
+                      <option value="todos" {% if campo == "todos" %}selected{% endif %}>Todos los campos</option>
+                      <option value="document_number" {% if campo == "document_number" %}selected{% endif %}>Nro de documento</option>
+                      <option value="name" {% if campo == "name" %}selected{% endif %}>Nombre</option>
+                      <option value="surname" {% if campo == "surname" %}selected{% endif %}>Apellido</option>
+                      <option value="telephone_number" {% if campo == "telephone_number" %}selected{% endif %}>Teléfono</option>
+                      <option value="email" {% if campo == "email" %}selected{% endif %}>Email</option>
+                      <option value="date_of_birth" {% if campo == "date_of_birth" %}selected{% endif %}>Fecha de Nacimiento</option>
+                      <option value="pais_origen" {% if campo == "pais_origen" %}selected{% endif %}>País de origen</option>
+                    </select>
+                  </div>
+
+                  <!-- Botones -->
+                  <div class="col-12 col-md-auto d-flex flex-wrap gap-2">
+                    <button class="btn btn-secondary flex-grow-1 flex-md-grow-0" type="submit">
+                      <i class="fa fa-search me-1"></i>Buscar
+                    </button>
+                    <a href="{% url 'docentes' %}" class="btn btn-secondary flex-grow-1 flex-md-grow-0">
+                      <i class="fa fa-undo me-1"></i>Refrescar
+                    </a>
+                    <button type="button" class="btn btn-primary flex-grow-1 flex-md-grow-0"
+                      data-bs-toggle="modal" data-bs-target="#controlNominaModal">
+                      <i class="fas fa-plus me-1"></i>Añadir
+                    </button>
+                  </div>
+                </div>
               </form>
             </div>
-
+            <hr class="d-block d-md-none mx-n3 my-3">
             <!-- Botón de exportar -->
-            <form class="d-flex mb-2" method="get" action="{% url 'export_tutors' %}">
-              <select name="format" class="form-select w-auto me-2">
+            <form method="get" action="{% url 'export_tutors' %}" class="mb-3">
+              <div class="row g-2 align-items-end">
+                <!-- Selector de formato -->
+                <div class="col-12 col-md-auto">
+              <select name="format" class="form-select">
                 <option value="xlsx">Excel (.xlsx)</option>
                 <option value="csv">CSV</option>
               </select>
-              <button type="submit" class="btn btn-success"><i class="fa fa-download me-1" aria-hidden="true"></i>Descargar Reporte</button>
+              </div>
+              <!-- Botón de descarga -->
+              <div class="col-12 col-md-auto">
+                <button type="submit" class="btn btn-success w-100 w-md-auto">
+                  <i class="fa fa-download me-1"></i>Descargar Reporte
+                </button>
+              </div>
+              </div>
             </form>
 
             <!-- Tabla de Resultados -->
             <div class="table-responsive">
-            <table class="table table-bordered">
-              <thead>
-                <tr class="align-top">
-                  <th style="min-width: 101px; width: 101px;">Acciones</th>
-                  <th>Tipo de Documento</th>
-                  <th>Número de Documento</th>
-                  <th>Nombres</th>
-                  <th>Apellidos</th>
-                  <th>Teléfono</th>
-                  <th>Email</th>
-                  <th>Fecha Nac.</th>
-                  <th>Sexo</th>
-                  <th>País de origen</th>
-                  <th>Cargo</th>
-                  
-                </tr>
-              </thead>
-              <tbody id="tabla-resultados">
-                {% if tutors %}
-                {% for tutor in tutors %}
-                <tr>
-                  <td>
-                    <button type="button" class="btn btn-warning btn-sm mb-2" data-bs-toggle="modal"
-                      data-bs-target="#controlNominaModal" data-tutor-id="{{ tutor.id }}"><i class="fas fa-edit me-1"></i>Editar</button>
-                    <form action="{% url 'eliminar_docente' tutor.id %}" method="post" style="display:inline;">
-                      {% csrf_token %}
-                      <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash me-1"></i>Eliminar</button>
-                    </form>
-                  </td>
-                  <td>{{ tutor.person.get_type_document_display }}</td>
-                  <td>{{ tutor.person.document_number }}</td>
-                  <td>{{ tutor.person.name }}</td>
-                  <td>{{ tutor.person.surname }}</td>
-                  <td>{{ tutor.person.telephone_number }}</td>
-                  <td>{{ tutor.person.email }}</td>
-                  <td>{{ tutor.person.date_of_birth }}</td>
-                  <td>{{ tutor.person.get_gender_display }}</td>
-                  <td>{{ tutor.person.pais_origen }}</td>
-                  <td>{{ tutor.get_staff_position_display }}</td>
-                  
-                </tr>
-                {% endfor %}
-                {% else %}
-                <tr>
-                  <td colspan="11" class="text-center text-muted">No se encontraron registros.</td>
-                </tr>
-                {% endif %}
-              </tbody>
-            </table>
+              <table class="table table-bordered">
+                <thead>
+                  <tr class="align-top">
+                    <th style="min-width: 101px; width: 101px;">Acciones</th>
+                    <th>Tipo de Documento</th>
+                    <th>Número de Documento</th>
+                    <th>Nombres</th>
+                    <th>Apellidos</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Fecha Nac.</th>
+                    <th>Sexo</th>
+                    <th>País de origen</th>
+                    <th>Cargo</th>
+                    
+                  </tr>
+                </thead>
+                <tbody id="tabla-resultados">
+                  {% if tutors %}
+                  {% for tutor in tutors %}
+                  <tr>
+                    <td>
+                      <button type="button" class="btn btn-warning btn-sm mb-2" data-bs-toggle="modal"
+                        data-bs-target="#controlNominaModal" data-tutor-id="{{ tutor.id }}" style="padding-inline: 0.87rem;"><i class="fas fa-edit me-1"></i>Editar</button>
+                      <form action="{% url 'eliminar_docente' tutor.id %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash me-1"></i>Eliminar</button>
+                      </form>
+                    </td>
+                    <td>{{ tutor.person.get_type_document_display }}</td>
+                    <td>{{ tutor.person.document_number }}</td>
+                    <td>{{ tutor.person.name }}</td>
+                    <td>{{ tutor.person.surname }}</td>
+                    <td>{{ tutor.person.telephone_number }}</td>
+                    <td>{{ tutor.person.email }}</td>
+                    <td>{{ tutor.person.date_of_birth }}</td>
+                    <td>{{ tutor.person.get_gender_display }}</td>
+                    <td>{{ tutor.person.pais_origen }}</td>
+                    <td>{{ tutor.get_staff_position_display }}</td>
+                    
+                  </tr>
+                  {% endfor %}
+                  {% else %}
+                  <tr>
+                    <td colspan="11" class="text-center text-muted">No se encontraron registros.</td>
+                  </tr>
+                  {% endif %}
+                </tbody>
+              </table>
             </div>
+            
           </div>
+          
         </div>
+        <!-- Paginación con flechas personalizadas -->
+            <div class="pagination-container d-flex justify-content-center align-items-center my-4">
+              <button 
+                id="prev-page" 
+                class="btn pagination-btn" 
+                {% if not tutors.has_previous %}disabled{% endif %}
+              >
+                <img src="{% static 'assets/images/flecha_izq.png' %}" alt="Anterior" width="40" height="30">
+              </button>
+              <span id="page-info" class="page-info text-white mx-3">
+                {{ tutors.number }} / {{ tutors.paginator.num_pages }}
+              </span>
+              <button 
+                id="next-page" 
+                class="btn pagination-btn" 
+                {% if not tutors.has_next %}disabled{% endif %}
+              >
+                <img src="{% static 'assets/images/flecha_der.png' %}" alt="Siguiente" width="40" height="30">
+              </button>
+            </div>
       </div>
-            <!-- Paginación con flechas personalizadas -->
-<div class="pagination-container d-flex justify-content-center align-items-center my-4">
-  <button 
-    id="prev-page" 
-    class="btn pagination-btn" 
-    {% if not tutors.has_previous %}disabled{% endif %}
-  >
-    <img src="{% static 'assets/images/flecha_izq.png' %}" alt="Anterior" width="40" height="30">
-  </button>
-  <span id="page-info" class="page-info text-white mx-3">
-    {{ tutors.number }} / {{ tutors.paginator.num_pages }}
-  </span>
-  <button 
-    id="next-page" 
-    class="btn pagination-btn" 
-    {% if not tutors.has_next %}disabled{% endif %}
-  >
-    <img src="{% static 'assets/images/flecha_der.png' %}" alt="Siguiente" width="40" height="30">
-  </button>
-</div>
+      
+            
       <!-- Ventana Modal -->
       <div class="modal fade" id="controlNominaModal" tabindex="-1" aria-labelledby="controlNominaModalLabel"
         aria-hidden="true">
