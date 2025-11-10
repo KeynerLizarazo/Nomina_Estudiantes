@@ -76,6 +76,9 @@ urlpatterns = [
     # Subir imagen para tinyMCE
     path('upload-image/', views.upload_image, name='upload_image'),
 
+
+    path('pagos/', views.PagosView.as_view(), name='pagos'),
+
     path('test-zone/', views.test_zone, name='test_zone'),
 
     # Exportar datos

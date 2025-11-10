@@ -116,6 +116,7 @@
                     <th>País de origen</th>
                     <th>Cedula Representante</th>
                     <th>Representante</th>
+                    <th>Solvencia</th>
 
                   </tr>
                 </thead>
@@ -132,6 +133,8 @@
                         <button type="submit" class="btn btn-danger btn-sm"><i
                             class="fas fa-trash me-1"></i>Eliminar</button>
                       </form>
+                      <a type="button" class="btn btn-success btn-sm mt-2  text-center" href="{% url 'pagos' %}"
+                        style="padding-inline: 0.87rem;"><i class="fas fa-usd me-1"></i>Pagos</a>
                     </td>
                     <td>{{ person.get_type_document_display }}</td>
                     <td>{{ person.document_number }}</td>
@@ -144,6 +147,8 @@
                     <td>{{ person.pais_origen|default_if_none:"" }}</td>
                     <td>{{ person.progenitor_document_number|default_if_none:"" }}</td>
                     <td>{{ person.progenitor_name|default_if_none:"" }}</td>
+                    <!-- relacionar esto con los pagos -->
+                    <td class="text-center align-middle fs-2"> {% if person.solvencia %}<i class="fas fa-check text-success"></i>{% else %}<i class="fas fa-times text-danger"></i>{% endif %}</td>
 
                   </tr>
                   {% endfor %}
