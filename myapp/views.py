@@ -1,4 +1,4 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required as django_login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import update_session_auth_hash
 from django.db.models import CharField
@@ -11,6 +11,10 @@ from django.utils.decorators import method_decorator
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+
+# Importar decoradores y mixins de permisos
+from myapp.decorators import admin_required, teacher_required, student_data_only
+from myapp.mixins import AdminRequiredMixin, TeacherRequiredMixin, StudentDataOnlyMixin
 from .models import Cedula, Group_Levels, User, Calendario, Courses, Tutors, Levels, TodoItem, Person, Testing, Grade_Students
 from .forms import CourseForm, LevelForm, PersonForm, TodoItemForm, UserForm, UserUpdateForm, DocenteForm, UnitForm, GroupLevelForm, EvaluacionForm
 from django import forms
@@ -50,43 +54,28 @@ def home(request):
 
 
 # ==============================
-# Decorador personalizado para login requerido
+# NOTA: Los decoradores personalizados han sido reemplazados por
+# el sistema de decoradores basado en roles en myapp/decorators.py
 # ==============================
-def login_required(view_func):
-    @wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return redirect('login')
-        return view_func(request, *args, **kwargs)
-    return wrapper
-
-def tutor_admin_required(view_func):
-    @wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated or (request.user.role not in ['tutor', 'admin']):
-            messages.error(request, 'No tienes permiso para acceder a esta página.')
-            return redirect('welcome')
-        return view_func(request, *args, **kwargs)
-    return wrapper
 
 
 # ==============================
 # Funciones CRUD para Cédulas
 # ==============================
 
-@login_required
+@django_login_required
 def welcome(request):
     
     must_change_password = request.session.get('must_change_password', False)
     return render(request, 'welcome.html', {'must_change_password': must_change_password})
 
 
-@login_required
+@admin_required
 def docentes(request):
 
     return render(request, 'docentes.html')
 
-class SeccionView(LoginRequiredMixin, View):
+class SeccionView(TeacherRequiredMixin, View):
     template_name = 'secciones.html'
     login_url = 'login'
 
@@ -101,7 +90,7 @@ class SeccionView(LoginRequiredMixin, View):
         }
         return render(request, self.template_name, context)
 
-class UpdateUnitOrderView(LoginRequiredMixin, View):
+class UpdateUnitOrderView(TeacherRequiredMixin, View):
     login_url = 'login'
 
     def post(self, request, *args, **kwargs):
@@ -120,7 +109,7 @@ class UpdateUnitOrderView(LoginRequiredMixin, View):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
-class CreateUnitView(LoginRequiredMixin, View):
+class CreateUnitView(TeacherRequiredMixin, View):
     login_url = 'login'
 
     def post(self, request, level_id, *args, **kwargs):
@@ -150,7 +139,7 @@ class CreateUnitView(LoginRequiredMixin, View):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
-class UnitJsonView(LoginRequiredMixin, View):
+class UnitJsonView(TeacherRequiredMixin, View):
     login_url = 'login'
 
     def get(self, request, unit_id, *args, **kwargs):
@@ -167,7 +156,7 @@ class UnitJsonView(LoginRequiredMixin, View):
             'pdf_filename': pdf_filename
         })
 
-class UpdateUnitView(LoginRequiredMixin, View):
+class UpdateUnitView(TeacherRequiredMixin, View):
     login_url = 'login'
 
     def post(self, request, unit_id, *args, **kwargs):
@@ -191,7 +180,7 @@ class UpdateUnitView(LoginRequiredMixin, View):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
-class DeleteUnitView(LoginRequiredMixin, View):
+class DeleteUnitView(TeacherRequiredMixin, View):
     login_url = 'login'
 
     def post(self, request, unit_id, *args, **kwargs):
@@ -201,7 +190,7 @@ class DeleteUnitView(LoginRequiredMixin, View):
         messages.success(request, 'Unidad eliminada exitosamente.')
         return redirect('secciones', level_id=level_id)
 
-class UnitCreateView(LoginRequiredMixin, View):
+class UnitCreateView(TeacherRequiredMixin, View):
     template_name = 'unit_form.html'
     login_url = 'login'
 
@@ -223,7 +212,7 @@ class UnitCreateView(LoginRequiredMixin, View):
             return redirect('secciones', level_id=level.id)
         return render(request, self.template_name, {'form': form, 'level': level})
 
-class UnitUpdateView(LoginRequiredMixin, View):
+class UnitUpdateView(TeacherRequiredMixin, View):
     template_name = 'unit_form.html'
     login_url = 'login'
 
@@ -244,7 +233,7 @@ class UnitUpdateView(LoginRequiredMixin, View):
         return render(request, self.template_name, {'form': form, 'level': level, 'unit': unit})
 
 @csrf_exempt
-@login_required
+@django_login_required
 def change_password(request):
     if request.method == 'POST':
         user = request.user
@@ -258,7 +247,7 @@ def change_password(request):
         request.session['must_change_password'] = False  # Actualiza la sesión
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'error': 'Método no permitido.'})
-class UserView(LoginRequiredMixin, View):
+class UserView(AdminRequiredMixin, View):
     template_name = 'usuarios.html'
     login_url = 'login'
 
@@ -375,7 +364,7 @@ class UserView(LoginRequiredMixin, View):
             }
             return render(request, self.template_name, context)
 
-class UpdateUserView(LoginRequiredMixin, View):
+class UpdateUserView(AdminRequiredMixin, View):
     template_name = 'usuarios.html'
     login_url = 'login'
 
@@ -438,7 +427,7 @@ class UpdateUserView(LoginRequiredMixin, View):
             }
             return render(request, self.template_name, context)
 
-class DeleteUserView(LoginRequiredMixin, View):
+class DeleteUserView(AdminRequiredMixin, View):
     login_url = 'login'
 
     def post(self, request, id, *args, **kwargs):
@@ -448,7 +437,7 @@ class DeleteUserView(LoginRequiredMixin, View):
         return redirect('usuarios')
 
 
-class NotasApiView(View):
+class NotasApiView(AdminRequiredMixin, View):
     def get(self, request, id, *args, **kwargs):
         person = get_object_or_404(Person, id=id)
         data = {
@@ -465,7 +454,7 @@ class NotasApiView(View):
             'progenitor_name': person.progenitor_name,
         }
         return JsonResponse(data)
-class NotasView(LoginRequiredMixin, View):
+class NotasView(AdminRequiredMixin, View):
     def sync_students(self):
         # Solo crear Students para personas cuyo usuario tiene rol 'estudiante'
         existing_tutor_ids = set(Tutors.all_objects.values_list('person_id', flat=True))
@@ -611,7 +600,7 @@ class NotasView(LoginRequiredMixin, View):
             return render(request, self.template_name, context)
         
 
-class AñadirGrupoApiView(View):
+class AñadirGrupoApiView(TeacherRequiredMixin, View):
     def get(self, request, id, *args, **kwargs):
         person = get_object_or_404(Person, id=id)
         data = {
@@ -629,7 +618,7 @@ class AñadirGrupoApiView(View):
         }
         return JsonResponse(data)
 
-class AñadirGrupoView(LoginRequiredMixin, View):
+class AñadirGrupoView(TeacherRequiredMixin, View):
     template_name = 'addgroup.html'
     login_url = 'login'
 
@@ -762,7 +751,7 @@ class AñadirGrupoView(LoginRequiredMixin, View):
             messages.error(request, f'Error al crear el grupo: {str(e)}')
             return redirect('addgroup_level', level_id=level_id) if level_id else redirect('addgroup')
 
-class PersonApiView(View):
+class PersonApiView(AdminRequiredMixin, View):
     def get(self, request, id, *args, **kwargs):
         person = get_object_or_404(Person, id=id)
         data = {
@@ -779,7 +768,7 @@ class PersonApiView(View):
             'progenitor_name': person.progenitor_name,
         }
         return JsonResponse(data)
-class PersonView(LoginRequiredMixin, View):
+class PersonView(AdminRequiredMixin, View):
     def sync_students(self):
         # Solo crear Students para personas cuyo usuario tiene rol 'estudiante'
         existing_tutor_ids = set(Tutors.all_objects.values_list('person_id', flat=True))
@@ -923,7 +912,7 @@ class PersonView(LoginRequiredMixin, View):
             }
             return render(request, self.template_name, context)
         
-class UpdatePersonView(LoginRequiredMixin, View):
+class UpdatePersonView(AdminRequiredMixin, View):
     template_name = 'cedulas.html'
     login_url = 'login'
 
@@ -978,7 +967,7 @@ class UpdatePersonView(LoginRequiredMixin, View):
             return render(request, self.template_name, context)
 
 
-class DeletePersonView(LoginRequiredMixin, View):
+class DeletePersonView(AdminRequiredMixin, View):
     login_url = 'login'
 
     def post(self, request, id, *args, **kwargs):
@@ -987,7 +976,7 @@ class DeletePersonView(LoginRequiredMixin, View):
         messages.success(request, 'Estudiante eliminada exitosamente.')
         return redirect('cedulas')
 
-class CourseView(LoginRequiredMixin, View):
+class CourseView(TeacherRequiredMixin, View):
     template_name = 'cursos.html'
     login_url = 'login'
 
@@ -1032,7 +1021,7 @@ class CourseView(LoginRequiredMixin, View):
             }
             return render(request, self.template_name, context)
 
-class UpdateCourseView(LoginRequiredMixin, View):
+class UpdateCourseView(TeacherRequiredMixin, View):
     template_name = 'cursos.html'
     login_url = 'login'
 
@@ -1064,7 +1053,7 @@ class UpdateCourseView(LoginRequiredMixin, View):
             }
             return render(request, self.template_name, context)
 
-class DeleteCourseView(LoginRequiredMixin, View):
+class DeleteCourseView(TeacherRequiredMixin, View):
     login_url = 'login'
 
     def post(self, request, id, *args, **kwargs):
@@ -1073,7 +1062,7 @@ class DeleteCourseView(LoginRequiredMixin, View):
         messages.success(request, 'Curso eliminado exitosamente.')
         return redirect('cursos')
 
-class LevelView(LoginRequiredMixin, View):
+class LevelView(TeacherRequiredMixin, View):
     template_name = 'niveles.html'
     login_url = 'login'
 
@@ -1120,7 +1109,7 @@ class LevelView(LoginRequiredMixin, View):
             }
             return render(request, self.template_name, context)
 
-class UpdateLevelView(LoginRequiredMixin, View):
+class UpdateLevelView(TeacherRequiredMixin, View):
     template_name = 'niveles.html'
     login_url = 'login'
 
@@ -1156,7 +1145,7 @@ class UpdateLevelView(LoginRequiredMixin, View):
             }
             return render(request, self.template_name, context)
 
-class DeleteLevelView(LoginRequiredMixin, View):
+class DeleteLevelView(TeacherRequiredMixin, View):
     login_url = 'login'
 
     def post(self, request, id, *args, **kwargs):
@@ -1166,12 +1155,9 @@ class DeleteLevelView(LoginRequiredMixin, View):
         messages.success(request, 'Nivel eliminado exitosamente.')
         return redirect('niveles', course_id=course_id)
 
-class TodoListView(LoginRequiredMixin, UserPassesTestMixin, View):
+class TodoListView(AdminRequiredMixin, View):
     template_name = 'todolist.html'
     login_url = 'login'
-
-    def test_func(self):
-        return self.request.user.role in ['tutor', 'admin']
 
     def get(self, request, *args, **kwargs):
         form = TodoItemForm()
@@ -1207,26 +1193,26 @@ class TodoListView(LoginRequiredMixin, UserPassesTestMixin, View):
             }
             return render(request, self.template_name, context)
 
-class UpdateTodoView(LoginRequiredMixin, View):
+class UpdateTodoView(AdminRequiredMixin, View):
     def post(self, request, id, *args, **kwargs):
         todo_item = get_object_or_404(TodoItem, id=id, user=request.user)
         todo_item.completed = not todo_item.completed
         todo_item.save()
         return redirect('todolist')
 
-class DeleteTodoView(LoginRequiredMixin, View):
+class DeleteTodoView(AdminRequiredMixin, View):
     def post(self, request, id, *args, **kwargs):
         todo_item = get_object_or_404(TodoItem, id=id, user=request.user)
         todo_item.delete()
         messages.success(request, 'Tarea eliminada exitosamente.')
         return redirect('todolist')
 
-@login_required
+@admin_required
 def test_zone(request):
 
     return render(request, 'test_zone.html')
 
-class GrupoView(LoginRequiredMixin, View):
+class GrupoView(TeacherRequiredMixin, View):
     template_name = 'grupos.html'
     login_url = 'login'
 
@@ -1301,7 +1287,7 @@ class GrupoView(LoginRequiredMixin, View):
         return redirect('grupos')
 
 
-class UpdateGrupoView(LoginRequiredMixin, View):
+class UpdateGrupoView(TeacherRequiredMixin, View):
     def post(self, request, id, *args, **kwargs):
         grupo = get_object_or_404(Group_Levels, id=id)
         
@@ -1338,7 +1324,7 @@ class UpdateGrupoView(LoginRequiredMixin, View):
         return redirect('grupos')
 
 
-class DeleteGrupoView(LoginRequiredMixin, View):
+class DeleteGrupoView(TeacherRequiredMixin, View):
     def post(self, request, id, *args, **kwargs):
         grupo = get_object_or_404(Group_Levels, id=id)
         nombre = grupo.name_group_levels
@@ -1347,7 +1333,7 @@ class DeleteGrupoView(LoginRequiredMixin, View):
         return redirect('grupos')
 
 
-class GrupoApiView(View):
+class GrupoApiView(TeacherRequiredMixin, View):
     def get(self, request, id, *args, **kwargs):
         grupo = get_object_or_404(Group_Levels, id=id)
         data = {
@@ -1367,17 +1353,228 @@ class GrupoApiView(View):
 
 #usar esta plantilla
 class MisNotasView(LoginRequiredMixin, View):
+    """
+    Vista para que los estudiantes vean sus propias notas.
+    """
     template_name = 'mis_notas.html'
     login_url = 'login'
 
     def get(self, request, *args, **kwargs):
+        # Verifica explícitamente si el usuario es un estudiante
+        if request.user.role == 'estudiante':
+            try:
+                estudiante_obj = Students.objects.get(user=request.user)
+            except Students.DoesNotExist:
+                return render(request, self.template_name, {
+                    'error': 'No se encontró un perfil de estudiante asociado a tu cuenta.'
+                })
+            
+            # Obtener notas del estudiante
+            notas_qs = Grade_Students.objects.filter(
+                student=estudiante_obj
+            ).select_related('evaluacion').order_by('-evaluacion__date')
+            
+            context = {
+                'estudiante': estudiante_obj,
+                'notas': notas_qs,
+                'total_notas': notas_qs.count(),
+                'es_estudiante': True
+            }
+        else:
+            # Para profesores/admin, podrías redirigir a otra vista o mostrar un mensaje
+            context = {
+                'error': 'Esta sección es exclusiva para estudiantes.',
+                'es_estudiante': False
+            }
         
+        return render(request, self.template_name, context)
+# class MisNotasView(StudentDataOnlyMixin, View):
+#     """
+#     Vista para que los estudiantes vean sus propias notas.
+#     Los estudiantes ven solo sus notas, profesores y admin ven todas.
+#     """
         
+#     template_name = 'mis_notas.html'
+#     login_url = 'login'
+
+#     def get(self, request, *args, **kwargs):
         
+#         # Si es estudiante, mostrar solo sus notas
+#         if request.student_filter:
+#             try:
+#                 estudiante_obj = Students.objects.get(user=request.user)
+#             except Students.DoesNotExist:
+#                 return render(request, "mis_notas.html", {
+#                     'error': 'No se encontró un perfil de estudiante asociado a tu cuenta.'
+#                 })
+            
+#             # Obtener notas del estudiante
+#             notas_qs = Grade_Students.objects.filter(
+#                 student=estudiante_obj
+#             ).select_related('evaluacion', 'evaluacion__seccion').order_by('-evaluacion__date')
+            
+#             context = {
+#                 'estudiante': estudiante_obj,
+#                 'notas': notas_qs,
+#                 'total_notas': notas_qs.count(),
+#                 'es_estudiante': True
+#             }
+#         else:
+#             # Admin o profesor: mostrar todas las notas
+#             notas_qs = Grade_Students.objects.all().select_related(
+#                 'student', 'student__user', 'evaluacion', 'evaluacion__seccion'
+#             ).order_by('-evaluacion__date')
+            
+#             context = {
+#                 'notas': notas_qs,
+#                 'total_notas': notas_qs.count(),
+#                 'es_estudiante': False
+#             }
+        
+#         return render(request, "mis_notas.html", context)
         
 
+class CalificarEvaluacionView(TeacherRequiredMixin, View):
+    """
+    Vista para que los profesores califiquen masivamente a todos los estudiantes
+    de un grupo en una evaluación específica.
+    """
+    template_name = 'calificar_evaluacion.html'
+    login_url = 'login'
+
+    def get(self, request, evaluacion_id, *args, **kwargs):
+        # Obtener la evaluación
+        evaluacion = get_object_or_404(Testing, id=evaluacion_id)
+        grupo = evaluacion.group_level
         
-        return render(request, self.template_name)
+        # Obtener todos los estudiantes del grupo
+        estudiantes = grupo.students.filter(is_deleted=False).select_related(
+            'person', 'user'
+        ).order_by('person__surname', 'person__name')
+        
+        # Preparar datos de estudiantes con sus notas actuales
+        estudiantes_data = []
+        for estudiante in estudiantes:
+            try:
+                # Buscar si ya tiene nota para esta evaluación
+                nota_obj = Grade_Students.objects.get(
+                    student=estudiante,
+                    evaluacion=evaluacion,
+                    group_level=grupo
+                )
+                nota_actual = nota_obj.grades
+                observaciones = nota_obj.observations
+                tiene_nota = True
+            except Grade_Students.DoesNotExist:
+                nota_actual = None
+                observaciones = ""
+                tiene_nota = False
+            
+            estudiantes_data.append({
+                'estudiante': estudiante,
+                'nota_actual': nota_actual,
+                'observaciones': observaciones,
+                'tiene_nota': tiene_nota
+            })
+        
+        # Calcular estadísticas
+        total_estudiantes = len(estudiantes_data)
+        calificados = sum(1 for e in estudiantes_data if e['tiene_nota'])
+        pendientes = total_estudiantes - calificados
+        progreso_porcentaje = round((calificados / total_estudiantes * 100), 1) if total_estudiantes > 0 else 0
+        
+        # Aplicar filtros de búsqueda si existen
+        query = request.GET.get('q', '').strip()
+        if query:
+            estudiantes_data = [
+                e for e in estudiantes_data
+                if query.lower() in e['estudiante'].person.name.lower() or
+                   query.lower() in e['estudiante'].person.surname.lower() or
+                   query.lower() in e['estudiante'].person.document_number.lower()
+            ]
+        
+        # Paginación
+        paginator = Paginator(estudiantes_data, 15)  # 15 estudiantes por página
+        page_number = request.GET.get('page', 1)
+        estudiantes_paginados = paginator.get_page(page_number)
+        
+        context = {
+            'evaluacion': evaluacion,
+            'grupo': grupo,
+            'estudiantes': estudiantes_paginados,
+            'total_estudiantes': total_estudiantes,
+            'calificados': calificados,
+            'pendientes': pendientes,
+            'progreso_porcentaje': progreso_porcentaje,
+            'query': query,
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def post(self, request, evaluacion_id, *args, **kwargs):
+        """
+        Guardar las notas de múltiples estudiantes simultáneamente
+        """
+        evaluacion = get_object_or_404(Testing, id=evaluacion_id)
+        grupo = evaluacion.group_level
+        
+        # Obtener los datos del formulario
+        notas_guardadas = 0
+        errores = []
+        
+        for key, value in request.POST.items():
+            if key.startswith('nota_'):
+                # Extraer el ID del estudiante
+                estudiante_id = key.replace('nota_', '')
+                
+                try:
+                    estudiante = Students.objects.get(id=estudiante_id)
+                    nota_valor = value.strip()
+                    observaciones = request.POST.get(f'observaciones_{estudiante_id}', '').strip()
+                    
+                    # Validar la nota
+                    if nota_valor:
+                        nota_decimal = float(nota_valor)
+                        
+                        if nota_decimal < 0 or nota_decimal > 100:
+                            errores.append(f'{estudiante.person.name}: La nota debe estar entre 0 y 100')
+                            continue
+                        
+                        # Crear o actualizar la nota
+                        nota_obj, created = Grade_Students.objects.update_or_create(
+                            student=estudiante,
+                            evaluacion=evaluacion,
+                            group_level=grupo,
+                            defaults={
+                                'grades': nota_decimal,
+                                'observations': observaciones
+                            }
+                        )
+                        notas_guardadas += 1
+                    else:
+                        # Si el campo está vacío, eliminar la nota si existe
+                        Grade_Students.objects.filter(
+                            student=estudiante,
+                            evaluacion=evaluacion,
+                            group_level=grupo
+                        ).delete()
+                
+                except Students.DoesNotExist:
+                    errores.append(f'Estudiante con ID {estudiante_id} no encontrado')
+                except ValueError:
+                    errores.append(f'Nota inválida para estudiante ID {estudiante_id}')
+                except Exception as e:
+                    errores.append(f'Error al guardar nota: {str(e)}')
+        
+        # Preparar mensaje de respuesta
+        if errores:
+            messages.warning(request, f'Se guardaron {notas_guardadas} notas con {len(errores)} errores: {", ".join(errores[:3])}')
+        else:
+            messages.success(request, f'✅ Se guardaron exitosamente {notas_guardadas} notas')
+        
+        # Redirigir de vuelta a la misma página
+        return redirect('calificar_evaluacion', evaluacion_id=evaluacion_id)
+
     
 class Perfil(LoginRequiredMixin, View):
     template_name = 'perfil.html'
@@ -1388,7 +1585,7 @@ class Perfil(LoginRequiredMixin, View):
         return render(request, self.template_name)
 
 # INTENTO DE BACKEND DE GABO !!!!
-class DocenteApiView(View):
+class DocenteApiView(AdminRequiredMixin, View):
     def get(self, request, id, *args, **kwargs):
         tutor = get_object_or_404(Tutors, id=id)
         person = tutor.person
@@ -1406,7 +1603,7 @@ class DocenteApiView(View):
         }
         return JsonResponse(data)
 
-class DocenteView(LoginRequiredMixin, View):
+class DocenteView(AdminRequiredMixin, View):
     template_name = 'docentes.html'
     login_url = 'login'
 
@@ -1559,7 +1756,7 @@ class DocenteView(LoginRequiredMixin, View):
                 'tutors': tutors
             }
             return render(request, self.template_name, context)
-class UpdateDocenteView(LoginRequiredMixin, View):
+class UpdateDocenteView(AdminRequiredMixin, View):
     template_name = 'docentes.html'
     login_url = 'login'
 
@@ -1606,7 +1803,7 @@ class UpdateDocenteView(LoginRequiredMixin, View):
             }
             return render(request, self.template_name, context)
         
-class DeleteDocenteView(LoginRequiredMixin, View):
+class DeleteDocenteView(AdminRequiredMixin, View):
     login_url = 'login'
 
     def post(self, request, id, *args, **kwargs):
@@ -1678,7 +1875,7 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-class GrupoStudentsApiView(View):
+class GrupoStudentsApiView(TeacherRequiredMixin, View):
     def get(self, request, id, *args, **kwargs):
         grupo = get_object_or_404(Group_Levels, id=id)
         students = grupo.students.select_related('person').filter(is_deleted=False)
@@ -1701,7 +1898,7 @@ class GrupoStudentsApiView(View):
         })
 
 
-class StudentSearchApiView(View):
+class StudentSearchApiView(TeacherRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         query = request.GET.get('q', '').strip()
         
@@ -1748,7 +1945,7 @@ class StudentSearchApiView(View):
         })
 
 
-class AddStudentToGroupView(LoginRequiredMixin, View):
+class AddStudentToGroupView(TeacherRequiredMixin, View):
     def post(self, request, id, *args, **kwargs):
         try:
             grupo = get_object_or_404(Group_Levels, id=id)
@@ -1815,7 +2012,7 @@ class AddStudentToGroupView(LoginRequiredMixin, View):
             })
 
 
-class RemoveStudentFromGroupView(LoginRequiredMixin, View):
+class RemoveStudentFromGroupView(TeacherRequiredMixin, View):
     def post(self, request, id, *args, **kwargs):
         try:
             grupo = get_object_or_404(Group_Levels, id=id)
@@ -1876,7 +2073,7 @@ class RemoveStudentFromGroupView(LoginRequiredMixin, View):
             })
 
 
-class EvaluacionesListView(LoginRequiredMixin, View):
+class EvaluacionesListView(TeacherRequiredMixin, View):
     """
     Vista para listar evaluaciones de un grupo específico.
     Incluye funcionalidades de búsqueda, filtrado y paginación.
@@ -1913,16 +2110,17 @@ class EvaluacionesListView(LoginRequiredMixin, View):
         for nombre, data in evaluaciones_dict.items():
             eval_data = data['evaluacion']
             
-            # Calcular estado basado en notas (simplificado por ahora)
-            total = data['total_estudiantes']
-            con_notas = data['estudiantes_con_notas']
+            # Usar el método estático para calcular el estado correctamente
+            estado = Testing.calcular_estado_evaluacion(nombre, group)
+            progreso = eval_data.get_progreso_calificacion()
             
-            if con_notas == 0:
-                estado = 'pendiente'
-            elif con_notas == total:
-                estado = 'completada'
-            else:
-                estado = 'en_progreso'
+            # Determinar clase CSS del badge según el estado
+            estado_badge_classes = {
+                'completada': 'bg-success',
+                'en_progreso': 'bg-warning',
+                'pendiente': 'bg-secondary',
+                'vencida': 'bg-danger'
+            }
             
             evaluaciones_list.append({
                 'id': eval_data.id,
@@ -1932,9 +2130,11 @@ class EvaluacionesListView(LoginRequiredMixin, View):
                 'percentage_grade': eval_data.percentage_grade,
                 'tipo_evaluacion': eval_data.get_tipo_evaluacion_display(),
                 'tipo_evaluacion_code': eval_data.tipo_evaluacion,
-                'total_estudiantes': total,
-                'estudiantes_con_notas': con_notas,
+                'total_estudiantes': progreso['total_estudiantes'],
+                'estudiantes_con_notas': progreso['estudiantes_con_notas'],
                 'estado': estado,
+                'estado_display': estado.title(),
+                'estado_badge_class': estado_badge_classes.get(estado, 'bg-secondary'),
                 'group_level': group
             })
         
@@ -1993,7 +2193,7 @@ class EvaluacionesListView(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
 
 
-class CrearEvaluacionView(LoginRequiredMixin, View):
+class CrearEvaluacionView(TeacherRequiredMixin, View):
     """
     Vista para crear una nueva evaluación para un grupo.
     Crea automáticamente una evaluación para cada estudiante del grupo.
@@ -2037,7 +2237,7 @@ class CrearEvaluacionView(LoginRequiredMixin, View):
                     
                     messages.success(
                         request, 
-                        f'Evaluación "{form.cleaned_data["name"]}" creada exitosamente para {len(evaluaciones_creadas)} estudiantes.'
+                        f'Evaluación {form.cleaned_data["name"]} creada exitosamente para {len(evaluaciones_creadas)} estudiantes.'
                     )
                     
             except Exception as e:
@@ -2056,7 +2256,7 @@ class CrearEvaluacionView(LoginRequiredMixin, View):
         return redirect('evaluaciones_grupo', group_id=group_id)
 
 
-class EditarEvaluacionView(LoginRequiredMixin, View):
+class EditarEvaluacionView(TeacherRequiredMixin, View):
     """
     Vista para editar una evaluación existente.
     Actualiza todas las evaluaciones con el mismo nombre en el grupo.
@@ -2095,7 +2295,7 @@ class EditarEvaluacionView(LoginRequiredMixin, View):
                     
                     messages.success(
                         request, 
-                        f'Evaluación "{form.cleaned_data["name"]}" actualizada exitosamente para {count} estudiantes.'
+                        f'Evaluación {form.cleaned_data["name"]} actualizada exitosamente para {count} estudiantes.'
                     )
                     
             except Exception as e:
@@ -2114,7 +2314,7 @@ class EditarEvaluacionView(LoginRequiredMixin, View):
         return redirect('evaluaciones_grupo', group_id=group_id)
 
 
-class EliminarEvaluacionView(LoginRequiredMixin, View):
+class EliminarEvaluacionView(TeacherRequiredMixin, View):
     """
     Vista para eliminar una evaluación.
     Elimina todas las evaluaciones con el mismo nombre en el grupo.
@@ -2139,7 +2339,7 @@ class EliminarEvaluacionView(LoginRequiredMixin, View):
                 
                 messages.success(
                     request, 
-                    f'Evaluación "{nombre_evaluacion}" eliminada exitosamente ({count} registros eliminados).'
+                    f'Evaluación {nombre_evaluacion} eliminada exitosamente ({count} registros eliminados).'
                 )
                 
         except Exception as e:
@@ -2148,7 +2348,7 @@ class EliminarEvaluacionView(LoginRequiredMixin, View):
         return redirect('evaluaciones_grupo', group_id=group_id)
 
 
-class EvaluacionApiView(LoginRequiredMixin, View):
+class EvaluacionApiView(TeacherRequiredMixin, View):
     """API para obtener datos de una evaluación específica"""
     login_url = 'login'
 
@@ -2188,7 +2388,7 @@ class EvaluacionApiView(LoginRequiredMixin, View):
             }, status=500)
 
 
-class PorcentajeTotalApiView(View):
+class PorcentajeTotalApiView(TeacherRequiredMixin, View):
     """
     API para obtener el porcentaje total usado en un grupo.
     """
@@ -2213,265 +2413,7 @@ class PorcentajeTotalApiView(View):
         return JsonResponse(data)
 
 
-# ==============================
-# Vistas para Evaluaciones
-# ==============================
 
-class EvaluacionesListView(LoginRequiredMixin, View):
-    """Vista para listar evaluaciones de un grupo específico"""
-    template_name = 'evaluaciones.html'
-    login_url = 'login'
-
-    def get(self, request, group_id, *args, **kwargs):
-        group = get_object_or_404(Group_Levels, id=group_id)
-        
-        # Obtener evaluaciones del grupo (una por nombre/fecha para evitar duplicados)
-        evaluaciones = Testing.objects.filter(
-            group_level=group
-        ).values(
-            'id', 'name', 'description', 'date', 'percentage_grade', 'tipo_evaluacion'
-        ).distinct('name', 'date').order_by('name', 'date', '-id')
-        
-        # Convertir a lista y agregar información adicional
-        evaluaciones_list = []
-        for eval_data in evaluaciones:
-            # Obtener una instancia para métodos del modelo
-            evaluacion = Testing.objects.filter(
-                id=eval_data['id']
-            ).first()
-            
-            if evaluacion:
-                eval_data['estado'] = 'pendiente'  # Por ahora estado fijo, se puede mejorar después
-                eval_data['get_tipo_evaluacion_display'] = evaluacion.get_tipo_evaluacion_display()
-                evaluaciones_list.append(eval_data)
-
-        # Aplicar filtros de búsqueda
-        query = request.GET.get('q')
-        campo = request.GET.get('campo', 'todos')
-
-        if query:
-            if campo == 'name':
-                evaluaciones_list = [e for e in evaluaciones_list if query.lower() in e['name'].lower()]
-            elif campo == 'tipo':
-                evaluaciones_list = [e for e in evaluaciones_list if query.lower() in e.get('get_tipo_evaluacion_display', '').lower()]
-            else:  # todos los campos
-                evaluaciones_list = [e for e in evaluaciones_list if 
-                    query.lower() in e['name'].lower() or 
-                    query.lower() in e.get('get_tipo_evaluacion_display', '').lower()]
-
-        # Paginación
-        paginator = Paginator(evaluaciones_list, 10)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-
-        context = {
-            'group': group,
-            'evaluaciones': page_obj,
-            'query': query,
-            'campo': campo,
-        }
-        return render(request, self.template_name, context)
-
-
-class CrearEvaluacionView(LoginRequiredMixin, View):
-    """Vista para crear una nueva evaluación"""
-    login_url = 'login'
-
-    def post(self, request, group_id, *args, **kwargs):
-        group = get_object_or_404(Group_Levels, id=group_id)
-        
-        try:
-            with transaction.atomic():
-                # Obtener datos del formulario
-                name = request.POST.get('name', '').strip()
-                description = request.POST.get('description', '').strip()
-                date = request.POST.get('date')
-                percentage_grade = request.POST.get('percentage_grade')
-                tipo_evaluacion = request.POST.get('tipo_evaluacion')
-
-                # Validaciones básicas
-                if not name:
-                    messages.error(request, 'El nombre de la evaluación es obligatorio.')
-                    return redirect('evaluaciones_grupo', group_id=group_id)
-
-                # Verificar que no exista una evaluación con el mismo nombre en el grupo
-                existing_eval = Testing.objects.filter(
-                    name=name,
-                    group_level=group
-                ).first()
-                
-                if existing_eval:
-                    messages.error(request, f'Ya existe una evaluación con el título "{name}" en este grupo.')
-                    return redirect('evaluaciones_grupo', group_id=group_id)
-
-                # Crear UNA SOLA evaluación para el grupo (sin asignar estudiante específico)
-                evaluacion = Testing.objects.create(
-                    name=name,
-                    description=description,
-                    date=date,
-                    percentage_grade=percentage_grade,
-                    tipo_evaluacion=tipo_evaluacion,
-                    student=None,  # No asignar estudiante específico
-                    group_level=group
-                )
-
-                students_count = group.students.filter(is_deleted=False).count()
-                messages.success(request, f'Evaluación "{name}" creada exitosamente para el grupo con {students_count} estudiantes.')
-                return redirect('evaluaciones_grupo', group_id=group_id)
-
-        except Exception as e:
-            messages.error(request, f'Error al crear la evaluación: {str(e)}')
-            return redirect('evaluaciones_grupo', group_id=group_id)
-
-
-class EditarEvaluacionView(LoginRequiredMixin, View):
-    """Vista para editar una evaluación existente"""
-    login_url = 'login'
-
-    def post(self, request, group_id, evaluacion_id, *args, **kwargs):
-        group = get_object_or_404(Group_Levels, id=group_id)
-        
-        try:
-            with transaction.atomic():
-                # Obtener datos del formulario
-                name = request.POST.get('name', '').strip()
-                description = request.POST.get('description', '').strip()
-                date = request.POST.get('date')
-                percentage_grade = request.POST.get('percentage_grade')
-                tipo_evaluacion = request.POST.get('tipo_evaluacion')
-
-                # Validaciones básicas
-                if not name:
-                    messages.error(request, 'El nombre de la evaluación es obligatorio.')
-                    return redirect('evaluaciones_grupo', group_id=group_id)
-
-                # Obtener la evaluación original para comparar el nombre
-                evaluacion_original = Testing.objects.filter(
-                    id=evaluacion_id,
-                    group_level=group
-                ).first()
-
-                if not evaluacion_original:
-                    messages.error(request, 'Evaluación no encontrada.')
-                    return redirect('evaluaciones_grupo', group_id=group_id)
-
-                # Si el nombre cambió, verificar que no exista otra evaluación con el nuevo nombre
-                if name != evaluacion_original.name:
-                    existing_eval = Testing.objects.filter(
-                        name=name,
-                        group_level=group
-                    ).exclude(id=evaluacion_id).first()
-                    
-                    if existing_eval:
-                        messages.error(request, f'Ya existe otra evaluación con el título "{name}" en este grupo.')
-                        return redirect('evaluaciones_grupo', group_id=group_id)
-
-                # Actualizar todas las evaluaciones con el mismo nombre original en el grupo
-                evaluaciones_actualizadas = Testing.objects.filter(
-                    name=evaluacion_original.name,
-                    group_level=group,
-                    date=evaluacion_original.date
-                ).update(
-                    name=name,
-                    description=description,
-                    date=date,
-                    percentage_grade=percentage_grade,
-                    tipo_evaluacion=tipo_evaluacion
-                )
-
-                messages.success(request, f'Evaluación "{name}" actualizada exitosamente para {evaluaciones_actualizadas} estudiantes.')
-                return redirect('evaluaciones_grupo', group_id=group_id)
-
-        except Exception as e:
-            messages.error(request, f'Error al actualizar la evaluación: {str(e)}')
-            return redirect('evaluaciones_grupo', group_id=group_id)
-
-
-class EliminarEvaluacionView(LoginRequiredMixin, View):
-    """Vista para eliminar una evaluación"""
-    login_url = 'login'
-
-    def post(self, request, group_id, evaluacion_id, *args, **kwargs):
-        group = get_object_or_404(Group_Levels, id=group_id)
-        
-        try:
-            with transaction.atomic():
-                # Obtener la evaluación original
-                evaluacion_original = Testing.objects.filter(
-                    id=evaluacion_id,
-                    group_level=group
-                ).first()
-
-                if not evaluacion_original:
-                    messages.error(request, 'Evaluación no encontrada.')
-                    return redirect('evaluaciones_grupo', group_id=group_id)
-
-                # Eliminar todas las evaluaciones con el mismo nombre y fecha en el grupo
-                evaluaciones_eliminadas = Testing.objects.filter(
-                    name=evaluacion_original.name,
-                    group_level=group,
-                    date=evaluacion_original.date
-                ).delete()
-
-                messages.success(request, f'Evaluación "{evaluacion_original.name}" eliminada exitosamente.')
-                return redirect('evaluaciones_grupo', group_id=group_id)
-
-        except Exception as e:
-            messages.error(request, f'Error al eliminar la evaluación: {str(e)}')
-            return redirect('evaluaciones_grupo', group_id=group_id)
-
-
-class EvaluacionApiView(LoginRequiredMixin, View):
-    """API para obtener datos de una evaluación específica"""
-    login_url = 'login'
-
-    def get(self, request, group_id, evaluacion_id, *args, **kwargs):
-        group = get_object_or_404(Group_Levels, id=group_id)
-        evaluacion = get_object_or_404(Testing, id=evaluacion_id, group_level=group)
-
-        data = {
-            'id': evaluacion.id,
-            'name': evaluacion.name,
-            'description': evaluacion.description,
-            'date': evaluacion.date.strftime('%Y-%m-%d'),
-            'percentage_grade': float(evaluacion.percentage_grade),
-            'tipo_evaluacion': evaluacion.tipo_evaluacion,
-            'group_name': group.name_group_levels,
-            'level_name': group.level.level_name,
-            'group_level_id': group.id,
-            'students_count': group.students.filter(is_deleted=False).count(),
-        }
-        return JsonResponse(data)
-
-
-class PorcentajeTotalApiView(LoginRequiredMixin, View):
-    """API para obtener el porcentaje total de evaluaciones de un grupo"""
-    login_url = 'login'
-
-    def get(self, request, group_id, *args, **kwargs):
-        group = get_object_or_404(Group_Levels, id=group_id)
-        
-        # Obtener evaluaciones únicas del grupo
-        evaluaciones = Testing.objects.filter(group_level=group).values(
-            'name', 'percentage_grade'
-        ).distinct()
-        
-        total_percentage = sum(float(eval_data['percentage_grade']) for eval_data in evaluaciones)
-        
-        data = {
-            'total_percentage': total_percentage,
-            'remaining_percentage': max(0, 100 - total_percentage),
-            'evaluaciones_count': len(evaluaciones)
-        }
-        return JsonResponse(data)
-
-
-class GrupoApiView(LoginRequiredMixin, View):
-    """API para obtener información de un grupo"""
-    login_url = 'login'
-
-    def get(self, request, id, *args, **kwargs):
-        group = get_object_or_404(Group_Levels, id=id)
         
         data = {
             'id': group.id,
@@ -2489,7 +2431,7 @@ class GrupoApiView(LoginRequiredMixin, View):
 # VISTA DE PERFIL DE USUARIO
 # ==============================
 
-@login_required
+@django_login_required
 def perfil_view(request):
     """
     Vista para mostrar y editar el perfil del usuario (solo correo y contraseña)

@@ -238,16 +238,41 @@ class Testing(models.Model):
 
     def get_estado(self):
         """
-        Calcula el estado de la evaluación basándose en si tiene notas asignadas.
+        Calcula el estado de la evaluación basándose en:
+        - Total de estudiantes del grupo
+        - Notas asignadas para esta evaluación
+        - Si la fecha ya pasó
         """
+        from django.utils import timezone
+        
         try:
-            # Verificar si existe una nota para esta evaluación
-            grade = Grade_Students.objects.filter(evaluacion=self).first()
-            if grade and grade.grades is not None:
-                return 'completada'
+            # Obtener total de estudiantes del grupo (activos)
+            total_estudiantes = self.group_level.students.filter(is_deleted=False).count()
+            
+            # Contar cuántos estudiantes tienen nota para esta evaluación específica
+            notas_asignadas = Grade_Students.objects.filter(
+                evaluacion__name=self.name,
+                evaluacion__group_level=self.group_level,
+                grades__isnull=False
+            ).count()
+            
+            # Verificar si la fecha ya pasó
+            fecha_pasada = self.date < timezone.now().date()
+            
+            # Determinar el estado
+            if notas_asignadas == 0:
+                # No hay notas asignadas
+                if fecha_pasada:
+                    return 'vencida'  # La fecha pasó y no se ha calificado
+                else:
+                    return 'pendiente'  # Aún no llega la fecha
+            elif notas_asignadas < total_estudiantes:
+                # Hay algunas notas pero no todas
+                return 'en_progreso'
             else:
-                return 'pendiente'
-        except:
+                # Todos los estudiantes tienen nota
+                return 'completada'
+        except Exception as e:
             return 'pendiente'
     
     def get_estado_display(self):
@@ -255,14 +280,94 @@ class Testing(models.Model):
         Retorna el estado en formato legible.
         """
         estado = self.get_estado()
-        return 'Completada' if estado == 'completada' else 'Pendiente'
+        estados = {
+            'completada': 'Completada',
+            'en_progreso': 'En Progreso',
+            'pendiente': 'Pendiente',
+            'vencida': 'Vencida'
+        }
+        return estados.get(estado, 'Pendiente')
     
     def get_estado_badge_class(self):
         """
         Retorna la clase CSS para el badge del estado.
         """
         estado = self.get_estado()
-        return 'bg-success' if estado == 'completada' else 'bg-warning'
+        clases = {
+            'completada': 'bg-success',
+            'en_progreso': 'bg-warning',
+            'pendiente': 'bg-secondary',
+            'vencida': 'bg-danger'
+        }
+        return clases.get(estado, 'bg-secondary')
+    
+    def get_progreso_calificacion(self):
+        """
+        Retorna el progreso de calificación (estudiantes con nota / total estudiantes del grupo)
+        """
+        try:
+            # Contar estudiantes activos del grupo
+            total_estudiantes = self.group_level.students.filter(is_deleted=False).count()
+            
+            # Contar cuántos estudiantes tienen nota para esta evaluación
+            notas_asignadas = Grade_Students.objects.filter(
+                evaluacion__name=self.name,
+                evaluacion__group_level=self.group_level,
+                grades__isnull=False
+            ).count()
+            
+            return {
+                'estudiantes_con_notas': notas_asignadas,
+                'total_estudiantes': total_estudiantes,
+                'porcentaje': round((notas_asignadas / total_estudiantes * 100), 1) if total_estudiantes > 0 else 0
+            }
+        except Exception as e:
+            return {
+                'estudiantes_con_notas': 0,
+                'total_estudiantes': 0,
+                'porcentaje': 0
+            }
+
+    @staticmethod
+    def calcular_estado_evaluacion(nombre_evaluacion, grupo):
+        """
+        Método estático para calcular el estado de una evaluación específica en un grupo
+        """
+        from django.utils import timezone
+        
+        try:
+            # Obtener una evaluación de referencia para la fecha
+            evaluacion_ref = Testing.objects.filter(
+                name=nombre_evaluacion,
+                group_level=grupo
+            ).first()
+            
+            if not evaluacion_ref:
+                return 'pendiente'
+            
+            # Total de estudiantes activos del grupo
+            total_estudiantes = grupo.students.filter(is_deleted=False).count()
+            
+            # Contar notas para esta evaluación
+            notas_asignadas = Grade_Students.objects.filter(
+                evaluacion__name=nombre_evaluacion,
+                evaluacion__group_level=grupo,
+                grades__isnull=False
+            ).count()
+            
+            # Verificar si la fecha ya pasó
+            fecha_pasada = evaluacion_ref.date < timezone.now().date()
+            
+            # Determinar el estado
+            if notas_asignadas == 0:
+                return 'vencida' if fecha_pasada else 'pendiente'
+            elif notas_asignadas < total_estudiantes:
+                return 'en_progreso'
+            else:
+                return 'completada'
+                
+        except Exception as e:
+            return 'pendiente'
 
     class Meta:
         db_table = 'evaluaciones'
