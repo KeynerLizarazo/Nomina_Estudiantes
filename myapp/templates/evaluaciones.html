@@ -82,9 +82,6 @@
               </select>
               <button class="btn btn-secondary" type="submit">Buscar</button>
               <a href="{% url 'evaluaciones_grupo' group.id %}" class="btn btn-secondary">Refrescar</a>
-              <a href="{% url 'notas' %}" class="btn btn-success">
-                <i class="fas fa-clipboard-check"></i> Ver Notas
-              </a>
               <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#evaluacionModal">
                 <i class="fas fa-plus"></i> Crear Evaluación
               </button>
@@ -117,7 +114,7 @@
                       onclick="eliminarEvaluacion({{ evaluacion.id }}, '{{ evaluacion.name|escapejs }}')">
                       <i class="fas fa-trash"></i> Eliminar
                     </button>
-                    <a href="{% url 'notas' %}" class="btn btn-primary btn-sm">
+                    <a href="{% url 'calificar_evaluacion' evaluacion.id %}" class="btn btn-primary btn-sm">
                       <i class="fas fa-clipboard-list"></i> Calificar
                     </a>
                   </div>
@@ -137,9 +134,11 @@
                   {% if evaluacion.estado == 'completada' %}
                   <span class="badge bg-success">Completada</span>
                   {% elif evaluacion.estado == 'en_progreso' %}
-                  <span class="badge bg-warning">En Progreso</span>
-                  <small class="text-muted d-block">{{ evaluacion.estudiantes_con_notas }}/{{
-                    evaluacion.total_estudiantes }}</small>
+                  <span class="badge bg-warning text-dark">En Progreso</span>
+                  <small class="text-muted d-block">{{ evaluacion.estudiantes_con_notas }}/{{ evaluacion.total_estudiantes }}</small>
+                  {% elif evaluacion.estado == 'vencida' %}
+                  <span class="badge bg-danger">Vencida</span>
+                  <small class="text-muted d-block">Sin calificar</small>
                   {% else %}
                   <span class="badge bg-secondary">Pendiente</span>
                   {% endif %}

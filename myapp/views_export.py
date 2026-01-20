@@ -5,7 +5,9 @@ import pandas as pd
 import io
 
 from .models import Tutors, Students, Person, User
+from myapp.decorators import admin_export_required
 
+@admin_export_required
 def export_persons(request):
 
     format_param = request.GET.get('format', 'xlsx')
@@ -47,6 +49,7 @@ def export_persons(request):
     return response
 
 
+@admin_export_required
 def export_tutors(request):
     format_param = request.GET.get('format', 'xlsx')
     tutors = Tutors.objects.select_related('person', 'user').all()

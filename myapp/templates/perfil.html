@@ -83,14 +83,18 @@
                             {% endif %}
 
                             <!-- Fecha de nacimiento -->
-                            {% if person.date_of_birth %}
                             <div class="d-flex align-items-center mb-3">
                                 <div>
-                                    <strong>Fecha de Nacimiento:</strong> <span>{{ person.date_of_birth|date:"d/m/Y"
-                                        }}</span>
+                                    <strong>Fecha de Nacimiento:</strong> 
+                                    <span>
+                                        {% if person.date_of_birth %}
+                                            {{ person.date_of_birth|date:"d/m/Y" }}
+                                        {% else %}
+                                            SIN DEFINIR
+                                        {% endif %}
+                                    </span>
                                 </div>
                             </div>
-                            {% endif %}
 
                             <!-- Sexo -->
                             {% if person.gender %}

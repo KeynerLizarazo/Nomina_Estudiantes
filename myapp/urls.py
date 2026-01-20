@@ -66,6 +66,9 @@ urlpatterns = [
     path('grupos/<int:group_id>/evaluaciones/<int:evaluacion_id>/api/', views.EvaluacionApiView.as_view(), name='evaluacion_api'),
     path('evaluaciones/api/porcentaje-total/<int:group_id>/', views.PorcentajeTotalApiView.as_view(), name='porcentaje_total_api'),
     
+    # Calificar evaluación (para profesores)
+    path('evaluaciones/<int:evaluacion_id>/calificar/', views.CalificarEvaluacionView.as_view(), name='calificar_evaluacion'),
+    
     path('notas/', views.NotasView.as_view(), name='notas'),
     path('addgroup/', views.AñadirGrupoView.as_view(), name='addgroup'),
     path('addgroup/<int:level_id>/', views.AñadirGrupoView.as_view(), name='addgroup_level'),
