@@ -237,6 +237,18 @@
                 <ul class="dropdown-menu dropdown-menu-end">
                   <li>
                     <button
+                      class="dropdown-item"
+                      data-bs-toggle="modal"
+                      data-bs-target="#viewDescriptionModal"
+                      data-level-name="{{ level.level_name }}"
+                      data-level-duration="{{ level.duration }}"
+                      data-level-description="{{ level.description|default:'Sin descripción' }}"
+                    >
+                      Ver descripción
+                    </button>
+                  </li>
+                  <li>
+                    <button
                       class="dropdown-item text-primary"
                       data-bs-toggle="modal"
                       data-bs-target="#editLevelModal"
@@ -250,16 +262,7 @@
                     </button>
                   </li>
 
-                  <li>
-                    <button
-                      class="dropdown-item"
-                      data-bs-toggle="modal"
-                      data-bs-target="#viewDescriptionModal"
-                      data-level-description="{{ level.description|default:'Sin descripción' }}"
-                    >
-                      Ver descripción
-                    </button>
-                  </li>
+                  
                   <li>
                     <hr class="dropdown-divider" />
                   </li>
@@ -322,7 +325,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="viewDescriptionModalLabel">
-              Descripción del Nivel
+              Detalles
             </h5>
             <button
               type="button"
@@ -332,8 +335,25 @@
             ></button>
           </div>
           <div class="modal-body">
-            <p id="levelDescriptionText"></p>
+            <!-- nombre del nivel --> <!-- solucionar error de espaciado con divs -->
+            <div class="mb-2">
+              <span class="fs-6 fw-bold">Nombre:</span>
+              <span id="levelNameInModal" class="ms-1"></span>
+            </div>
+            <!-- Duración del nivel -->
+            <div class="mb-2">
+              <span class="fs-6 fw-bold">Duración:</span>
+              
+                <span id="levelDurationInModal"></span>
+            </div>
+
+            <!-- Descripción del nivel -->
+            <div>
+              <span class="fs-6 fw-bold">Descripción:</span>
+              <p id="levelDescriptionText"></p>
+            </div>
           </div>
+
           <div class="modal-footer">
             <button
               type="button"
@@ -596,23 +616,23 @@
 
       // Script para el modal de ver descripción
 
-      var viewDescriptionModal = document.getElementById(
-        "viewDescriptionModal"
-      );
+      var viewDescriptionModal = document.getElementById("viewDescriptionModal");
       if (viewDescriptionModal) {
-        viewDescriptionModal.addEventListener(
-          "show.bs.modal",
-          function (event) {
-            var button = event.relatedTarget;
-            var description =
-              button.getAttribute("data-level-description") ||
-              "Sin descripción";
-            var descText = viewDescriptionModal.querySelector(
-              "#levelDescriptionText"
-            );
-            descText.textContent = description;
-          }
-        );
+        viewDescriptionModal.addEventListener("show.bs.modal", function (event) {
+          var button = event.relatedTarget;
+          var levelName = button.getAttribute("data-level-name") || "Nivel";
+          var levelDuration = button.getAttribute("data-level-duration") || "0";
+          var description = button.getAttribute("data-level-description") || "Sin descripción";
+
+          // Actualizar el título con nombre y duración
+          var nameElement = viewDescriptionModal.querySelector("#levelNameInModal");
+          var durationElement = viewDescriptionModal.querySelector("#levelDurationInModal");
+          var descText = viewDescriptionModal.querySelector("#levelDescriptionText");
+
+          nameElement.textContent = levelName;
+          durationElement.textContent = levelDuration + " Horas";
+          descText.textContent = description;
+        });
       }
     </script>
   </body>

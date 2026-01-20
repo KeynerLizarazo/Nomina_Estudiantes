@@ -79,10 +79,12 @@ urlpatterns = [
     # Subir imagen para tinyMCE
     path('upload-image/', views.upload_image, name='upload_image'),
 
+    # test zone (BORRAR AL SALIR DE DESARROLLO)
+    path('test-zone/', views.test_zone, name='test_zone'),
 
+    # Pagos (BASICO SOLO VISTA SIN FUNCIONALIDAD)
     path('pagos/', views.PagosView.as_view(), name='pagos'),
 
-    path('test-zone/', views.test_zone, name='test_zone'),
 
     # Exportar datos
     path('cedulas/export/', views_export.export_persons, name='export_persons'),
