@@ -64,9 +64,20 @@ class SoftDeleteManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(is_deleted=False)
 
-class SoftDeleteModel(models.Model):
+class TimestampedModel(models.Model):
+    """
+    Modelo base abstracto que agrega campos de auditoría temporal.
+    """
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Fecha de actualización")
+    
+    class Meta:
+        abstract = True
+
+class SoftDeleteModel(TimestampedModel):
     """
     Modelo base abstracto con campos y métodos para la eliminación lógica.
+    Incluye timestamps para auditoría completa.
     """
     is_deleted = models.BooleanField(default=False, verbose_name="Eliminado")
     deleted_at = models.DateTimeField(null=True, blank=True, default=None, verbose_name="Fecha de eliminación")
@@ -122,9 +133,10 @@ class Cedula(models.Model):
         return f"{self.get_tipo_documento_display()} - {self.numero_documento} - {self.nombre} {self.apellido}"
 
 
-class Calendario(models.Model):
+class Calendario(TimestampedModel):
     """
     Modelo para gestionar eventos del calendario.
+    Ahora con timestamps para mejor auditoría.
     """
     titulo = models.CharField(max_length=200, verbose_name="Título")
     descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
@@ -133,40 +145,84 @@ class Calendario(models.Model):
     creador = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     activo = models.BooleanField(default=True, verbose_name="Evento Activo")
 
-    def __str__(self):
-        return self.titulo
-    
     class Meta:
         db_table = 'calendario'
         verbose_name = 'Evento de calendario'
         verbose_name_plural = 'Eventos de calendario'
+        # Indexes para mejor performance
+        indexes = [
+            models.Index(fields=['fecha_inicio', 'fecha_fin']),
+            models.Index(fields=['creador', 'activo']),
+            models.Index(fields=['activo', 'fecha_inicio']),
+        ]
+        # Ordenamiento por defecto
+        ordering = ['fecha_inicio', 'titulo']
+
+    def clean(self):
+        """
+        Validación personalizada para fechas.
+        """
+        from django.core.exceptions import ValidationError
+        if self.fecha_inicio and self.fecha_fin and self.fecha_inicio >= self.fecha_fin:
+            raise ValidationError('La fecha de inicio debe ser anterior a la fecha de fin.')
+
+    def __str__(self):
+        return self.titulo
 
 
 # MODELOS DE NUEVA BASE DE DATOS ACADEMIA
 class Person(SoftDeleteModel):
+    """
+    Modelo que representa una persona en el sistema.
+    Mejorado con indexes y constraints para mejor performance e integridad.
+    """
     type_document = models.CharField(max_length=2, choices=TIPO_DOCUMENTO_CHOICES, default='V')
     document_number = models.CharField(
-    max_length=20, 
-    unique=True,
-    error_messages={
-    'unique': 'Ya existe una persona registrada con este número de documento.'
-    })
-    name= models.CharField(max_length=50)
-    surname= models.CharField(max_length=50)
-    progenitor_name= models.CharField(max_length=50, blank=True, null=True)
-    progenitor_document_number= models.CharField(max_length=20, blank=True, null=True)
-    telephone_number=models.CharField(max_length=15, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
+        max_length=20, 
+        unique=True,
+        error_messages={
+            'unique': 'Ya existe una persona registrada con este número de documento.'
+        }
+    )
+    name = models.CharField(max_length=50)
+    surname = models.CharField(max_length=50)
+    progenitor_name = models.CharField(max_length=50, blank=True, null=True)
+    progenitor_document_number = models.CharField(max_length=20, blank=True, null=True)
+    telephone_number = models.CharField(max_length=15, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True, unique=True, 
+                              error_messages={
+                                  'unique': 'Ya existe una persona registrada con este email.'
+                              })
     date_of_birth = models.DateField(blank=True, null=True)
-    gender = models.CharField(max_length=10, choices=GENDER_LIST_PREDIFINED, default='H')
+    gender = models.CharField(max_length=10, choices=GENDER_LIST_PREDIFINED, default='M')
     pais_origen = models.CharField("País de origen", max_length=50, choices=PAIS_ORIGEN_CHOICES, blank=True, null=True)
+    
     class Meta:
         db_table = 'personas'
         verbose_name = 'Persona'
         verbose_name_plural = 'Personas'
+        # Indexes para mejor performance
+        indexes = [
+            models.Index(fields=['document_number']),
+            models.Index(fields=['email']),
+            models.Index(fields=['name', 'surname']),
+            models.Index(fields=['type_document', 'document_number']),
+        ]
+        # Ordenamiento por defecto
+        ordering = ['name', 'surname']
+        
+    def clean(self):
+        """
+        Validación personalizada.
+        """
+        from django.core.exceptions import ValidationError
+        if self.date_of_birth:
+            from django.utils import timezone
+            if self.date_of_birth > timezone.now().date():
+                raise ValidationError('La fecha de nacimiento no puede ser futura.')
         
     def __str__(self):
-        return f"{self.name} ({self.document_number})"
+        return f"{self.name} {self.surname} ({self.document_number})"
 
 class Students(SoftDeleteModel):
     """
@@ -187,10 +243,11 @@ class Students(SoftDeleteModel):
         return f"{self.person.name} ({self.user.username})"
     
 
-class Grade_Students(models.Model):
+class Grade_Students(SoftDeleteModel):
     """
     Modelo que almacena las calificaciones de los estudiantes en un grupo específico.
     Conecta las notas con evaluaciones específicas.
+    Ahora con SoftDelete y timestamps para mejor auditoría.
     """
     grades = models.DecimalField(max_digits=5, decimal_places=2)
     observations = models.TextField(blank=True, null=True)
@@ -205,14 +262,20 @@ class Grade_Students(models.Model):
         verbose_name_plural = 'Notas de estudiantes'
         # Constraint: Un estudiante no puede tener dos notas para la misma evaluación
         unique_together = ['student', 'evaluacion']
+        # Indexes para mejor performance
+        indexes = [
+            models.Index(fields=['student', 'evaluacion']),
+            models.Index(fields=['group_level', 'created_at']),
+        ]
 
     def __str__(self):
         evaluacion_name = self.evaluacion.name if self.evaluacion else "Sin evaluación"
         return f"{self.grades} - {self.student.person.name} - {evaluacion_name}"
 
-class Testing(models.Model):
+class Testing(SoftDeleteModel):
     """
-    Modelo que representa una evaluación aplicada a un estudiante en un grupo.
+    Modelo que representa una evaluación aplicada a un grupo.
+    Ahora con SoftDelete y timestamps para mejor auditoría.
     """
     TIPOS_EVALUACION = [
         ('examen', 'Examen'),
@@ -374,21 +437,52 @@ class Testing(models.Model):
         verbose_name = 'Evaluación'
         verbose_name_plural = 'Evaluaciones'
         # Constraint: Un estudiante no puede tener dos evaluaciones con el mismo nombre en el mismo grupo
-        unique_together = ['name', 'student', 'group_level']    
+        unique_together = ['name', 'student', 'group_level']
+        # Indexes para mejor performance
+        indexes = [
+            models.Index(fields=['group_level', 'date']),
+            models.Index(fields=['tipo_evaluacion', 'date']),
+            models.Index(fields=['student', 'group_level']),
+            models.Index(fields=['name', 'group_level']),
+        ]
+        # Ordenamiento por defecto
+        ordering = ['-date', 'name']
+
+    def clean(self):
+        """
+        Validación personalizada.
+        """
+        from django.core.exceptions import ValidationError
+        if self.percentage_grade < 0 or self.percentage_grade > 100:
+            raise ValidationError('El porcentaje debe estar entre 0 y 100.')
 
     def __str__(self):
         return f"{self.name} ({self.date}) - {self.student.person.name}"
     
-class Units(models.Model):
+class Units(SoftDeleteModel):
+    """
+    Modelo que representa las unidades de contenido de un nivel.
+    Ahora con SoftDelete y timestamps para mejor auditoría.
+    """
     title = models.CharField(max_length=100)
     content = models.TextField(blank=True, null=True)
     pdf_material = models.FileField(upload_to='materials/', blank=True, null=True)
     topic_order = models.IntegerField()
     level = models.ForeignKey('Levels', on_delete=models.CASCADE, related_name='units', null=True)
+    
     class Meta:
         db_table = 'unidades'
         verbose_name = 'Unidad'
         verbose_name_plural = 'Unidades'
+        # Constraint: No puede haber dos unidades con el mismo orden en el mismo nivel
+        unique_together = ['level', 'topic_order']
+        # Indexes para mejor performance
+        indexes = [
+            models.Index(fields=['level', 'topic_order']),
+            models.Index(fields=['title']),
+        ]
+        # Ordenamiento por defecto
+        ordering = ['level', 'topic_order']
 
     def __str__(self):
         return f"{self.title} (Tema {self.topic_order})"
@@ -453,28 +547,43 @@ class Courses(SoftDeleteModel):
         verbose_name = 'Curso'
         verbose_name_plural = 'Cursos'
 
-class Levels(models.Model):
+class Levels(TimestampedModel):
+    """
+    Modelo que representa los niveles de un curso.
+    Ahora con timestamps para mejor auditoría.
+    """
     level_name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     duration = models.IntegerField(help_text="Duración en horas")
     course = models.ForeignKey(Courses, on_delete=models.CASCADE)
+    
     class Meta:
         db_table = 'niveles'
         verbose_name = 'Nivel'
         verbose_name_plural = 'Niveles'
+        # Constraint: No puede haber dos niveles con el mismo nombre en el mismo curso
+        unique_together = ['level_name', 'course']
+        # Indexes para mejor performance
+        indexes = [
+            models.Index(fields=['course', 'level_name']),
+            models.Index(fields=['duration']),
+        ]
+        # Ordenamiento por defecto
+        ordering = ['course', 'level_name']
 
     def __str__(self):
         return f"{self.level_name} ({self.course.course_name})"
     
-class Group_Levels(models.Model):
+class Group_Levels(SoftDeleteModel):
     """
     Modelo que representa un grupo de nivel en la academia.
     Un grupo puede tener muchos estudiantes y un nivel asociado.
+    Ahora con SoftDelete y timestamps para mejor auditoría.
     """
     name_group_levels = models.CharField(max_length=100)
     date_begin = models.DateField()
     date_end = models.DateField()
-    study_modality = models.CharField(max_length=50, choices=COURSE_MODALITY_LIST_PREDIFINED, default='presential')
+    study_modality = models.CharField(max_length=50, choices=COURSE_MODALITY_LIST_PREDIFINED, default='presencial')
     level = models.ForeignKey('Levels', on_delete=models.CASCADE)
     students = models.ManyToManyField('Students', related_name='group_levels', blank=True)
     cohort = models.IntegerField(help_text="Cohorte del Grupo", blank=True, null=True)
@@ -483,20 +592,56 @@ class Group_Levels(models.Model):
         db_table = 'grupos_niveles'
         verbose_name = 'Grupo Nivel'
         verbose_name_plural = 'Grupos Niveles'
+        # Constraint: No puede haber dos grupos con el mismo nombre en el mismo nivel
+        unique_together = ['name_group_levels', 'level']
+        # Indexes para mejor performance
+        indexes = [
+            models.Index(fields=['level', 'date_begin']),
+            models.Index(fields=['study_modality', 'cohort']),
+            models.Index(fields=['date_begin', 'date_end']),
+        ]
+        # Ordenamiento por defecto
+        ordering = ['-date_begin', 'name_group_levels']
+
+    def clean(self):
+        """
+        Validación personalizada para fechas.
+        """
+        from django.core.exceptions import ValidationError
+        if self.date_begin and self.date_end and self.date_begin >= self.date_end:
+            raise ValidationError('La fecha de inicio debe ser anterior a la fecha de fin.')
 
     def __str__(self):
         return f"{self.name_group_levels} ({self.level.level_name})"
 
-class TodoItem(models.Model):
+class TodoItem(TimestampedModel):
+    """
+    Modelo para las tareas del sistema To-Do.
+    Ahora con timestamps para mejor auditoría.
+    """
     task = models.CharField(max_length=200)
     completed = models.BooleanField(default=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     due_date = models.DateField(null=True, blank=True)
-    priority = models.CharField(max_length=20, choices=[('low', 'Baja'), ('medium', 'Media'), ('high', 'Alta')], default='medium', verbose_name="Prioridad")
+    priority = models.CharField(
+        max_length=20, 
+        choices=[('low', 'Baja'), ('medium', 'Media'), ('high', 'Alta')], 
+        default='medium', 
+        verbose_name="Prioridad"
+    )
+    
     class Meta:
         db_table = 'tareas'
         verbose_name = 'Tarea'
         verbose_name_plural = 'Tareas'
+        # Indexes para mejor performance
+        indexes = [
+            models.Index(fields=['user', 'completed']),
+            models.Index(fields=['due_date', 'priority']),
+            models.Index(fields=['created_at']),
+        ]
+        # Ordenamiento por defecto
+        ordering = ['-priority', 'due_date', '-created_at']
 
     def __str__(self):
         return self.task
