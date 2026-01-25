@@ -21,6 +21,7 @@
 </head>
 
 <body class="m-0 p-0">
+  {% include 'partials/header.html' %}
   <div class="bg-my-background-color d-flex text-white ">
     <!-- SIDEBAR -->
     {% include 'partials/sidebar.html' %}
@@ -31,72 +32,90 @@
         <div class="card-header">Lista de Usuarios</div>
         <div class="card-body">
           <!-- Formulario de Búsqueda y Filtro -->
-          <form class="d-flex mb-3" method="get" action="{% url 'usuarios' %}">
-            <div class="input-group me-2">
-              <input type="text" name="q" class="form-control" placeholder="Buscar por nombre de usuario o email..."
-                value="{{ query|default_if_none:'' }}">
+          <form method="get" action="{% url 'usuarios' %}" class="mb-3">
+            <div class="row g-2 align-items-end">
+              <!-- Campo de búsqueda (crece en md+) -->
+              <div class="col-12 col-md">
+                <label class="visually-hidden" for="q">Buscar</label>
+                <div class="input-group">
+                  <input type="text" name="q" id="q" class="form-control" placeholder="Buscar por nombre de usuario o email..."
+                    value="{{ query|default_if_none:'' }}">
+                </div>
+              </div>
+
+              <!-- Selector de rol (ancho fijo en md+) -->
+              <div class="col-12 col-md-auto">
+                <label class="visually-hidden" for="role">Rol</label>
+                <select name="role" id="role" class="form-select">
+                  <option value="">Todos los Roles</option>
+                  {% for role_value, role_display in form.fields.role.choices %}
+                    <option value="{{ role_value }}" {% if role == role_value %}selected{% endif %}>{{ role_display }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Botones: misma fila en md+, nueva fila en xs/sm -->
+              <div class="col-12 col-md-auto d-flex flex-wrap gap-2 justify-content-end justify-content-md-start">
+                <button class="btn btn-secondary flex-grow-1 flex-md-grow-0" type="submit">
+                  <i class="fa fa-search me-1"></i>Buscar
+                </button>
+                <a href="{% url 'usuarios' %}" class="btn btn-secondary flex-grow-1 flex-md-grow-0">
+                  <i class="fa fa-undo me-1"></i>Refrescar
+                </a>
+                <button type="button" class="btn btn-primary flex-grow-1 flex-md-grow-0" 
+                  data-bs-toggle="modal" data-bs-target="#addUserModal">
+                  <i class="fas fa-plus me-1"></i>Añadir
+                </button>
+              </div>
             </div>
-            <select name="role" class="form-select w-25 me-2">
-              <option value="">Todos los Roles</option>
-              {% for role_value, role_display in form.fields.role.choices %}
-              <option value="{{ role_value }}" {% if role == role_value %}selected{% endif %}>{{ role_display }}</option>
-              {% endfor %}
-            </select>
-            <button class="btn btn-secondary" type="submit" style="white-space: nowrap;"><i class="fa fa-search me-1"
-                aria-hidden="true"></i>Buscar</button>
-            <a href="{% url 'usuarios' %}" class="btn btn-secondary ms-2 me-2" style="white-space: nowrap;"><i
-                class="fa fa-undo me-1" aria-hidden="true"></i>Refrescar</a>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal"
-              style="white-space: nowrap;">
-              <i class="fas fa-plus me-1"></i>Añadir
-            </button>
           </form>
-
           <!-- Tabla de Usuarios -->
-          <table class="table table-bordered">
-            <thead>
-              <tr>
-                <th style="min-width: 101px; width: 101px;">Acciones</th>
-                <th>Nombre de Usuario</th>
-                <th>Correo</th>
-                <th>Documento</th>
-                <th>Rol</th>
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th style="min-width: 101px; width: 101px;">Acciones</th>
+                  <th>Nombre de Usuario</th>
+                  <th>Correo</th>
+                  <th>Documento</th>
+                  <th>Rol</th>
 
-              </tr>
-            </thead>
-            <tbody>
-              {% for user in users %}
-              <tr>
+                </tr>
+              </thead>
+              <tbody>
+                {% for user in users %}
+                <tr>
 
-                <td>
+                  <td>
 
 
-                  <button class="btn btn-warning btn-sm d-block mb-1" data-bs-toggle="modal"
-                    data-bs-target="#editUserModal" data-user-id="{{ user.id }}"
-                    data-user-username="{{ user.username }}" data-user-email="{{ user.email }}"
-                    data-user-documento="{{ user.documento }}" data-user-role="{{ user.role }}"
-                    data-user-action="{% url 'editar_usuario' user.id %}">
-                    <i class="fas fa-edit me-1"></i>Editar
-                  </button>
-                  <button class="btn btn-danger btn-sm d-block" data-bs-toggle="modal" data-bs-target="#deleteUserModal"
-                    data-delete-url="{% url 'eliminar_usuario' user.id %}">
-                    <i class="fas fa-trash me-1"></i>Eliminar
-                  </button>
-                </td>
+                    <button class="btn btn-warning btn-sm d-block mb-1" data-bs-toggle="modal"
+                      data-bs-target="#editUserModal" data-user-id="{{ user.id }}"
+                      data-user-username="{{ user.username }}" data-user-email="{{ user.email }}"
+                      data-user-documento="{{ user.documento }}" data-user-role="{{ user.role }}"
+                      data-user-action="{% url 'editar_usuario' user.id %}" style="padding-inline: 0.87rem;">
+                      <i class="fas fa-edit me-1"></i>Editar
+                    </button>
+                    <button class="btn btn-danger btn-sm d-block" data-bs-toggle="modal" data-bs-target="#deleteUserModal"
+                      data-delete-url="{% url 'eliminar_usuario' user.id %}">
+                      <i class="fas fa-trash me-1"></i>Eliminar
+                    </button>
+                  </td>
 
-                <td>{{ user.username }}</td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.documento }}</td>
-                <td>{{ user.get_role_display }}</td>
+                  <td>{{ user.username }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>{{ user.documento }}</td>
+                  <td>{{ user.get_role_display }}</td>
 
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="4" class="text-center text-muted">No se encontraron usuarios.</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-muted">No se encontraron usuarios.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
       <!-- Paginación visual -->

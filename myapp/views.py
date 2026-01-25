@@ -1352,6 +1352,14 @@ class GrupoApiView(TeacherRequiredMixin, View):
 
 
 #usar esta plantilla
+class PagosView(LoginRequiredMixin, View):
+    template_name = 'pagos.html'
+    login_url = 'login'
+
+    def get(self, request, *args, **kwargs):
+
+        return render(request, self.template_name)
+    
 class MisNotasView(LoginRequiredMixin, View):
     """
     Vista para que los estudiantes vean sus propias notas.
@@ -1574,6 +1582,8 @@ class CalificarEvaluacionView(TeacherRequiredMixin, View):
         
         # Redirigir de vuelta a la misma página
         return redirect('calificar_evaluacion', evaluacion_id=evaluacion_id)
+
+    
 
     
 class Perfil(LoginRequiredMixin, View):
@@ -2493,3 +2503,4 @@ def perfil_view(request):
     }
     
     return render(request, 'perfil.html', context)
+

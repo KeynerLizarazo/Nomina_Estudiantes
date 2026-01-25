@@ -29,62 +29,75 @@
 </head>
 
 <body class="m-0 p-0">
+  {% include 'partials/header.html' %}
   <div class="bg-my-background-color d-flex text-white ">
     <!-- SIDEBAR -->
     {% include 'partials/sidebar.html' %}
 
     <!-- Contenido principal -->
-
     <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto pt-4">
       <div class="card shadow">
         <div class="card-header">Lista de Estudiantes</div>
-        <div class="card-body ">
-          <div class="card-body">
-            <div class="mb-3">
-              <!-- Formulario de Búsqueda -->
-              <form class="d-flex" method="get" action="{% url 'cedulas' %}">
-                <div class="input-group me-2">
-                  <input type="text" name="q" class="form-control" placeholder="Buscar..."
-                    value="{{ query|default_if_none:''  }}">
+        
+        <!-- Contenido del card-body (todo dentro de UN solo card-body) -->
+        <div class="card-body">
+          <!-- ✅ Formulario de Búsqueda (responsive) -->
+          <form method="get" action="{% url 'cedulas' %}" class="mb-3">
+            <div class="row g-2 align-items-end">
+              <div class="col-12 col-md">
+                <label class="visually-hidden" for="q">Buscar</label>
+                <div class="input-group">
+                  <input type="text" name="q" id="q" class="form-control"
+                    placeholder="Buscar..." value="{{ query|default_if_none:'' }}">
                 </div>
-                <select name="campo" class="form-select w-25 me-2">
+              </div>
+              <div class="col-12 col-md-auto">
+                <label class="visually-hidden" for="campo">Campo</label>
+                <select name="campo" id="campo" class="form-select">
                   <option value="todos" {% if campo == "todos" %}selected{% endif %}>Todos los campos</option>
-                  <option value="document_number" {% if campo == "document_number" %}selected{% endif %}>Nro de
-                    documento
-                  </option>
+                  <option value="document_number" {% if campo == "document_number" %}selected{% endif %}>Nro de documento</option>
                   <option value="name" {% if campo == "name" %}selected{% endif %}>Nombre</option>
                   <option value="surname" {% if campo == "surname" %}selected{% endif %}>Apellido</option>
-                  <option value="telephone_number" {% if campo == "telephone_number" %}selected{% endif %}>Teléfono
-                  </option>
+                  <option value="telephone_number" {% if campo == "telephone_number" %}selected{% endif %}>Teléfono</option>
                   <option value="email" {% if campo == "email" %}selected{% endif %}>Email</option>
-                  <option value="date_of_birth" {% if campo == "date_of_birth" %}selected{% endif %}>Fecha de Nacimiento
-                  </option>
+                  <option value="date_of_birth" {% if campo == "date_of_birth" %}selected{% endif %}>Fecha de Nacimiento</option>
                   <option value="pais_origen" {% if campo == "pais_origen" %}selected{% endif %}>País de origen</option>
-                  <option value="progenitor_document_number" {% if campo == "progenitor_document_number" %}selected {% endif %}>C.Represe</option>
-                  <option value="progenitor_name" {% if campo == "progenitor_name" %}selected{% endif %}>Representante
-                  </option>
+                  <option value="progenitor_document_number" {% if campo == "progenitor_document_number" %}selected{% endif %}>C.Represe</option>
+                  <option value="progenitor_name" {% if campo == "progenitor_name" %}selected{% endif %}>Representante</option>
                 </select>
-
-                <button class="btn btn-secondary" type="submit" style="white-space: nowrap;"><i
-                    class="fa fa-search me-1" aria-hidden="true"></i>Buscar</button>
-                <a href="{% url 'cedulas' %}" class="btn btn-secondary ms-2 me-2" style="white-space: nowrap;"><i
-                    class="fa fa-undo me-1" aria-hidden="true"></i>Refrescar</a>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                  data-bs-target="#controlNominaModal" style="white-space: nowrap;">
+              </div>
+              <div class="col-12 col-md-auto d-flex flex-wrap gap-2">
+                <button class="btn btn-secondary flex-grow-1 flex-md-grow-0" type="submit">
+                  <i class="fa fa-search me-1"></i>Buscar
+                </button>
+                <a href="{% url 'cedulas' %}" class="btn btn-secondary flex-grow-1 flex-md-grow-0">
+                  <i class="fa fa-undo me-1"></i>Refrescar
+                </a>
+                <button type="button" class="btn btn-primary flex-grow-1 flex-md-grow-0"
+                  data-bs-toggle="modal" data-bs-target="#controlNominaModal">
                   <i class="fas fa-plus me-1"></i>Añadir
                 </button>
-              </form>
+              </div>
             </div>
-
-            <!-- Botón de exportar -->
-            <form class="d-flex mb-2" method="get" action="{% url 'export_persons' %}">
-              <select name="format" class="form-select w-auto me-2">
-                <option value="xlsx">Excel (.xlsx)</option>
-                <option value="csv">CSV</option>
-              </select>
-              <button type="submit" class="btn btn-success" style="white-space: nowrap;"><i class="fa fa-download me-1"
-                  aria-hidden="true"></i>Descargar Reporte</button>
-            </form>
+          </form>
+          <hr class="d-block d-md-none mx-n3 my-3">
+          <!-- ✅ Formulario de Exportación (responsive) -->
+          <form method="get" action="{% url 'export_persons' %}" class="mb-3">
+            <div class="row g-2 align-items-end">
+              <div class="col-12 col-md-auto">
+                <label class="visually-hidden" for="format">Formato</label>
+                <select name="format" id="format" class="form-select">
+                  <option value="xlsx">Excel (.xlsx)</option>
+                  <option value="csv">CSV</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-auto">
+                <button type="submit" class="btn btn-success w-100 w-md-auto">
+                  <i class="fa fa-download me-1"></i>Descargar Reporte
+                </button>
+              </div>
+            </div>
+          </form>
 
             <!-- Tabla de Resultados -->
             <div class="table-responsive">
@@ -103,6 +116,7 @@
                     <th>País de origen</th>
                     <th>Cedula Representante</th>
                     <th>Representante</th>
+                    <th>Solvencia</th>
 
                   </tr>
                 </thead>
@@ -111,14 +125,16 @@
                   {% for person in persons %}
                   <tr>
                     <td>
-                      <button type="button" class="btn btn-warning btn-sm mb-2 text-center" data-bs-toggle="modal"
+                      <button type="button" class="w-100 btn btn-warning btn-sm mb-2 text-center" data-bs-toggle="modal"
                         data-bs-target="#controlNominaModal" data-person-id="{{ person.id }}"
-                        style="padding-inline: 0.87rem;"><i class="fas fa-edit me-1"></i>Editar</button>
+                        style=""><i class="fas fa-edit me-1"></i>Editar</button>
                       <form action="{% url 'eliminar_persona' person.id %}" method="post" style="display:inline;">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-danger btn-sm"><i
+                        <button type="submit" class="w-100 btn btn-danger btn-sm"><i
                             class="fas fa-trash me-1"></i>Eliminar</button>
                       </form>
+                      <a type="button" class="w-100 btn btn-success btn-sm mt-2  text-center" href="{% url 'pagos' %}"
+                        style=""><i class="fas fa-usd me-1"></i>Pagos</a>
                     </td>
                     <td>{{ person.get_type_document_display }}</td>
                     <td>{{ person.document_number }}</td>
@@ -131,6 +147,8 @@
                     <td>{{ person.pais_origen|default_if_none:"" }}</td>
                     <td>{{ person.progenitor_document_number|default_if_none:"" }}</td>
                     <td>{{ person.progenitor_name|default_if_none:"" }}</td>
+                    <!-- relacionar esto con los pagos -->
+                    <td class="text-center align-middle fs-2"> {% if person.solvencia %}<i class="fas fa-check text-success"></i>{% else %}<i class="fas fa-times text-danger"></i>{% endif %}</td>
 
                   </tr>
                   {% endfor %}
@@ -145,9 +163,7 @@
           </div>
 
         </div>
-
-      </div>
-      <!-- Paginación -->
+<!-- Paginación -->
       <div class="pagination-container d-flex justify-content-center align-items-center my-4">
         <button id="prev-page" class="btn pagination-btn" {% if not persons.has_previous %}disabled{% endif %}>
           <img src="{% static 'assets/images/flecha_izq.png' %}" alt="Anterior" width="40" height="30">
@@ -159,6 +175,8 @@
           <img src="{% static 'assets/images/flecha_der.png' %}" alt="Siguiente" width="40" height="30">
         </button>
       </div>
+      </div>
+      
       <!-- Ventana Modal -->
       <div class="modal fade" id="controlNominaModal" tabindex="-1" aria-labelledby="controlNominaModalLabel"
         aria-hidden="true">

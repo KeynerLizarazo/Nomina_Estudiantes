@@ -27,13 +27,14 @@
 </head>
 
 <body class="m-0 p-0">
+    {% include 'partials/header.html' %}
     <div class="bg-my-background-color d-flex text-white ">
         <!-- SIDEBAR -->
         {% include 'partials/sidebar.html' %}
 
 
 
-        <!-- aguila -->
+        <main class="main-content vh-100 d-flex flex-grow-1 p-3">
         <div class="container-fluid position-relative">
             <div class="row justify-content-center align-items-center ">
                 <img src="{% static 'assets/images/aguila.png' %}" alt="Imagen transparente"
@@ -41,7 +42,7 @@
 
 
                 <!-- Contenido principal -->
-                <div class="container-fluid ms-2 me-2 mt-4 mb-4 p-4 rounded-3 z-1">
+                <div class="ms-2 me-2 mt-4 mb-4 p-4 rounded-3 z-1">
 
                     <div class="row">
                         <div class="col-12">
@@ -161,6 +162,7 @@
                     </div>
                 </div>
             </div>
+            </main>
 
             <!-- Modal Cambiar Contraseña -->
             <div class="modal fade" id="editPasswordModal" tabindex="-1" aria-labelledby="editPasswordModalLabel"

@@ -38,12 +38,12 @@
 
     <main class="main-content vh-100 p-3 mx-3 flex-grow-1 overflow-auto pt-4">
       <div class="card shadow">
-        <div class="card-header">Lista de Docentes</div>
+        <div class="card-header">Lista de Pagos del estudiante {{ student.name }} {{ student.surname }}</div>
         
           <div class="card-body">
             <div class="mb-3">
 
-              <!-- Formulario de Búsqueda (Docentes - versión responsive) -->
+              <!-- Formulario de Búsqueda -->
               <form method="get" action="{% url 'docentes' %}" class="mb-3">
                 <div class="row g-2 align-items-end">
 
@@ -62,13 +62,10 @@
                     <label class="visually-hidden" for="campo">Campo</label>
                     <select name="campo" id="campo" class="form-select">
                       <option value="todos" {% if campo == "todos" %}selected{% endif %}>Todos los campos</option>
-                      <option value="document_number" {% if campo == "document_number" %}selected{% endif %}>Nro de documento</option>
-                      <option value="name" {% if campo == "name" %}selected{% endif %}>Nombre</option>
-                      <option value="surname" {% if campo == "surname" %}selected{% endif %}>Apellido</option>
-                      <option value="telephone_number" {% if campo == "telephone_number" %}selected{% endif %}>Teléfono</option>
-                      <option value="email" {% if campo == "email" %}selected{% endif %}>Email</option>
-                      <option value="date_of_birth" {% if campo == "date_of_birth" %}selected{% endif %}>Fecha de Nacimiento</option>
-                      <option value="pais_origen" {% if campo == "pais_origen" %}selected{% endif %}>País de origen</option>
+                      <option value="curso" {% if campo == "curso" %}selected{% endif %}>Curso</option>
+                      <option value="fecha" {% if campo == "fecha" %}selected{% endif %}>Fecha</option>
+                     
+                      
                     </select>
                   </div>
 
@@ -81,7 +78,7 @@
                       <i class="fa fa-undo me-1"></i>Refrescar
                     </a>
                     <button type="button" class="btn btn-primary flex-grow-1 flex-md-grow-0"
-                      data-bs-toggle="modal" data-bs-target="#controlNominaModal">
+                      data-bs-toggle="modal" data-bs-target="#añadirPagoModal">
                       <i class="fas fa-plus me-1"></i>Añadir
                     </button>
                   </div>
@@ -92,17 +89,11 @@
             <!-- Botón de exportar -->
             <form method="get" action="{% url 'export_tutors' %}" class="mb-3">
               <div class="row g-2 align-items-end">
-                <!-- Selector de formato -->
-                <div class="col-12 col-md-auto">
-              <select name="format" class="form-select">
-                <option value="xlsx">Excel (.xlsx)</option>
-                <option value="csv">CSV</option>
-              </select>
-              </div>
+                
               <!-- Botón de descarga -->
               <div class="col-12 col-md-auto">
                 <button type="submit" class="btn btn-success w-100 w-md-auto">
-                  <i class="fa fa-download me-1"></i>Descargar Reporte
+                  <i class="fa fa-download me-1"></i>Descargar Reporte en PDF
                 </button>
               </div>
               </div>
@@ -114,41 +105,31 @@
                 <thead>
                   <tr class="align-top">
                     <th style="min-width: 101px; width: 101px;">Acciones</th>
-                    <th>Tipo de Documento</th>
-                    <th>Número de Documento</th>
-                    <th>Nombres</th>
-                    <th>Apellidos</th>
-                    <th>Teléfono</th>
-                    <th>Email</th>
-                    <th>Fecha Nac.</th>
-                    <th>Sexo</th>
-                    <th>País de origen</th>
-                    <th>Cargo</th>
+                    <th>Curso</th>
+                    <th>Fecha</th>
+                    
+                    <th>Monto</th>
+                    
                     
                   </tr>
                 </thead>
                 <tbody id="tabla-resultados">
-                  {% if tutors %}
-                  {% for tutor in tutors %}
+                  {% if pago %}
+                  {% for pago in pagos %}
                   <tr>
                     <td>
                       <button type="button" class="btn btn-warning btn-sm mb-2" data-bs-toggle="modal"
-                        data-bs-target="#controlNominaModal" data-tutor-id="{{ tutor.id }}" style="padding-inline: 0.87rem;"><i class="fas fa-edit me-1"></i>Editar</button>
+                        data-bs-target="#editPagoModal" data-tutor-id="{{ tutor.id }}" style="padding-inline: 0.87rem;"><i class="fas fa-edit me-1"></i>Editar</button>
                       <form action="{% url 'eliminar_docente' tutor.id %}" method="post" style="display:inline;">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash me-1"></i>Eliminar</button>
                       </form>
                     </td>
-                    <td>{{ tutor.person.get_type_document_display }}</td>
-                    <td>{{ tutor.person.document_number }}</td>
-                    <td>{{ tutor.person.name }}</td>
-                    <td>{{ tutor.person.surname }}</td>
-                    <td>{{ tutor.person.telephone_number }}</td>
-                    <td>{{ tutor.person.email }}</td>
-                    <td>{{ tutor.person.date_of_birth }}</td>
-                    <td>{{ tutor.person.get_gender_display }}</td>
-                    <td>{{ tutor.person.pais_origen }}</td>
-                    <td>{{ tutor.get_staff_position_display }}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    
                     
                   </tr>
                   {% endfor %}
@@ -186,31 +167,95 @@
             </div>
       </div>
       
-            
-      <!-- Ventana Modal -->
-      <div class="modal fade" id="controlNominaModal" tabindex="-1" aria-labelledby="controlNominaModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content ">
-            <!-- Encabezado del Modal -->
-            <div class="modal-header bg-primary text-white">
-              <h5 class="modal-title text-center w-100" id="modalTitle">Control de Docentes</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+    <!-- Modal para añadir pago -->
+        <div class="modal fade" id="añadirPagoModal" tabindex="-1" aria-labelledby="addPagoModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title text-center w-100">Añadir Pago</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="añadirPagoForm" method="POST">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                            <label for="añadir_monto" class="form-label">Curso:</label>
+                            <input type="text" class="form-control" id="add_curso" name="curso" required>
+                            </div>
+                            <div class="mb-3">
+                            <label for="add_mes" class="form-label">Fecha:</label>
+                            <input type="month" class="form-control" id="add_mes" name="mes" required>
+                            </div>
+                            <div class="mb-3">
+                            <label for="edit_password" class="form-label">Monto:</label>
+                            <input type="text" class="form-control" id="add_monto" name="monto" required>
+                            </div>
+                            <div class="mb-3">
+                        </form>
+                    </div>
+                    <!-- Pie del Modal -->
+                    <div class="modal-footer">
+                    <div class="row w-100">
+                        <div class="col">
+                        <button type="submit" form="añadirPagoForm" class="btn btn-primary w-100">Guardar</button>
+                        </div>
+                        <div class="col">
+                        <button type="button" class="btn btn-danger w-100" data-bs-dismiss="modal">Cancelar</button>
+                        </div>
+                    </div>
+                    </div>
 
-            <!-- Cuerpo del Modal -->
-            <div class="modal-body">
-              <!-- Formulario -->
-              <form id="nominaForm" method="POST" action="{% if tutor_to_edit %}{% url 'editar_docente' tutor_to_edit.id %}{% else %}{% url 'docentes' %}{% endif %}">
-                {% csrf_token %}
-                {% if tutor_to_edit %}
-                    <input type="hidden" name="id" value="{{ tutor_to_edit.id }}">
-                    {{ form.as_p }}
-                {% else %}
-                    {{ form.as_p }}
-                {% endif %}
-              </form>
+
+
+                </div>
             </div>
+      
+
+
+            
+
+          </div>
+        </div>      
+
+
+
+
+      <!-- Modal para Editar pago -->
+        <div class="modal fade" id="editPagoModal" tabindex="-1" aria-labelledby="editPagoModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title text-center w-100">Editar Pago</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editPagoForm" method="POST">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                            <label for="edit_monto" class="form-label">Monto:</label>
+                            <input type="text" class="form-control" id="edit_monto" name="monto" required>
+                            </div>
+                            
+                        </form>
+                    </div>
+                    
+                    <!-- Pie del Modal -->
+                    <div class="modal-footer">
+                    <div class="row w-100">
+                        <div class="col">
+                        <button type="submit" form="editPagoForm" class="btn btn-primary w-100">Guardar</button>
+                        </div>
+                        <div class="col">
+                        <button type="button" class="btn btn-danger w-100" data-bs-dismiss="modal">Cancelar</button>
+                        </div>
+                    </div>
+                    </div>
+
+
+
+                </div>
+            </div>
+      
 
 
             <!-- Pie del Modal -->
@@ -224,8 +269,10 @@
                 </div>
               </div>
             </div>
+
           </div>
         </div>
+
       </div>
       <!-- Bootstrap JS Bundle -->
       <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
